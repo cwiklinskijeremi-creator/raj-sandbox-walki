@@ -146,7 +146,7 @@ function hasTwoDistinctPaths(freeHexes, playerZoneHexes, enemyZoneHexes) {
 
 const MIN_OBSTACLES = 3;
 const MAX_OBSTACLES = 56;
-const MIN_ZONE_FREE_HEXES = 3;
+const MIN_ZONE_FREE_HEXES = 5;
 
 function generateObstacles() {
   const desiredCount = MIN_OBSTACLES + Math.floor(Math.random() * (MAX_OBSTACLES - MIN_OBSTACLES + 1));

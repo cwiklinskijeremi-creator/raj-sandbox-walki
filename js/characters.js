@@ -63,37 +63,87 @@ function createPlayer() {
   });
 }
 
+const ENEMY_TEMPLATES = [
+  () => createCharacter({
+    name: "Zmutowany Górnik",
+    str: 5,
+    wyt: 5,
+    zre: 8,
+    int: 0,
+    cha: 0,
+    weapons: [
+      { name: "Kilof", minDmg: 6, maxDmg: 11, range: 1 },
+      { name: "Rzucony Kamień", minDmg: 4, maxDmg: 8, range: 2 },
+    ],
+    pancerz: 0.056,
+    przebicie: 0,
+    hp: 118,
+  }),
+  () => createCharacter({
+    name: "Łowca Gildii",
+    str: 6,
+    wyt: 6,
+    zre: 10,
+    int: 5,
+    cha: 10,
+    weapons: [
+      { name: "Kusza", minDmg: 9, maxDmg: 14, range: 6 },
+      { name: "Sztylet", minDmg: 7, maxDmg: 11, range: 1 },
+    ],
+    pancerz: 0.124,
+    przebicie: 0.056,
+    hp: 155,
+  }),
+  () => createCharacter({
+    name: "Aberracja Many",
+    str: 7,
+    wyt: 4,
+    zre: 10,
+    int: 0,
+    cha: 5,
+    weapons: [
+      { name: "Szpony", minDmg: 8, maxDmg: 14, range: 1 },
+      { name: "Skok i Ugryzienie", minDmg: 6, maxDmg: 10, range: 2 },
+    ],
+    pancerz: 0.03,
+    przebicie: 0.05,
+    hp: 100,
+  }),
+  () => createCharacter({
+    name: "Adept Zakonu Światła",
+    str: 4,
+    wyt: 5,
+    zre: 6,
+    int: 12,
+    cha: 8,
+    weapons: [
+      { name: "Promień Światła", minDmg: 7, maxDmg: 12, range: 6 },
+      { name: "Laska Kapłańska", minDmg: 5, maxDmg: 9, range: 1 },
+    ],
+    pancerz: 0.08,
+    przebicie: 0.1,
+    hp: 95,
+  }),
+];
+
 function createEnemies() {
-  return [
-    createCharacter({
-      name: "Zmutowany Górnik",
-      str: 5,
-      wyt: 5,
-      zre: 8,
-      int: 0,
-      cha: 0,
-      weapons: [
-        { name: "Kilof", minDmg: 6, maxDmg: 11, range: 1 },
-        { name: "Rzucony Kamień", minDmg: 4, maxDmg: 8, range: 2 },
-      ],
-      pancerz: 0.056,
-      przebicie: 0,
-      hp: 118,
-    }),
-    createCharacter({
-      name: "Łowca Gildii",
-      str: 6,
-      wyt: 6,
-      zre: 10,
-      int: 5,
-      cha: 10,
-      weapons: [
-        { name: "Kusza", minDmg: 9, maxDmg: 14, range: 6 },
-        { name: "Sztylet", minDmg: 7, maxDmg: 11, range: 1 },
-      ],
-      pancerz: 0.124,
-      przebicie: 0.056,
-      hp: 155,
-    }),
-  ];
+  const count = 1 + Math.floor(Math.random() * 4);
+  const chosen = [];
+  for (let i = 0; i < count; i++) {
+    const template = ENEMY_TEMPLATES[Math.floor(Math.random() * ENEMY_TEMPLATES.length)];
+    chosen.push(template());
+  }
+
+  const nameCounts = {};
+  for (const enemy of chosen) nameCounts[enemy.name] = (nameCounts[enemy.name] || 0) + 1;
+
+  const seen = {};
+  for (const enemy of chosen) {
+    if (nameCounts[enemy.name] > 1) {
+      seen[enemy.name] = (seen[enemy.name] || 0) + 1;
+      enemy.name = `${enemy.name} #${seen[enemy.name]}`;
+    }
+  }
+
+  return chosen;
 }
