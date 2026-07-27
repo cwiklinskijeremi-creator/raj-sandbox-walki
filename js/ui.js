@@ -401,3 +401,82 @@ document.querySelectorAll(".collapse-toggle").forEach((btn) => {
     btn.closest(".collapsible").classList.toggle("collapsed");
   });
 });
+
+const CODEX_TABS = [
+  { key: "world", label: "Świat" },
+  { key: "castes", label: "Kasty i frakcje" },
+  { key: "hero", label: "Twoja historia" },
+  { key: "classes", label: "Klasy" },
+];
+let codexActiveTab = "world";
+
+function renderCodexTabBody(tabKey) {
+  if (tabKey === "world") {
+    const w = LORE_DATA.world;
+    return `<h3>${w.icon} ${w.title}</h3>` + w.paragraphs.map((p) => `<p>${p}</p>`).join("");
+  }
+  if (tabKey === "castes") {
+    const c = LORE_DATA.castes;
+    return `<h3>${c.icon} ${c.title}</h3>` + c.entries.map((e) => `
+      <div class="codex-entry">
+        <h4>${e.icon} ${e.name}</h4>
+        <p>${e.description}</p>
+      </div>
+    `).join("");
+  }
+  if (tabKey === "hero") {
+    const h = LORE_DATA.hero;
+    return `<h3>${h.icon} ${h.title}</h3>` + h.paragraphs.map((p) => `<p>${p}</p>`).join("");
+  }
+  if (tabKey === "classes") {
+    return CLASS_DATA.map((cls) => `
+      <div class="codex-entry">
+        <h4>${cls.icon} ${cls.name}</h4>
+        ${cls.subclasses.map((sub) => `
+          <div class="codex-subclass">
+            <div class="codex-subclass-title">${sub.icon} ${sub.name}</div>
+            <p>${LORE_DATA.classFlavor[sub.name] || ""}</p>
+            <div class="codex-subclass-gear">Broń: ${sub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${sub.skill.name}</div>
+          </div>
+        `).join("")}
+      </div>
+    `).join("");
+  }
+  return "";
+}
+
+function renderCodex() {
+  const tabsEl = document.getElementById("codex-tabs");
+  const bodyEl = document.getElementById("codex-body");
+  tabsEl.innerHTML = "";
+  CODEX_TABS.forEach((tab) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `codex-tab-btn${tab.key === codexActiveTab ? " selected" : ""}`;
+    btn.textContent = tab.label;
+    btn.addEventListener("click", () => {
+      codexActiveTab = tab.key;
+      renderCodex();
+    });
+    tabsEl.appendChild(btn);
+  });
+  bodyEl.innerHTML = renderCodexTabBody(codexActiveTab);
+}
+
+function openCodex() {
+  renderCodex();
+  document.getElementById("codex-overlay").classList.remove("hidden");
+}
+
+function closeCodex() {
+  document.getElementById("codex-overlay").classList.add("hidden");
+}
+
+document.getElementById("codex-btn").addEventListener("click", openCodex);
+document.getElementById("codex-close").addEventListener("click", closeCodex);
+document.getElementById("codex-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "codex-overlay") closeCodex();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeCodex();
+});

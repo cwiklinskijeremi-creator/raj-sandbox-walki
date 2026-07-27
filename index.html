@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
@@ -40,6 +40,17 @@
     <button id="end-turn-btn">Zakończ turę</button>
     <button id="reset-btn">Nowa walka</button>
     <button id="mute-btn" type="button">🔊 Dźwięk</button>
+    <button id="codex-btn" type="button">📜 Kodeks świata</button>
+  </div>
+
+  <div class="codex-overlay hidden" id="codex-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs" id="codex-tabs"></div>
+        <button class="codex-close" id="codex-close" type="button">✕</button>
+      </div>
+      <div class="codex-body" id="codex-body"></div>
+    </div>
   </div>
 
   <section class="class-picker">
@@ -54,13 +65,14 @@
     <div class="collapsible-content" id="combat-log"></div>
   </section>
 
-  <script src="js/audio.js?v=9"></script>
-  <script src="js/dice.js?v=9"></script>
-  <script src="js/grid.js?v=9"></script>
-  <script src="js/classes.js?v=9"></script>
-  <script src="js/characters.js?v=9"></script>
-  <script src="js/combat.js?v=9"></script>
-  <script src="js/ui.js?v=9"></script>
-  <script src="js/main.js?v=9"></script>
+  <script src="js/audio.js?v=10"></script>
+  <script src="js/dice.js?v=10"></script>
+  <script src="js/grid.js?v=10"></script>
+  <script src="js/classes.js?v=10"></script>
+  <script src="js/lore.js?v=10"></script>
+  <script src="js/characters.js?v=10"></script>
+  <script src="js/combat.js?v=10"></script>
+  <script src="js/ui.js?v=10"></script>
+  <script src="js/main.js?v=10"></script>
 </body>
 </html>

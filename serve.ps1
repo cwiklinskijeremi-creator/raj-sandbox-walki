@@ -1,8 +1,8 @@
 $root = $PSScriptRoot
 $listener = New-Object System.Net.HttpListener
-$listener.Prefixes.Add("http://localhost:8731/")
+$listener.Prefixes.Add("http://localhost:8090/")
 $listener.Start()
-Write-Host "Serving $root on http://localhost:8731/"
+Write-Host "Serving $root on http://localhost:8090/"
 
 $mime = @{
   ".html" = "text/html"
