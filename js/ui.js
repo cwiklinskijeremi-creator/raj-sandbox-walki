@@ -33,7 +33,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
         HP: ${fighter.currentHP}/${fighter.maxHP} &nbsp;|&nbsp;
         STR: ${fighter.str} &nbsp; WYT: ${fighter.wyt} &nbsp;|&nbsp;
         Broń: ${fighter.weapons.map((w, i) => i === fighter.weaponIndex ? `<strong>${w.name} (${w.minDmg}-${w.maxDmg}, zas.${w.range})</strong>` : `${w.name} (${w.minDmg}-${w.maxDmg}, zas.${w.range})`).join(" / ")}
-        ${fighter.isPlayer && fighter.weapons.length > 1 ? "<em>(kliknij swój token żeby zmienić)</em>" : ""} &nbsp;|&nbsp;
+        ${fighter.isPlayer ? "<em>(kliknij swój token, żeby otworzyć menu)</em>" : ""} &nbsp;|&nbsp;
         Pancerz: ${(fighter.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(fighter.przebicie * 100).toFixed(0)}%
       </div>
       ${extraStatsLine}
@@ -113,15 +113,35 @@ function svgEl(tag, attrs) {
   return el;
 }
 
-function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], deployHexes = [], onHexClick }) {
-  svg.innerHTML = "";
+let tokenElements = new Map();
 
+function resetTokenLayer() {
+  tokenElements = new Map();
+  const svg = document.getElementById("battle-map");
+  const layer = svg && svg.querySelector("#token-layer");
+  if (layer) layer.innerHTML = "";
+}
+
+function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], deployHexes = [], onHexClick }) {
   const positions = ALL_HEXES.map((h) => axialToPixel(h));
   const minX = Math.min(...positions.map((p) => p.x)) - HEX_SIZE;
   const minY = Math.min(...positions.map((p) => p.y)) - HEX_SIZE;
   const maxX = Math.max(...positions.map((p) => p.x)) + HEX_SIZE;
   const maxY = Math.max(...positions.map((p) => p.y)) + HEX_SIZE;
   svg.setAttribute("viewBox", `${minX} ${minY} ${maxX - minX} ${maxY - minY}`);
+
+  let hexLayer = svg.querySelector("#hex-layer");
+  if (!hexLayer) {
+    hexLayer = svgEl("g", { id: "hex-layer" });
+    svg.appendChild(hexLayer);
+  }
+  hexLayer.innerHTML = "";
+
+  let tokenLayer = svg.querySelector("#token-layer");
+  if (!tokenLayer) {
+    tokenLayer = svgEl("g", { id: "token-layer" });
+    svg.appendChild(tokenLayer);
+  }
 
   const allCombatants = [player, ...enemies];
 
@@ -146,35 +166,69 @@ function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], depl
     const poly = svgEl("polygon", { points: corners, class: classes.join(" ") });
     poly.addEventListener("click", () => onHexClick(hex));
     if (clickable) poly.classList.add("hex-clickable");
-    svg.appendChild(poly);
+    hexLayer.appendChild(poly);
 
     if (obstacle) {
       const emoji = { rock: "🪨", tree: "🌳", lake: "🌊" }[type];
       const icon = svgEl("text", { x, y: y + 8, class: "obstacle-icon", "text-anchor": "middle" });
       icon.textContent = emoji;
       icon.style.pointerEvents = "none";
-      svg.appendChild(icon);
+      hexLayer.appendChild(icon);
     }
   }
 
+  const stillPresent = new Set();
+
   for (const combatant of allCombatants) {
     if (!combatant.pos || combatant.currentHP <= 0) continue;
+    stillPresent.add(combatant);
+
     const { x, y } = axialToPixel(combatant.pos);
     const isPlayerToken = combatant === player;
-    const circle = svgEl("circle", {
-      cx: x, cy: y, r: HEX_SIZE * 0.5,
-      class: `token ${isPlayerToken ? "token-player" : "token-enemy"}`,
-    });
-    svg.appendChild(circle);
 
-    const label = svgEl("text", { x, y: y + 9, class: "token-label", "text-anchor": "middle" });
-    label.textContent = combatant.icon;
-    svg.appendChild(label);
+    let entry = tokenElements.get(combatant);
+    if (!entry) {
+      const circle = svgEl("circle", {
+        cx: x, cy: y, r: HEX_SIZE * 0.5,
+        class: `token ${isPlayerToken ? "token-player" : "token-enemy"}`,
+      });
+      const label = svgEl("text", { x, y: y + 9, class: "token-label", "text-anchor": "middle" });
+      label.textContent = combatant.icon;
+      const rangeLabel = svgEl("text", { x, y: y + HEX_SIZE * 0.5 + 14, class: "token-range", "text-anchor": "middle" });
 
-    const rangeLabel = svgEl("text", { x, y: y + HEX_SIZE * 0.5 + 14, class: "token-range", "text-anchor": "middle" });
-    rangeLabel.textContent = `zas.${combatant.weapon.range}`;
-    svg.appendChild(rangeLabel);
+      tokenLayer.appendChild(circle);
+      tokenLayer.appendChild(label);
+      tokenLayer.appendChild(rangeLabel);
+
+      entry = { circle, label, rangeLabel };
+      tokenElements.set(combatant, entry);
+    }
+
+    entry.circle.setAttribute("cx", x);
+    entry.circle.setAttribute("cy", y);
+    entry.label.setAttribute("x", x);
+    entry.label.setAttribute("y", y + 9);
+    entry.rangeLabel.setAttribute("x", x);
+    entry.rangeLabel.setAttribute("y", y + HEX_SIZE * 0.5 + 14);
+    entry.rangeLabel.textContent = `zas.${combatant.weapon.range}`;
   }
+
+  for (const [combatant, entry] of tokenElements) {
+    if (stillPresent.has(combatant)) continue;
+    entry.circle.remove();
+    entry.label.remove();
+    entry.rangeLabel.remove();
+    tokenElements.delete(combatant);
+  }
+}
+
+function hexToLayerXY(hex) {
+  const svg = document.getElementById("battle-map");
+  const fxLayer = document.getElementById("fx-layer");
+  const { x, y } = axialToPixel(hex);
+  const screenPt = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
+  const layerRect = fxLayer.getBoundingClientRect();
+  return { left: screenPt.x - layerRect.left, top: screenPt.y - layerRect.top };
 }
 
 function spawnHitEffect(hex, { text, cssClass = "" }) {
@@ -182,11 +236,7 @@ function spawnHitEffect(hex, { text, cssClass = "" }) {
   const fxLayer = document.getElementById("fx-layer");
   if (!svg || !fxLayer) return;
 
-  const { x, y } = axialToPixel(hex);
-  const screenPt = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
-  const layerRect = fxLayer.getBoundingClientRect();
-  const left = screenPt.x - layerRect.left;
-  const top = screenPt.y - layerRect.top;
+  const { left, top } = hexToLayerXY(hex);
 
   const flash = document.createElement("div");
   flash.className = `hit-flash ${cssClass}`.trim();
@@ -202,6 +252,46 @@ function spawnHitEffect(hex, { text, cssClass = "" }) {
   popup.style.top = `${top}px`;
   fxLayer.appendChild(popup);
   popup.addEventListener("animationend", () => popup.remove());
+}
+
+function closeRadialMenu() {
+  const existing = document.querySelector(".radial-menu");
+  if (existing) existing.remove();
+}
+
+function showRadialMenu(hex, options) {
+  const fxLayer = document.getElementById("fx-layer");
+  if (!fxLayer) return;
+
+  closeRadialMenu();
+
+  const { left, top } = hexToLayerXY(hex);
+  const menu = document.createElement("div");
+  menu.className = "radial-menu";
+
+  const radius = 55;
+  const startAngle = -Math.PI / 2;
+  const angleStep = options.length > 1 ? (2 * Math.PI) / options.length : 0;
+
+  options.forEach((opt, i) => {
+    const angle = startAngle + i * angleStep;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "radial-menu-btn";
+    btn.textContent = opt.icon;
+    btn.title = opt.label;
+    btn.disabled = !!opt.disabled;
+    btn.style.left = `${left + radius * Math.cos(angle)}px`;
+    btn.style.top = `${top + radius * Math.sin(angle)}px`;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeRadialMenu();
+      opt.onClick();
+    });
+    menu.appendChild(btn);
+  });
+
+  fxLayer.appendChild(menu);
 }
 
 document.querySelectorAll(".collapse-toggle").forEach((btn) => {

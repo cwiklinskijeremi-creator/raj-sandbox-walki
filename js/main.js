@@ -4,6 +4,7 @@ let selectedTargetIndex = null;
 let battleOver = false;
 let playerActionsRemaining = 1;
 let phase = "deployment";
+let radialMenuOpen = false;
 
 function isOccupied(hex, excluding) {
   const all = [player, ...enemies];
@@ -24,6 +25,9 @@ function deployEnemiesRandomly() {
 
 function startNewBattle() {
   regenerateObstacles();
+  resetTokenLayer();
+  closeRadialMenu();
+  radialMenuOpen = false;
 
   player = createPlayer();
   enemies = createEnemies();
@@ -56,6 +60,41 @@ function triggerAttackFx(result, defenderPos) {
   spawnHitEffect(defenderPos, { text: `-${result.damage}`, cssClass: result.d6 === 6 ? "crit" : "" });
 }
 
+function openPlayerActionMenu() {
+  radialMenuOpen = true;
+  showRadialMenu(player.pos, [
+    {
+      icon: "🔁",
+      label: "Zmień broń",
+      disabled: playerActionsRemaining <= 0 || player.weapons.length < 2,
+      onClick: () => {
+        radialMenuOpen = false;
+        if (playerActionsRemaining > 0 && player.weapons.length > 1) {
+          switchWeapon(player);
+          playerActionsRemaining--;
+          appendLog(`Zmieniasz broń na: ${player.weapon.name} (koszt: 1 akcja).`, "system");
+          if (playerActionsRemaining <= 0) {
+            enemyPhase();
+          } else {
+            render();
+          }
+        } else {
+          render();
+        }
+      },
+    },
+    {
+      icon: "✨",
+      label: "Umiejętności (wkrótce)",
+      onClick: () => {
+        radialMenuOpen = false;
+        appendLog("Umiejętności będą dostępne w przyszłej aktualizacji.", "system");
+        render();
+      },
+    },
+  ]);
+}
+
 function handleHexClick(hex) {
   if (battleOver) return;
 
@@ -68,17 +107,18 @@ function handleHexClick(hex) {
   }
 
   if (hexEquals(hex, player.pos)) {
-    if (playerActionsRemaining > 0 && player.weapons.length > 1) {
-      switchWeapon(player);
-      playerActionsRemaining--;
-      appendLog(`Zmieniasz broń na: ${player.weapon.name} (koszt: 1 akcja).`, "system");
-      if (playerActionsRemaining <= 0) {
-        enemyPhase();
-      } else {
-        render();
-      }
+    if (radialMenuOpen) {
+      closeRadialMenu();
+      radialMenuOpen = false;
+    } else {
+      openPlayerActionMenu();
     }
     return;
+  }
+
+  if (radialMenuOpen) {
+    closeRadialMenu();
+    radialMenuOpen = false;
   }
 
   if (playerActionsRemaining > 0) {
@@ -161,6 +201,8 @@ function render() {
 
 function playerAttack() {
   if (battleOver || playerActionsRemaining <= 0) return;
+  closeRadialMenu();
+  radialMenuOpen = false;
   const target = enemies[selectedTargetIndex];
   if (!target || target.currentHP <= 0) {
     appendLog("Wybierz żywy cel.", "system");
@@ -225,6 +267,8 @@ function bestWeaponFor(character, target) {
 }
 
 function enemyPhase() {
+  closeRadialMenu();
+  radialMenuOpen = false;
   const context = { allCombatants: [player, ...enemies], obstacles: OBSTACLES };
 
   for (const enemy of enemies) {
