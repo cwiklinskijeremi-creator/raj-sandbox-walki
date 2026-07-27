@@ -12,6 +12,10 @@ const CLASS_DATA = [
           { name: "Różdżka Ognia", minDmg: 10, maxDmg: 16, range: 6 },
           { name: "Laska Maga", minDmg: 5, maxDmg: 8, range: 1 },
         ],
+        skill: {
+          name: "Kula Ognia", icon: "🔥", colorClass: "spell-fire",
+          minDmg: 12, maxDmg: 18, range: 6,
+        },
       },
       {
         name: "Apostata",
@@ -22,6 +26,10 @@ const CLASS_DATA = [
           { name: "Mroczny Płomień", minDmg: 11, maxDmg: 18, range: 6 },
           { name: "Sztylet Rytualny", minDmg: 6, maxDmg: 10, range: 1 },
         ],
+        skill: {
+          name: "Mroczny Pocisk", icon: "🌀", colorClass: "spell-dark",
+          minDmg: 13, maxDmg: 19, range: 6,
+        },
       },
     ],
   },
@@ -38,6 +46,10 @@ const CLASS_DATA = [
           { name: "Miecz Światła", minDmg: 11, maxDmg: 16, range: 1 },
           { name: "Tarcza Uderzeniowa", minDmg: 6, maxDmg: 9, range: 1 },
         ],
+        skill: {
+          name: "Promień Osądu", icon: "✨", colorClass: "spell-holy",
+          minDmg: 10, maxDmg: 15, range: 5,
+        },
       },
       {
         name: "Mroczny rycerz",
@@ -48,6 +60,10 @@ const CLASS_DATA = [
           { name: "Czarny Miecz", minDmg: 13, maxDmg: 19, range: 1 },
           { name: "Rękawica Mroku", minDmg: 8, maxDmg: 12, range: 1 },
         ],
+        skill: {
+          name: "Klątwa Krwi", icon: "🩸", colorClass: "spell-dark",
+          minDmg: 12, maxDmg: 17, range: 5,
+        },
       },
     ],
   },
@@ -64,6 +80,10 @@ const CLASS_DATA = [
           { name: "Miecz Najemnika", minDmg: 12, maxDmg: 18, range: 1 },
           { name: "Kusza Ręczna", minDmg: 8, maxDmg: 12, range: 5 },
         ],
+        skill: {
+          name: "Celny Rzut", icon: "🔪", colorClass: "spell-physical",
+          minDmg: 10, maxDmg: 14, range: 5,
+        },
       },
       {
         name: "Berserk",
@@ -74,6 +94,10 @@ const CLASS_DATA = [
           { name: "Wielki Topór", minDmg: 16, maxDmg: 24, range: 1 },
           { name: "Dwa Topory", minDmg: 12, maxDmg: 16, range: 1 },
         ],
+        skill: {
+          name: "Rzucony Topór", icon: "🪓", colorClass: "spell-physical",
+          minDmg: 14, maxDmg: 20, range: 4,
+        },
       },
     ],
   },
@@ -90,6 +114,10 @@ const CLASS_DATA = [
           { name: "Długi Łuk", minDmg: 10, maxDmg: 15, range: 7 },
           { name: "Krótki Miecz", minDmg: 7, maxDmg: 11, range: 1 },
         ],
+        skill: {
+          name: "Precyzyjny Strzał", icon: "🏹", colorClass: "spell-physical",
+          minDmg: 11, maxDmg: 16, range: 7,
+        },
       },
       {
         name: "Skrytobójca",
@@ -100,6 +128,10 @@ const CLASS_DATA = [
           { name: "Zatrute Sztylety", minDmg: 9, maxDmg: 14, range: 1 },
           { name: "Shuriken", minDmg: 6, maxDmg: 9, range: 3 },
         ],
+        skill: {
+          name: "Zatruty Sztylet", icon: "☠️", colorClass: "spell-poison",
+          minDmg: 10, maxDmg: 15, range: 4,
+        },
       },
     ],
   },
@@ -116,6 +148,10 @@ const CLASS_DATA = [
           { name: "Butelki z Trucizną", minDmg: 9, maxDmg: 14, range: 4 },
           { name: "Zatruty Sztylet", minDmg: 6, maxDmg: 10, range: 1 },
         ],
+        skill: {
+          name: "Kwasowa Fiolka", icon: "🧪", colorClass: "spell-poison",
+          minDmg: 11, maxDmg: 16, range: 5,
+        },
       },
       {
         name: "Medyk",
@@ -126,6 +162,10 @@ const CLASS_DATA = [
           { name: "Skalpel Alchemiczny", minDmg: 7, maxDmg: 11, range: 1 },
           { name: "Rzucany Eliksir", minDmg: 6, maxDmg: 10, range: 3 },
         ],
+        skill: {
+          name: "Wybuchowy Eliksir", icon: "💥", colorClass: "spell-elixir",
+          minDmg: 9, maxDmg: 14, range: 5,
+        },
       },
     ],
   },

@@ -87,6 +87,22 @@ h1 { text-align: center; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
 }
 
+.spell-projectile {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 1.8rem;
+  z-index: 5;
+  transition: left 0.5s linear, top 0.5s linear;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.spell-fire { filter: drop-shadow(0 0 8px #ff7a30); }
+.spell-dark { filter: drop-shadow(0 0 8px #9b5de5); }
+.spell-holy { filter: drop-shadow(0 0 8px #ffe9a8); }
+.spell-physical { filter: drop-shadow(0 0 6px #d8d8d8); }
+.spell-poison { filter: drop-shadow(0 0 8px #5bd97a); }
+.spell-elixir { filter: drop-shadow(0 0 8px #4fb3ff); }
+
 .hex-tile {
   fill: rgba(0, 0, 0, 0.05);
   stroke: #c8dd6b;

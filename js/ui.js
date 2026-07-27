@@ -228,6 +228,39 @@ function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], depl
   }
 }
 
+function spawnProjectile(fromHex, toHex, { icon, colorClass = "" }, onArrive) {
+  const fxLayer = document.getElementById("fx-layer");
+  if (!fxLayer) {
+    onArrive();
+    return;
+  }
+
+  const from = hexToLayerXY(fromHex);
+  const to = hexToLayerXY(toHex);
+
+  const proj = document.createElement("div");
+  proj.className = `spell-projectile ${colorClass}`.trim();
+  proj.textContent = icon;
+  proj.style.left = `${from.left}px`;
+  proj.style.top = `${from.top}px`;
+  fxLayer.appendChild(proj);
+
+  requestAnimationFrame(() => {
+    proj.style.left = `${to.left}px`;
+    proj.style.top = `${to.top}px`;
+  });
+
+  let settled = false;
+  const settle = () => {
+    if (settled) return;
+    settled = true;
+    proj.remove();
+    onArrive();
+  };
+  proj.addEventListener("transitionend", settle);
+  setTimeout(settle, 700);
+}
+
 function hexToLayerXY(hex) {
   const svg = document.getElementById("battle-map");
   const fxLayer = document.getElementById("fx-layer");

@@ -90,15 +90,20 @@ function openPlayerActionMenu() {
       },
     },
     {
-      icon: "✨",
-      label: "Umiejętności (wkrótce)",
+      icon: playerSkill() ? playerSkill().icon : "✨",
+      label: playerSkill() ? playerSkill().name : "Umiejętności (wybierz klasę)",
+      disabled: playerActionsRemaining <= 0,
       onClick: () => {
         radialMenuOpen = false;
-        appendLog("Umiejętności będą dostępne w przyszłej aktualizacji.", "system");
-        render();
+        castSkill();
       },
     },
   ]);
+}
+
+function playerSkill() {
+  const subclassData = findSubclassData(player.class, player.subclass);
+  return subclassData && subclassData.skill;
 }
 
 function handleHexClick(hex) {
@@ -258,6 +263,10 @@ function playerAttack() {
   triggerAttackFx(result, target.pos);
   playerActionsRemaining--;
 
+  finishPlayerAction(target);
+}
+
+function finishPlayerAction(target) {
   if (target.currentHP <= 0) {
     appendLog(`${target.name} pada martwy.`, "system");
     const nextAlive = enemies.findIndex((e) => e.currentHP > 0);
@@ -276,6 +285,46 @@ function playerAttack() {
   } else {
     render();
   }
+}
+
+function castSkill() {
+  if (battleOver || playerActionsRemaining <= 0) return;
+  closeRadialMenu();
+  radialMenuOpen = false;
+
+  const skill = playerSkill();
+  if (!skill) {
+    appendLog("Wybierz najpierw klasę i specjalizację, żeby odblokować czar.", "system");
+    render();
+    return;
+  }
+
+  const target = enemies[selectedTargetIndex];
+  if (!target || target.currentHP <= 0) {
+    appendLog("Wybierz żywy cel.", "system");
+    render();
+    return;
+  }
+
+  if (hexDistance(player.pos, target.pos) > skill.range) {
+    appendLog(`${target.name} jest poza zasięgiem czaru "${skill.name}" (${skill.range}). Podejdź bliżej.`, "system");
+    render();
+    return;
+  }
+
+  const context = { allCombatants: [player, ...enemies], obstacles: OBSTACLES };
+  const virtualAttacker = Object.assign({}, player, { weapon: skill });
+
+  playerActionsRemaining--;
+  render();
+
+  spawnProjectile(player.pos, target.pos, { icon: skill.icon, colorClass: skill.colorClass }, () => {
+    const result = resolveAttack(virtualAttacker, target, context);
+    const { text, cssClass } = formatAttackResult(result);
+    appendLog(`${skill.icon} ${skill.name}! ${text}`, cssClass);
+    triggerAttackFx(result, target.pos);
+    finishPlayerAction(target);
+  });
 }
 
 function moveEnemyTowardPlayer(enemy) {
