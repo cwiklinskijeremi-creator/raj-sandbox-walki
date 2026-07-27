@@ -18,10 +18,14 @@ function reachableFor(combatant) {
 }
 
 function deployEnemiesRandomly() {
-  const candidates = ALL_HEXES.filter((h) => isEnemyDeployHex(h) && !isObstacle(h));
+  const zoneHexes = ALL_HEXES.filter((h) => isEnemyDeployHex(h) && !isObstacle(h));
+  const safeZoneHexes = zoneHexes.filter(hasAnyOpenNeighbor);
+  const pool = safeZoneHexes.length > 0 ? safeZoneHexes : zoneHexes;
+
   for (const enemy of enemies) {
-    const free = candidates.filter((h) => !isOccupied(h, enemy));
-    enemy.pos = free[Math.floor(Math.random() * free.length)];
+    const free = pool.filter((h) => !isOccupied(h, enemy));
+    const options = free.length > 0 ? free : zoneHexes.filter((h) => !isOccupied(h, enemy));
+    enemy.pos = options[Math.floor(Math.random() * options.length)];
   }
 }
 
@@ -40,7 +44,8 @@ function startNewBattle() {
 
   const defaultPos = getStartPositions().player;
   player.pos = isObstacle(defaultPos)
-    ? ALL_HEXES.find((h) => isPlayerDeployHex(h) && !isObstacle(h))
+    ? (ALL_HEXES.find((h) => isPlayerDeployHex(h) && !isObstacle(h) && hasAnyOpenNeighbor(h))
+      || ALL_HEXES.find((h) => isPlayerDeployHex(h) && !isObstacle(h)))
     : defaultPos;
   deployEnemiesRandomly();
 
@@ -216,7 +221,11 @@ function render() {
   });
 
   const deployHexes = phase === "deployment"
-    ? ALL_HEXES.filter((h) => isPlayerDeployHex(h) && !isObstacle(h))
+    ? (() => {
+        const zoneHexes = ALL_HEXES.filter((h) => isPlayerDeployHex(h) && !isObstacle(h));
+        const safeZoneHexes = zoneHexes.filter(hasAnyOpenNeighbor);
+        return safeZoneHexes.length > 0 ? safeZoneHexes : zoneHexes;
+      })()
     : [];
 
   renderGrid({
@@ -337,18 +346,43 @@ function castSkill() {
 }
 
 function moveEnemyTowardPlayer(enemy) {
-  const options = [enemy.pos, ...reachableFor(enemy)];
-  let best = enemy.pos;
-  let bestDist = hexDistance(enemy.pos, player.pos);
-  for (const hex of options) {
-    const d = hexDistance(hex, player.pos);
-    if (d < bestDist) {
-      bestDist = d;
-      best = hex;
+  // Path over TERRAIN only (obstacles), never over other units — the map is guaranteed
+  // fully connected by terrain alone, so a route always exists. Other combatants are only
+  // checked when actually stepping onto a hex, so a temporarily-blocked bottleneck just
+  // truncates this turn's move instead of making the whole path search fail.
+  const terrainFreeHexes = ALL_HEXES.filter((h) => !isObstacle(h));
+  const terrainFreeKeySet = new Set(terrainFreeHexes.map(hexKey));
+
+  // Prefer a hex within actual weapon range, but if the player is boxed in by terrain,
+  // widen the search ring so the enemy still closes the distance as far as the map
+  // allows instead of freezing in place.
+  const currentDist = hexDistance(enemy.pos, player.pos);
+  const maxRing = Math.max(enemy.weapon.range, currentDist);
+  let targetKeySet = null;
+  for (let ring = enemy.weapon.range; ring <= maxRing; ring++) {
+    const candidates = terrainFreeHexes.filter((h) => hexDistance(h, player.pos) <= ring && !isOccupied(h, enemy));
+    if (candidates.length > 0) {
+      targetKeySet = new Set(candidates.map(hexKey));
+      break;
     }
   }
-  if (!hexEquals(best, enemy.pos)) {
-    enemy.pos = best;
+  if (!targetKeySet) return;
+
+  const pathKeys = bfsPathAvoiding([enemy.pos], targetKeySet, terrainFreeKeySet, new Set());
+  if (!pathKeys) return;
+
+  const pathHexes = pathKeys.map(hexFromKey).reverse();
+  const maxSteps = Math.min(enemy.moveRange, pathHexes.length - 1);
+
+  let destination = enemy.pos;
+  for (let i = 1; i <= maxSteps; i++) {
+    const step = pathHexes[i];
+    if (isOccupied(step, enemy)) break;
+    destination = step;
+  }
+
+  if (!hexEquals(destination, enemy.pos)) {
+    enemy.pos = destination;
     appendLog(`${enemy.name} zbliża się (koszt: 1 akcja).`, "system");
   }
 }

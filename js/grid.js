@@ -15,6 +15,11 @@ function hexKey(hex) {
   return `${hex.q},${hex.r}`;
 }
 
+function hexFromKey(key) {
+  const [q, r] = key.split(",").map(Number);
+  return { q, r };
+}
+
 function hexEquals(a, b) {
   return a.q === b.q && a.r === b.r;
 }
@@ -72,6 +77,10 @@ function isPlayerDeployHex(hex) {
 
 function isEnemyDeployHex(hex) {
   return hexColumn(hex) >= MAP_COLS - DEPLOY_ZONE_COLS;
+}
+
+function hasAnyOpenNeighbor(hex) {
+  return hexNeighbors(hex).some((n) => isWithinMap(n) && !isObstacle(n));
 }
 
 function floodFill(start, isBlocked) {
