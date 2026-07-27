@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Raj — Sandbox Walki</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
+
+  <div class="arena">
+    <section class="panel player-panel collapsible" id="player-panel">
+      <h2>Gracz <button class="collapse-toggle" type="button">▾</button></h2>
+      <div class="fighter collapsible-content" id="player-fighter"></div>
+    </section>
+
+    <section class="map-panel">
+      <svg id="battle-map"></svg>
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-swatch swatch-obstacle"></span>Przeszkoda (osłona)</span>
+        <span class="legend-item"><span class="legend-swatch swatch-reachable"></span>Osiągalne ruchem</span>
+        <span class="legend-item"><span class="legend-swatch swatch-deploy"></span>Strefa rozstawienia</span>
+        <span class="legend-item"><span class="legend-swatch swatch-player"></span>Ty</span>
+        <span class="legend-item"><span class="legend-swatch swatch-enemy"></span>Przeciwnik</span>
+      </div>
+    </section>
+
+    <section class="panel enemies-panel collapsible">
+      <h2>Przeciwnicy <button class="collapse-toggle" type="button">▾</button></h2>
+      <div class="collapsible-content" id="enemies-list"></div>
+    </section>
+  </div>
+
+  <div class="controls">
+    <button id="start-battle-btn">Rozpocznij walkę</button>
+    <button id="attack-btn">Atakuj wybrany cel</button>
+    <button id="end-turn-btn">Zakończ turę</button>
+    <button id="reset-btn">Nowa walka</button>
+  </div>
+
+  <section class="log-panel collapsible">
+    <h2>Log walki <button class="collapse-toggle" type="button">▾</button></h2>
+    <div class="collapsible-content" id="combat-log"></div>
+  </section>
+
+  <script src="js/dice.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
