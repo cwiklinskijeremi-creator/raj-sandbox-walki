@@ -213,6 +213,7 @@ function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], depl
     entry.circle.setAttribute("cy", y);
     entry.label.setAttribute("x", x);
     entry.label.setAttribute("y", y + 9);
+    entry.label.textContent = combatant.icon;
     entry.rangeLabel.setAttribute("x", x);
     entry.rangeLabel.setAttribute("y", y + HEX_SIZE * 0.5 + 14);
     entry.rangeLabel.textContent = `zas.${combatant.weapon.range}`;

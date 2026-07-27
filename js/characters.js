@@ -1,9 +1,4 @@
-function createCharacter({
-  name, str, wyt, zre = 0, int = 0, cha = 0,
-  weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓",
-}) {
-  const maxHP = hp !== null ? hp : 50 + str * 5 + wyt * 5;
-
+function computeDerivedStats({ zre, int, cha, przebicie }) {
   const extraD20Rolls = Math.floor(zre / 10);
   const extraActions = Math.floor(zre / 5);
   const totalPrzebicie = przebicie + Math.floor(zre / 10) * 0.05;
@@ -11,6 +6,15 @@ function createCharacter({
   const d20Bonus = Math.floor(int / 5);
   const charismaExponent = 1 + Math.floor(cha / 10);
   const moveRange = 2 + Math.floor(zre / 8);
+  return { extraD20Rolls, extraActions, totalPrzebicie, d6Bonus, d20Bonus, charismaExponent, moveRange };
+}
+
+function createCharacter({
+  name, str, wyt, zre = 0, int = 0, cha = 0,
+  weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓",
+}) {
+  const maxHP = hp !== null ? hp : 50 + str * 5 + wyt * 5;
+  const derived = computeDerivedStats({ zre, int, cha, przebicie });
 
   return {
     name,
@@ -24,16 +28,16 @@ function createCharacter({
     weapon: weapons[0],
     icon,
     pancerz,
-    przebicie: totalPrzebicie,
-    extraD20Rolls,
-    extraActions,
-    d6Bonus,
-    d20Bonus,
-    charismaExponent,
+    przebicie: derived.totalPrzebicie,
+    extraD20Rolls: derived.extraD20Rolls,
+    extraActions: derived.extraActions,
+    d6Bonus: derived.d6Bonus,
+    d20Bonus: derived.d20Bonus,
+    charismaExponent: derived.charismaExponent,
     isPlayer,
     maxHP,
     currentHP: maxHP,
-    moveRange,
+    moveRange: derived.moveRange,
     pos: null,
   };
 }
@@ -43,6 +47,32 @@ function switchWeapon(character) {
   character.weaponIndex = (character.weaponIndex + 1) % character.weapons.length;
   character.weapon = character.weapons[character.weaponIndex];
   return true;
+}
+
+function applyClassProfile(character, profile) {
+  const derived = computeDerivedStats({
+    zre: profile.zre, int: profile.int, cha: profile.cha, przebicie: profile.przebicie,
+  });
+
+  character.str = profile.str;
+  character.wyt = profile.wyt;
+  character.zre = profile.zre;
+  character.int = profile.int;
+  character.cha = profile.cha;
+  character.weapons = profile.weapons;
+  character.weaponIndex = 0;
+  character.weapon = profile.weapons[0];
+  character.icon = profile.icon;
+  character.pancerz = profile.pancerz;
+  character.przebicie = derived.totalPrzebicie;
+  character.extraD20Rolls = derived.extraD20Rolls;
+  character.extraActions = derived.extraActions;
+  character.d6Bonus = derived.d6Bonus;
+  character.d20Bonus = derived.d20Bonus;
+  character.charismaExponent = derived.charismaExponent;
+  character.moveRange = derived.moveRange;
+  character.maxHP = profile.hp;
+  character.currentHP = profile.hp;
 }
 
 function createPlayer() {

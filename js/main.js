@@ -32,6 +32,8 @@ function startNewBattle() {
   radialMenuOpen = false;
 
   player = createPlayer();
+  const savedSubclass = findSubclassData(selectedClassName, selectedSubclassName);
+  if (savedSubclass) applyClassProfile(player, savedSubclass);
   player.class = selectedClassName;
   player.subclass = selectedSubclassName;
   enemies = createEnemies();
@@ -147,7 +149,16 @@ function handleHexClick(hex) {
   }
 }
 
+function findSubclassData(className, subclassName) {
+  const cls = CLASS_DATA.find((c) => c.name === className);
+  return cls && cls.subclasses.find((s) => s.name === subclassName);
+}
+
 function selectClass(cls) {
+  if (phase !== "deployment") {
+    appendLog("Klasę można wybrać tylko przed rozpoczęciem walki.", "system");
+    return;
+  }
   selectedClassName = cls.name;
   selectedSubclassName = null;
   player.class = selectedClassName;
@@ -156,9 +167,15 @@ function selectClass(cls) {
 }
 
 function selectSubclass(sub) {
+  if (phase !== "deployment") {
+    appendLog("Specjalizację można wybrać tylko przed rozpoczęciem walki.", "system");
+    return;
+  }
   selectedSubclassName = sub.name;
+  applyClassProfile(player, sub);
+  player.class = selectedClassName;
   player.subclass = selectedSubclassName;
-  appendLog(`Wybrano klasę: ${selectedClassName} — ${selectedSubclassName}.`, "system");
+  appendLog(`Wybrano klasę: ${selectedClassName} — ${selectedSubclassName}. Statystyki i broń zaktualizowane.`, "system");
   render();
 }
 
