@@ -48,6 +48,14 @@ function inRange(attacker, defender) {
   return hexDistance(attacker.pos, defender.pos) <= attacker.weapon.range;
 }
 
+function triggerAttackFx(result, defenderPos) {
+  if (!result.hit) {
+    spawnHitEffect(defenderPos, { text: "Pudło!", cssClass: "miss" });
+    return;
+  }
+  spawnHitEffect(defenderPos, { text: `-${result.damage}`, cssClass: result.d6 === 6 ? "crit" : "" });
+}
+
 function handleHexClick(hex) {
   if (battleOver) return;
 
@@ -167,6 +175,7 @@ function playerAttack() {
   const result = resolveAttack(player, target, context);
   const { text, cssClass } = formatAttackResult(result);
   appendLog(text, cssClass);
+  triggerAttackFx(result, target.pos);
   playerActionsRemaining--;
 
   if (target.currentHP <= 0) {
@@ -247,6 +256,7 @@ function enemyPhase() {
       const result = resolveAttack(enemy, player, context);
       const { text, cssClass } = formatAttackResult(result);
       appendLog(text, cssClass);
+      triggerAttackFx(result, player.pos);
 
       if (player.currentHP <= 0) {
         appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");

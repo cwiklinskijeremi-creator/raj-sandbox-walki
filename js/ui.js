@@ -167,14 +167,41 @@ function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], depl
     });
     svg.appendChild(circle);
 
-    const label = svgEl("text", { x, y: y + 5, class: "token-label", "text-anchor": "middle" });
-    label.textContent = isPlayerToken ? "Ty" : combatant.name.slice(0, 2);
+    const label = svgEl("text", { x, y: y + 9, class: "token-label", "text-anchor": "middle" });
+    label.textContent = combatant.icon;
     svg.appendChild(label);
 
     const rangeLabel = svgEl("text", { x, y: y + HEX_SIZE * 0.5 + 14, class: "token-range", "text-anchor": "middle" });
     rangeLabel.textContent = `zas.${combatant.weapon.range}`;
     svg.appendChild(rangeLabel);
   }
+}
+
+function spawnHitEffect(hex, { text, cssClass = "" }) {
+  const svg = document.getElementById("battle-map");
+  const fxLayer = document.getElementById("fx-layer");
+  if (!svg || !fxLayer) return;
+
+  const { x, y } = axialToPixel(hex);
+  const screenPt = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
+  const layerRect = fxLayer.getBoundingClientRect();
+  const left = screenPt.x - layerRect.left;
+  const top = screenPt.y - layerRect.top;
+
+  const flash = document.createElement("div");
+  flash.className = `hit-flash ${cssClass}`.trim();
+  flash.style.left = `${left}px`;
+  flash.style.top = `${top}px`;
+  fxLayer.appendChild(flash);
+  flash.addEventListener("animationend", () => flash.remove());
+
+  const popup = document.createElement("div");
+  popup.className = `dmg-popup ${cssClass}`.trim();
+  popup.textContent = text;
+  popup.style.left = `${left}px`;
+  popup.style.top = `${top}px`;
+  fxLayer.appendChild(popup);
+  popup.addEventListener("animationend", () => popup.remove());
 }
 
 document.querySelectorAll(".collapse-toggle").forEach((btn) => {

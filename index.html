@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
@@ -15,7 +15,10 @@
     </section>
 
     <section class="map-panel">
-      <svg id="battle-map"></svg>
+      <div class="map-stage">
+        <svg id="battle-map"></svg>
+        <div id="fx-layer"></div>
+      </div>
       <div class="map-legend">
         <span class="legend-item"><span class="legend-swatch swatch-obstacle"></span>Przeszkoda (osłona)</span>
         <span class="legend-item"><span class="legend-swatch swatch-reachable"></span>Osiągalne ruchem</span>
@@ -43,11 +46,11 @@
     <div class="collapsible-content" id="combat-log"></div>
   </section>
 
-  <script src="js/dice.js?v=2"></script>
-  <script src="js/grid.js?v=2"></script>
-  <script src="js/characters.js?v=2"></script>
-  <script src="js/combat.js?v=2"></script>
-  <script src="js/ui.js?v=2"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/dice.js?v=3"></script>
+  <script src="js/grid.js?v=3"></script>
+  <script src="js/characters.js?v=3"></script>
+  <script src="js/combat.js?v=3"></script>
+  <script src="js/ui.js?v=3"></script>
+  <script src="js/main.js?v=3"></script>
 </body>
 </html>

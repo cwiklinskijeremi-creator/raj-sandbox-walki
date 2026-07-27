@@ -1,6 +1,6 @@
 function createCharacter({
   name, str, wyt, zre = 0, int = 0, cha = 0,
-  weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false,
+  weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓",
 }) {
   const maxHP = hp !== null ? hp : 50 + str * 5 + wyt * 5;
 
@@ -22,6 +22,7 @@ function createCharacter({
     weapons,
     weaponIndex: 0,
     weapon: weapons[0],
+    icon,
     pancerz,
     przebicie: totalPrzebicie,
     extraD20Rolls,
@@ -60,6 +61,7 @@ function createPlayer() {
     przebicie: 0.15,
     hp: 145,
     isPlayer: true,
+    icon: "🤺",
   });
 }
 
@@ -78,6 +80,7 @@ const ENEMY_TEMPLATES = [
     pancerz: 0.056,
     przebicie: 0,
     hp: 118,
+    icon: "🧟",
   }),
   () => createCharacter({
     name: "Łowca Gildii",
@@ -93,6 +96,7 @@ const ENEMY_TEMPLATES = [
     pancerz: 0.124,
     przebicie: 0.056,
     hp: 155,
+    icon: "🏹",
   }),
   () => createCharacter({
     name: "Aberracja Many",
@@ -108,6 +112,7 @@ const ENEMY_TEMPLATES = [
     pancerz: 0.03,
     przebicie: 0.05,
     hp: 100,
+    icon: "👹",
   }),
   () => createCharacter({
     name: "Adept Zakonu Światła",
@@ -123,6 +128,7 @@ const ENEMY_TEMPLATES = [
     pancerz: 0.08,
     przebicie: 0.1,
     hp: 95,
+    icon: "🧙",
   }),
 ];
 
