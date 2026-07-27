@@ -261,6 +261,16 @@ function spawnProjectile(fromHex, toHex, { icon, colorClass = "" }, onArrive) {
   setTimeout(settle, 700);
 }
 
+function triggerScreenShake(intensity = "normal") {
+  const stage = document.querySelector(".map-stage");
+  if (!stage) return;
+  const shakeClass = intensity === "crit" ? "shake-crit" : "shake-normal";
+  stage.classList.remove("shake-normal", "shake-crit");
+  void stage.offsetWidth;
+  stage.classList.add(shakeClass);
+  stage.addEventListener("animationend", () => stage.classList.remove(shakeClass), { once: true });
+}
+
 function hexToLayerXY(hex) {
   const svg = document.getElementById("battle-map");
   const fxLayer = document.getElementById("fx-layer");

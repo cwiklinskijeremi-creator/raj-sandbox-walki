@@ -22,6 +22,29 @@ h1 { text-align: center; }
   position: relative;
 }
 
+.map-stage.shake-normal {
+  animation: shake-normal 0.25s ease-in-out;
+}
+
+.map-stage.shake-crit {
+  animation: shake-crit 0.4s ease-in-out;
+}
+
+@keyframes shake-normal {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-4px, 2px); }
+  50% { transform: translate(4px, -2px); }
+  75% { transform: translate(-3px, -3px); }
+}
+
+@keyframes shake-crit {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(-8px, 4px) scale(1.02); }
+  40% { transform: translate(8px, -5px) scale(1.03); }
+  60% { transform: translate(-6px, -6px) scale(1.02); }
+  80% { transform: translate(5px, 5px) scale(1.01); }
+}
+
 #battle-map {
   width: 100%;
   height: 560px;

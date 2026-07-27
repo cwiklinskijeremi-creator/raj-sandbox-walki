@@ -63,7 +63,9 @@ function triggerAttackFx(result, defenderPos) {
     spawnHitEffect(defenderPos, { text: "Pudło!", cssClass: "miss" });
     return;
   }
-  spawnHitEffect(defenderPos, { text: `-${result.damage}`, cssClass: result.d6 === 6 ? "crit" : "" });
+  const isCrit = result.d6 === 6;
+  spawnHitEffect(defenderPos, { text: `-${result.damage}`, cssClass: isCrit ? "crit" : "" });
+  triggerScreenShake(isCrit ? "crit" : "normal");
 }
 
 function openPlayerActionMenu() {
@@ -77,6 +79,7 @@ function openPlayerActionMenu() {
         radialMenuOpen = false;
         if (playerActionsRemaining > 0 && player.weapons.length > 1) {
           switchWeapon(player);
+          playWeaponSwitchSound();
           playerActionsRemaining--;
           appendLog(`Zmieniasz broń na: ${player.weapon.name} (koszt: 1 akcja).`, "system");
           if (playerActionsRemaining <= 0) {
@@ -136,6 +139,7 @@ function handleHexClick(hex) {
     const reachable = reachableFor(player);
     if (reachable.some((h) => hexEquals(h, hex))) {
       player.pos = hex;
+      playMoveSound();
       playerActionsRemaining--;
       appendLog("Przemieszczasz się (koszt: 1 akcja).", "system");
       if (playerActionsRemaining <= 0) {
@@ -261,6 +265,7 @@ function playerAttack() {
   const { text, cssClass } = formatAttackResult(result);
   appendLog(text, cssClass);
   triggerAttackFx(result, target.pos);
+  if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
   playerActionsRemaining--;
 
   finishPlayerAction(target);
@@ -269,12 +274,14 @@ function playerAttack() {
 function finishPlayerAction(target) {
   if (target.currentHP <= 0) {
     appendLog(`${target.name} pada martwy.`, "system");
+    playDeathSound();
     const nextAlive = enemies.findIndex((e) => e.currentHP > 0);
     selectedTargetIndex = nextAlive === -1 ? null : nextAlive;
   }
 
   if (enemies.every((e) => e.currentHP <= 0)) {
     appendLog("Zwycięstwo! Wszyscy przeciwnicy pokonani.", "system");
+    playVictorySound();
     battleOver = true;
     render();
     return;
@@ -316,6 +323,7 @@ function castSkill() {
   const virtualAttacker = Object.assign({}, player, { weapon: skill });
 
   playerActionsRemaining--;
+  playSpellCastSound();
   render();
 
   spawnProjectile(player.pos, target.pos, { icon: skill.icon, colorClass: skill.colorClass }, () => {
@@ -323,6 +331,7 @@ function castSkill() {
     const { text, cssClass } = formatAttackResult(result);
     appendLog(`${skill.icon} ${skill.name}! ${text}`, cssClass);
     triggerAttackFx(result, target.pos);
+    if (result.hit) playSpellImpactSound(); else playMissSound();
     finishPlayerAction(target);
   });
 }
@@ -388,9 +397,11 @@ function enemyPhase() {
       const { text, cssClass } = formatAttackResult(result);
       appendLog(text, cssClass);
       triggerAttackFx(result, player.pos);
+      if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
 
       if (player.currentHP <= 0) {
         appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");
+        playDeathSound();
         battleOver = true;
       }
     }
@@ -412,5 +423,9 @@ document.getElementById("start-battle-btn").addEventListener("click", () => {
   render();
 });
 document.getElementById("reset-btn").addEventListener("click", startNewBattle);
+document.getElementById("mute-btn").addEventListener("click", (e) => {
+  const muted = toggleAudioMuted();
+  e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
+});
 
 startNewBattle();
