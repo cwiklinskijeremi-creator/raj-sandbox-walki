@@ -5,6 +5,8 @@ let battleOver = false;
 let playerActionsRemaining = 1;
 let phase = "deployment";
 let radialMenuOpen = false;
+let selectedClassName = null;
+let selectedSubclassName = null;
 
 function isOccupied(hex, excluding) {
   const all = [player, ...enemies];
@@ -30,6 +32,8 @@ function startNewBattle() {
   radialMenuOpen = false;
 
   player = createPlayer();
+  player.class = selectedClassName;
+  player.subclass = selectedSubclassName;
   enemies = createEnemies();
 
   const defaultPos = getStartPositions().player;
@@ -143,7 +147,24 @@ function handleHexClick(hex) {
   }
 }
 
+function selectClass(cls) {
+  selectedClassName = cls.name;
+  selectedSubclassName = null;
+  player.class = selectedClassName;
+  player.subclass = null;
+  render();
+}
+
+function selectSubclass(sub) {
+  selectedSubclassName = sub.name;
+  player.subclass = selectedSubclassName;
+  appendLog(`Wybrano klasę: ${selectedClassName} — ${selectedSubclassName}.`, "system");
+  render();
+}
+
 function render() {
+  renderClassPicker(selectedClassName, selectedSubclassName, selectClass, selectSubclass);
+
   const playerContainer = document.getElementById("player-fighter");
   playerContainer.innerHTML = "";
   renderFighter(playerContainer, player);

@@ -40,8 +40,13 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
     `;
   }
 
+  const classLine = fighter.isPlayer && fighter.class
+    ? `<div class="stats class-line">Klasa: ${fighter.class}${fighter.subclass ? " — " + fighter.subclass : " (wybierz specjalizację poniżej)"}</div>`
+    : "";
+
   el.innerHTML = `
     <strong>${fighter.name}</strong> ${dead ? "(martwy)" : ""}
+    ${classLine}
     <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${hpPct}%"></div>${hpBarPreview}</div>
     ${bodyHtml}
   `;
@@ -292,6 +297,59 @@ function showRadialMenu(hex, options) {
   });
 
   fxLayer.appendChild(menu);
+}
+
+function renderClassPicker(selectedClassName, selectedSubclassName, onSelectClass, onSelectSubclass) {
+  const wheel = document.getElementById("class-wheel");
+  const radius = 95;
+  const center = radius + 32;
+  wheel.style.width = `${center * 2}px`;
+  wheel.style.height = `${center * 2}px`;
+  wheel.innerHTML = "";
+
+  const angleStep = (2 * Math.PI) / CLASS_DATA.length;
+  const startAngle = -Math.PI / 2;
+
+  CLASS_DATA.forEach((cls, i) => {
+    const angle = startAngle + i * angleStep;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `class-wheel-btn${cls.name === selectedClassName ? " selected" : ""}`;
+    btn.textContent = cls.icon;
+    btn.title = cls.name;
+    btn.style.left = `${center + radius * Math.cos(angle)}px`;
+    btn.style.top = `${center + radius * Math.sin(angle)}px`;
+    btn.addEventListener("click", () => onSelectClass(cls));
+    wheel.appendChild(btn);
+  });
+
+  const centerLabel = document.createElement("div");
+  centerLabel.className = "class-wheel-center";
+  centerLabel.style.left = `${center}px`;
+  centerLabel.style.top = `${center}px`;
+  centerLabel.textContent = selectedClassName || "Klasa";
+  wheel.appendChild(centerLabel);
+
+  const subRow = document.getElementById("subclass-row");
+  subRow.innerHTML = "";
+  const selectedClass = CLASS_DATA.find((c) => c.name === selectedClassName);
+  if (selectedClass) {
+    selectedClass.subclasses.forEach((sub) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `subclass-btn${sub.name === selectedSubclassName ? " selected" : ""}`;
+      btn.textContent = `${sub.icon} ${sub.name}`;
+      btn.addEventListener("click", () => onSelectSubclass(sub));
+      subRow.appendChild(btn);
+    });
+  }
+
+  const info = document.getElementById("class-selection-info");
+  info.textContent = !selectedClassName
+    ? "Wybierz klasę postaci."
+    : !selectedSubclassName
+      ? `Wybrana klasa: ${selectedClassName} — wybierz specjalizację poniżej.`
+      : `Postać: ${selectedClassName} — ${selectedSubclassName}`;
 }
 
 document.querySelectorAll(".collapse-toggle").forEach((btn) => {
