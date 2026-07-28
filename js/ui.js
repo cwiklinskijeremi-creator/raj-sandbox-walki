@@ -396,6 +396,21 @@ function renderClassPicker(selectedClassName, selectedSubclassName, onSelectClas
       : `Postać: ${selectedClassName} — ${selectedSubclassName}`;
 }
 
+function renderMainMenuState(activeRunData) {
+  const resumeBtn = document.getElementById("resume-btn");
+  const infoEl = document.getElementById("main-menu-save-info");
+  if (!activeRunData) {
+    resumeBtn.disabled = true;
+    infoEl.textContent = "Brak zapisanej gry.";
+    return;
+  }
+  resumeBtn.disabled = false;
+  const loc = LOCATIONS.find((l) => l.key === activeRunData.locationKey);
+  const locText = loc ? `${loc.icon} ${loc.name}` : "nieznana lokacja";
+  const when = new Date(activeRunData.savedAt).toLocaleString("pl-PL");
+  infoEl.textContent = `Ostatni zapis: ${locText} — ${when}`;
+}
+
 function renderLocationPicker(locations, currentLocation, onSelect) {
   const grid = document.getElementById("location-grid");
   grid.innerHTML = "";

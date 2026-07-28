@@ -3,13 +3,14 @@ let enemies;
 let selectedTargetIndex = null;
 let battleOver = false;
 let playerActionsRemaining = 1;
-let phase = "location-select";
+let phase = "main-menu";
 let radialMenuOpen = false;
 let selectedClassName = null;
 let selectedSubclassName = null;
 let currentLocation = null;
 
 const RESOURCES_STORAGE_KEY = "raj-sandbox-resources";
+const ACTIVE_RUN_KEY = "raj-sandbox-active-run";
 
 function loadResources() {
   try {
@@ -35,6 +36,62 @@ function awardLocationResources() {
   appendLog(`Zdobywasz ${amount} × ${icon} ${name}.`, "system");
 }
 
+function saveActiveRun() {
+  const data = {
+    phase,
+    player,
+    enemies,
+    selectedTargetIndex,
+    battleOver,
+    playerActionsRemaining,
+    selectedClassName,
+    selectedSubclassName,
+    locationKey: currentLocation ? currentLocation.key : null,
+    obstacles: OBSTACLES,
+    obstacleTypes: [...OBSTACLE_TYPES.entries()],
+    savedAt: Date.now(),
+  };
+  localStorage.setItem(ACTIVE_RUN_KEY, JSON.stringify(data));
+}
+
+function loadActiveRunData() {
+  try {
+    return JSON.parse(localStorage.getItem(ACTIVE_RUN_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function clearActiveRun() {
+  localStorage.removeItem(ACTIVE_RUN_KEY);
+}
+
+function applyActiveRunData(data) {
+  player = data.player;
+  enemies = data.enemies;
+  selectedTargetIndex = data.selectedTargetIndex;
+  battleOver = data.battleOver;
+  playerActionsRemaining = data.playerActionsRemaining;
+  selectedClassName = data.selectedClassName;
+  selectedSubclassName = data.selectedSubclassName;
+  currentLocation = LOCATIONS.find((l) => l.key === data.locationKey) || null;
+  restoreObstacles(data.obstacles, data.obstacleTypes);
+  phase = data.phase;
+
+  resetTokenLayer();
+  closeRadialMenu();
+  radialMenuOpen = false;
+  clearLog();
+  appendLog("Wznowiono grę.", "system");
+  render();
+}
+
+function resumeGame() {
+  const data = loadActiveRunData();
+  if (!data) return;
+  applyActiveRunData(data);
+}
+
 function selectLocation(location) {
   currentLocation = location;
   appendLog(`${location.icon} ${location.name}: ${location.description}`, "system");
@@ -46,6 +103,78 @@ function backToLocationSelect() {
   closeRadialMenu();
   radialMenuOpen = false;
   render();
+}
+
+function goToMainMenu() {
+  phase = "main-menu";
+  closeRadialMenu();
+  radialMenuOpen = false;
+  render();
+}
+
+function startNewGame() {
+  clearActiveRun();
+  selectedClassName = null;
+  selectedSubclassName = null;
+  currentLocation = null;
+  phase = "location-select";
+  render();
+}
+
+function exitGame() {
+  const screen = document.getElementById("main-menu-screen");
+  screen.innerHTML = "<h2>Raj</h2><p class=\"main-menu-subtitle\">Dziękujemy za grę! Możesz bezpiecznie zamknąć tę kartę przeglądarki.</p>";
+  window.close();
+}
+
+function openSettingsModal() {
+  document.getElementById("settings-overlay").classList.remove("hidden");
+}
+
+function closeSettingsModal() {
+  document.getElementById("settings-overlay").classList.add("hidden");
+}
+
+function clearAllProgress() {
+  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby i zapisana gra zostaną utracone bezpowrotnie.")) return;
+  clearActiveRun();
+  resources = {};
+  saveResources();
+  selectedClassName = null;
+  selectedSubclassName = null;
+  currentLocation = null;
+  closeSettingsModal();
+  phase = "main-menu";
+  render();
+}
+
+function openLoadGameModal() {
+  const data = loadActiveRunData();
+  const summaryEl = document.getElementById("load-game-summary");
+  const confirmBtn = document.getElementById("load-game-confirm-btn");
+  if (!data) {
+    summaryEl.textContent = "Brak zapisanej gry.";
+    confirmBtn.classList.add("hidden");
+  } else {
+    const loc = LOCATIONS.find((l) => l.key === data.locationKey);
+    const locText = loc ? `${loc.icon} ${loc.name}` : "nieznana lokacja";
+    const classText = data.selectedClassName
+      ? `${data.selectedClassName}${data.selectedSubclassName ? " — " + data.selectedSubclassName : ""}`
+      : "brak wybranej klasy";
+    const when = new Date(data.savedAt).toLocaleString("pl-PL");
+    summaryEl.textContent = `${locText} • ${classText} • zapisano: ${when}`;
+    confirmBtn.classList.remove("hidden");
+  }
+  document.getElementById("load-game-overlay").classList.remove("hidden");
+}
+
+function closeLoadGameModal() {
+  document.getElementById("load-game-overlay").classList.add("hidden");
+}
+
+function confirmLoadGame() {
+  closeLoadGameModal();
+  resumeGame();
 }
 
 function isOccupied(hex, excluding) {
@@ -236,8 +365,18 @@ function selectSubclass(sub) {
 function render() {
   renderResourceBar(resources);
 
+  const mainMenuScreen = document.getElementById("main-menu-screen");
   const locationScreen = document.getElementById("location-screen");
   const gameScreen = document.getElementById("game-screen");
+
+  if (phase === "main-menu") {
+    mainMenuScreen.classList.remove("hidden");
+    locationScreen.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    renderMainMenuState(loadActiveRunData());
+    return;
+  }
+  mainMenuScreen.classList.add("hidden");
 
   if (phase === "location-select") {
     locationScreen.classList.remove("hidden");
@@ -308,6 +447,8 @@ function render() {
     ? `Atakuj wybrany cel (akcje: ${playerActionsRemaining}/${1 + player.extraActions})`
     : `Poza zasięgiem (zasięg ${player.weapon.range})`;
   endTurnBtn.disabled = battleOver;
+
+  saveActiveRun();
 }
 
 function playerAttack() {
@@ -516,7 +657,30 @@ document.getElementById("reset-btn").addEventListener("click", startNewBattle);
 document.getElementById("mute-btn").addEventListener("click", (e) => {
   const muted = toggleAudioMuted();
   e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
+  document.getElementById("settings-mute-btn").textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
 });
 document.getElementById("change-location-btn").addEventListener("click", backToLocationSelect);
+document.getElementById("main-menu-btn").addEventListener("click", goToMainMenu);
+
+document.getElementById("new-game-btn").addEventListener("click", startNewGame);
+document.getElementById("resume-btn").addEventListener("click", resumeGame);
+document.getElementById("load-game-btn").addEventListener("click", openLoadGameModal);
+document.getElementById("load-game-close").addEventListener("click", closeLoadGameModal);
+document.getElementById("load-game-confirm-btn").addEventListener("click", confirmLoadGame);
+document.getElementById("load-game-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "load-game-overlay") closeLoadGameModal();
+});
+document.getElementById("settings-btn").addEventListener("click", openSettingsModal);
+document.getElementById("settings-close").addEventListener("click", closeSettingsModal);
+document.getElementById("settings-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "settings-overlay") closeSettingsModal();
+});
+document.getElementById("settings-mute-btn").addEventListener("click", (e) => {
+  const muted = toggleAudioMuted();
+  e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
+  document.getElementById("mute-btn").textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
+});
+document.getElementById("clear-progress-btn").addEventListener("click", clearAllProgress);
+document.getElementById("exit-game-btn").addEventListener("click", exitGame);
 
 render();

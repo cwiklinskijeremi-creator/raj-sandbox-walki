@@ -255,6 +255,12 @@ function regenerateObstacles(biasType = null) {
   OBSTACLE_TYPES = assignObstacleTypes(OBSTACLES, biasType);
 }
 
+function restoreObstacles(obstacles, typeEntries) {
+  OBSTACLES = obstacles;
+  OBSTACLE_KEYS = new Set(OBSTACLES.map(hexKey));
+  OBSTACLE_TYPES = new Map(typeEntries);
+}
+
 function isObstacle(hex) {
   return OBSTACLE_KEYS.has(hexKey(hex));
 }

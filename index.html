@@ -3,14 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
 
   <div class="resource-bar" id="resource-bar"></div>
 
-  <section class="location-screen" id="location-screen">
+  <section class="main-menu-screen" id="main-menu-screen">
+    <h2>Raj</h2>
+    <p class="main-menu-subtitle">Sandbox Walki — K6 + K20 + Siatka</p>
+    <div class="main-menu-buttons">
+      <button id="new-game-btn" type="button">Nowa gra</button>
+      <button id="resume-btn" type="button">Wznów</button>
+      <button id="load-game-btn" type="button">Wczytaj grę</button>
+      <button id="settings-btn" type="button">Ustawienia</button>
+      <button id="exit-game-btn" type="button">Wyjdź z gry</button>
+    </div>
+    <p class="main-menu-save-info" id="main-menu-save-info"></p>
+  </section>
+
+  <section class="location-screen hidden" id="location-screen">
     <h2>Wybierz cel wyprawy</h2>
     <div class="location-grid" id="location-grid"></div>
   </section>
@@ -50,6 +63,7 @@
       <button id="end-turn-btn">Zakończ turę</button>
       <button id="reset-btn">Nowa walka</button>
       <button id="change-location-btn" type="button">🗺️ Zmień lokację</button>
+      <button id="main-menu-btn" type="button">🏠 Menu główne</button>
       <button id="mute-btn" type="button">🔊 Dźwięk</button>
       <button id="codex-btn" type="button">📜 Kodeks świata</button>
     </div>
@@ -77,15 +91,47 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=11"></script>
-  <script src="js/dice.js?v=11"></script>
-  <script src="js/grid.js?v=11"></script>
-  <script src="js/classes.js?v=11"></script>
-  <script src="js/lore.js?v=11"></script>
-  <script src="js/locations.js?v=11"></script>
-  <script src="js/characters.js?v=11"></script>
-  <script src="js/combat.js?v=11"></script>
-  <script src="js/ui.js?v=11"></script>
-  <script src="js/main.js?v=11"></script>
+  <div class="codex-overlay hidden" id="settings-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs"><span class="modal-title">Ustawienia</span></div>
+        <button class="codex-close" id="settings-close" type="button">✕</button>
+      </div>
+      <div class="codex-body">
+        <div class="settings-row">
+          <span>Dźwięk</span>
+          <button id="settings-mute-btn" type="button">🔊 Dźwięk</button>
+        </div>
+        <div class="settings-row">
+          <span>Cały postęp (zasoby, zapisana gra)</span>
+          <button id="clear-progress-btn" type="button" class="danger-btn">Wyczyść cały postęp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="codex-overlay hidden" id="load-game-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs"><span class="modal-title">Wczytaj grę</span></div>
+        <button class="codex-close" id="load-game-close" type="button">✕</button>
+      </div>
+      <div class="codex-body">
+        <p id="load-game-summary"></p>
+        <button id="load-game-confirm-btn" type="button">Wczytaj</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/audio.js?v=12"></script>
+  <script src="js/dice.js?v=12"></script>
+  <script src="js/grid.js?v=12"></script>
+  <script src="js/classes.js?v=12"></script>
+  <script src="js/lore.js?v=12"></script>
+  <script src="js/locations.js?v=12"></script>
+  <script src="js/characters.js?v=12"></script>
+  <script src="js/combat.js?v=12"></script>
+  <script src="js/ui.js?v=12"></script>
+  <script src="js/main.js?v=12"></script>
 </body>
 </html>
