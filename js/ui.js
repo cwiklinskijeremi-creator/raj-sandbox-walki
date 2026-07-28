@@ -22,31 +22,17 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
       </div>
     `;
   } else {
-    const extraStatsLine = (fighter.zre || fighter.int || fighter.cha)
-      ? `<div class="stats">ZRE: ${fighter.zre} (+${fighter.extraD20Rolls} rzut, +${fighter.extraActions} akcja, ruch ${fighter.moveRange}) &nbsp;|&nbsp;
-          INT: ${fighter.int} (K6+${fighter.d6Bonus}, K20+${fighter.d20Bonus}) &nbsp;|&nbsp;
-          CHA: ${fighter.cha} (wykładnik ^${fighter.charismaExponent})</div>`
-      : `<div class="stats">Ruch: ${fighter.moveRange}</div>`;
-
     bodyHtml = `
       <div class="stats">
         HP: ${fighter.currentHP}/${fighter.maxHP} &nbsp;|&nbsp;
-        STR: ${fighter.str} &nbsp; WYT: ${fighter.wyt} &nbsp;|&nbsp;
-        Broń: ${fighter.weapons.map((w, i) => i === fighter.weaponIndex ? `<strong>${w.name} (${w.minDmg}-${w.maxDmg}, zas.${w.range})</strong>` : `${w.name} (${w.minDmg}-${w.maxDmg}, zas.${w.range})`).join(" / ")}
-        ${fighter.isPlayer ? "<em>(kliknij swój token, żeby otworzyć menu)</em>" : ""} &nbsp;|&nbsp;
-        Pancerz: ${(fighter.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(fighter.przebicie * 100).toFixed(0)}%
+        Broń: <strong>${fighter.weapon.name} (${fighter.weapon.minDmg}-${fighter.weapon.maxDmg}, zas.${fighter.weapon.range})</strong>
+        ${fighter.isPlayer ? "<em>(kliknij swój token, żeby otworzyć menu)</em>" : ""}
       </div>
-      ${extraStatsLine}
     `;
   }
 
-  const classLine = fighter.isPlayer && fighter.class
-    ? `<div class="stats class-line">Klasa: ${fighter.class}${fighter.subclass ? " — " + fighter.subclass : ""}${fighter.gender ? " &nbsp;|&nbsp; Płeć: " + fighter.gender : ""}</div>`
-    : "";
-
   el.innerHTML = `
     <strong>${fighter.name}</strong> ${dead ? "(martwy)" : ""}
-    ${classLine}
     <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${hpPct}%"></div>${hpBarPreview}</div>
     ${bodyHtml}
   `;
@@ -677,6 +663,7 @@ const CODEX_TABS = [
   { key: "castes", label: "Kasty i frakcje" },
   { key: "hero", label: "Twoja historia" },
   { key: "classes", label: "Klasy" },
+  { key: "bestiary", label: "Bestiariusz" },
 ];
 let codexActiveTab = "world";
 
@@ -711,6 +698,26 @@ function renderCodexTabBody(tabKey) {
         `).join("")}
       </div>
     `).join("");
+  }
+  if (tabKey === "bestiary") {
+    return LOCATIONS.map((loc) => `
+      <div class="codex-entry">
+        <h4>${loc.icon} ${loc.name}</h4>
+        ${loc.enemyKeys.map((key) => {
+          const e = ENEMY_TEMPLATES[key]();
+          return `
+            <div class="codex-subclass">
+              <div class="codex-subclass-title">${e.icon} ${e.name}</div>
+              <div class="codex-subclass-gear">
+                HP: ${e.maxHP} &nbsp;|&nbsp; STR: ${e.str} &nbsp; WYT: ${e.wyt} &nbsp; ZRE: ${e.zre} &nbsp; INT: ${e.int} &nbsp; CHA: ${e.cha}
+                &nbsp;|&nbsp; Pancerz: ${(e.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(e.przebicie * 100).toFixed(0)}%
+              </div>
+              <div class="codex-subclass-gear">Broń: ${e.weapons.map((w) => `${w.name} (${w.minDmg}-${w.maxDmg}, zas.${w.range})`).join(", ")}</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `).join("") + `<p class="creation-hint">Staty przeciwników rosną wraz z Twoim poziomem — powyżej pokazane są wartości bazowe.</p>`;
   }
   return "";
 }

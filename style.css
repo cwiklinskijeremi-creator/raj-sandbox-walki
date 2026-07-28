@@ -248,7 +248,7 @@ h1 { text-align: center; }
 }
 
 #enemies-list {
-  height: 460px;
+  height: 470px;
   overflow-y: auto;
 }
 
@@ -510,11 +510,6 @@ button:disabled {
   border-color: #c9a24b;
   background: #3a3040;
   box-shadow: 0 0 8px rgba(201, 162, 75, 0.6);
-}
-
-.class-line {
-  color: #f0be3c;
-  font-weight: 600;
 }
 
 .character-creation-screen {
