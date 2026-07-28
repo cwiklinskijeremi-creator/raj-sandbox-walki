@@ -388,6 +388,7 @@ function scaleEnemyForLevel(enemy, level) {
   const statMult = 1 + tier * 0.12;
   const hpMult = 1 + tier * 0.15;
   const defenseMult = 1 + tier * 0.08;
+  const mindMult = 1 + tier * 0.06;
 
   enemy.str = Math.round(enemy.str * statMult);
   enemy.wyt = Math.round(enemy.wyt * statMult);
@@ -395,6 +396,21 @@ function scaleEnemyForLevel(enemy, level) {
   enemy.currentHP = enemy.maxHP;
   enemy.pancerz = Math.min(0.6, enemy.pancerz * defenseMult);
   enemy.przebicie = Math.min(0.6, enemy.przebicie * defenseMult);
+
+  // ZRE/INT/CHA scale slower than STR/WYT (enemies shouldn't snowball extra
+  // actions/rerolls too), but they must scale at all — otherwise the
+  // player's own charismaExponent growth from leveling races ahead
+  // unopposed and the game gets easier with level instead of harder
+  // (confirmed via battle simulation across levels 1-25).
+  enemy.zre = Math.round(enemy.zre * mindMult);
+  enemy.int = Math.round(enemy.int * mindMult);
+  enemy.cha = Math.round(enemy.cha * mindMult);
+  enemy.extraD20Rolls = Math.floor(enemy.zre / 10);
+  enemy.extraActions = Math.floor(enemy.zre / 5);
+  enemy.moveRange = 2 + Math.floor(enemy.zre / 8);
+  enemy.d6Bonus = Math.floor(enemy.int / 10);
+  enemy.d20Bonus = Math.floor(enemy.int / 5);
+  enemy.charismaExponent = 1 + Math.floor(enemy.cha / 10);
 
   return enemy;
 }
