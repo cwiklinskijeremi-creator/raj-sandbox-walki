@@ -57,6 +57,29 @@ function awardLocationResources() {
   appendLog(`Zdobywasz ${amount} × ${icon} ${name}.`, "system");
 }
 
+const BESTIARY_STORAGE_KEY = "raj-sandbox-bestiary";
+
+function loadDiscoveredEnemies() {
+  try {
+    return JSON.parse(localStorage.getItem(BESTIARY_STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDiscoveredEnemies() {
+  localStorage.setItem(BESTIARY_STORAGE_KEY, JSON.stringify(discoveredEnemies));
+}
+
+let discoveredEnemies = loadDiscoveredEnemies();
+
+function discoverEnemy(templateKey) {
+  if (!templateKey || discoveredEnemies.includes(templateKey)) return;
+  discoveredEnemies.push(templateKey);
+  saveDiscoveredEnemies();
+  appendLog("Bestiariusz zaktualizowany — odkryto nowego przeciwnika.", "system");
+}
+
 const EQUIPMENT_STORAGE_KEY = "raj-sandbox-equipment";
 
 function loadEquipmentState() {
@@ -336,13 +359,15 @@ function closeSettingsModal() {
 }
 
 function clearAllProgress() {
-  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek i zapisana gra zostaną utracone bezpowrotnie.")) return;
+  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek, bestiariusz i zapisana gra zostaną utracone bezpowrotnie.")) return;
   clearActiveRun();
   resources = {};
   saveResources();
   inventory = [];
   equipped = { zbroja: null, amulet: null };
   saveEquipmentState();
+  discoveredEnemies = [];
+  saveDiscoveredEnemies();
   selectedClassName = null;
   selectedSubclassName = null;
   currentLocation = null;
@@ -688,6 +713,7 @@ function finishPlayerAction(target) {
   if (target.currentHP <= 0) {
     appendLog(`${target.name} pada martwy.`, "system");
     playDeathSound();
+    discoverEnemy(target.templateKey);
     const nextAlive = enemies.findIndex((e) => e.currentHP > 0);
     selectedTargetIndex = nextAlive === -1 ? null : nextAlive;
   }

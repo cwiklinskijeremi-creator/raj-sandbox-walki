@@ -766,6 +766,11 @@ button:disabled {
   color: #c9a24b;
 }
 
+.codex-subclass-title.codex-undiscovered {
+  color: #6a6470;
+  font-style: italic;
+}
+
 .codex-subclass-gear {
   font-size: 0.85rem;
   color: #a89c8f;

@@ -704,6 +704,14 @@ function renderCodexTabBody(tabKey) {
       <div class="codex-entry">
         <h4>${loc.icon} ${loc.name}</h4>
         ${loc.enemyKeys.map((key) => {
+          if (!discoveredEnemies.includes(key)) {
+            return `
+              <div class="codex-subclass">
+                <div class="codex-subclass-title codex-undiscovered">❓ Nieznany przeciwnik</div>
+                <div class="codex-subclass-gear">Pokonaj tego przeciwnika w walce, aby odkryć jego dane.</div>
+              </div>
+            `;
+          }
           const e = ENEMY_TEMPLATES[key]();
           return `
             <div class="codex-subclass">
@@ -717,7 +725,7 @@ function renderCodexTabBody(tabKey) {
           `;
         }).join("")}
       </div>
-    `).join("") + `<p class="creation-hint">Staty przeciwników rosną wraz z Twoim poziomem — powyżej pokazane są wartości bazowe.</p>`;
+    `).join("") + `<p class="creation-hint">Staty przeciwników rosną wraz z Twoim poziomem — powyżej pokazane są wartości bazowe. Pokonani przeciwnicy zostają odkryci na stałe.</p>`;
   }
   return "";
 }

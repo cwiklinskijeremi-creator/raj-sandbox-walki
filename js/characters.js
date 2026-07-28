@@ -362,7 +362,9 @@ function createEnemies(location = null) {
   const chosen = [];
   for (let i = 0; i < count; i++) {
     const key = keys[Math.floor(Math.random() * keys.length)];
-    chosen.push(ENEMY_TEMPLATES[key]());
+    const enemy = ENEMY_TEMPLATES[key]();
+    enemy.templateKey = key;
+    chosen.push(enemy);
   }
 
   const nameCounts = {};
