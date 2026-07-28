@@ -344,7 +344,7 @@ function showRadialMenu(hex, options) {
 }
 
 function renderCharacterCreation(state, handlers) {
-  const { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats } = state;
+  const { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats, statPointsAvailable } = state;
 
   const nameInput = document.getElementById("creation-name-input");
   if (document.activeElement !== nameInput) nameInput.value = playerName;
@@ -411,37 +411,42 @@ function renderCharacterCreation(state, handlers) {
   }
 
   const statsEl = document.getElementById("creation-stats");
-  const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
-  const remaining = 10 - spent;
   if (!selectedSub) {
-    statsEl.innerHTML = `<p class="creation-hint">Wybierz specjalizację, aby rozdzielić 10 punktów statystyk.</p>`;
+    statsEl.innerHTML = `<p class="creation-hint">Wybierz specjalizację, aby rozdzielić punkty statystyk.</p>`;
   } else {
-    const statMeta = [
-      { key: "str", label: "STR" },
-      { key: "wyt", label: "WYT" },
-      { key: "zre", label: "ZRE" },
-      { key: "int", label: "INT" },
-      { key: "cha", label: "CHA" },
-    ];
-    statsEl.innerHTML = `<div class="creation-points-remaining">Pozostałe punkty: <strong>${remaining}</strong>/10</div>` +
-      statMeta.map(({ key, label }) => `
-        <div class="stat-row">
-          <span class="stat-row-label">${label}</span>
-          <span class="stat-row-value">${selectedSub[key] + bonusStats[key]}</span>
-          <button type="button" class="stat-btn stat-minus" data-stat="${key}" ${bonusStats[key] <= 0 ? "disabled" : ""}>−</button>
-          <button type="button" class="stat-btn stat-plus" data-stat="${key}" ${remaining <= 0 ? "disabled" : ""}>+</button>
-        </div>
-      `).join("");
-    statsEl.querySelectorAll(".stat-minus").forEach((btn) => {
-      btn.addEventListener("click", () => handlers.onAdjustStat(btn.dataset.stat, -1));
-    });
-    statsEl.querySelectorAll(".stat-plus").forEach((btn) => {
-      btn.addEventListener("click", () => handlers.onAdjustStat(btn.dataset.stat, 1));
-    });
+    renderStatAllocatorInto(statsEl, selectedSub, bonusStats, statPointsAvailable, handlers.onAdjustStat);
   }
 
   const confirmBtn = document.getElementById("creation-confirm-btn");
   confirmBtn.disabled = !(playerName.trim().length > 0 && !!playerGender && !!selectedSub);
+}
+
+const STAT_META = [
+  { key: "str", label: "STR" },
+  { key: "wyt", label: "WYT" },
+  { key: "zre", label: "ZRE" },
+  { key: "int", label: "INT" },
+  { key: "cha", label: "CHA" },
+];
+
+function renderStatAllocatorInto(container, baseStats, bonusStats, totalPoints, onAdjust) {
+  const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+  const remaining = totalPoints - spent;
+  container.innerHTML = `<div class="creation-points-remaining">Pozostałe punkty: <strong>${remaining}</strong>/${totalPoints}</div>` +
+    STAT_META.map(({ key, label }) => `
+      <div class="stat-row">
+        <span class="stat-row-label">${label}</span>
+        <span class="stat-row-value">${baseStats[key] + bonusStats[key]}</span>
+        <button type="button" class="stat-btn stat-minus" data-stat="${key}" ${bonusStats[key] <= 0 ? "disabled" : ""}>−</button>
+        <button type="button" class="stat-btn stat-plus" data-stat="${key}" ${remaining <= 0 ? "disabled" : ""}>+</button>
+      </div>
+    `).join("");
+  container.querySelectorAll(".stat-minus").forEach((btn) => {
+    btn.addEventListener("click", () => onAdjust(btn.dataset.stat, -1));
+  });
+  container.querySelectorAll(".stat-plus").forEach((btn) => {
+    btn.addEventListener("click", () => onAdjust(btn.dataset.stat, 1));
+  });
 }
 
 function renderMainMenuState(activeRunData) {
@@ -459,7 +464,7 @@ function renderMainMenuState(activeRunData) {
   infoEl.textContent = `Ostatni zapis: ${locText} — ${when}`;
 }
 
-function renderCamp(player) {
+function renderCamp(player, level, xp, xpToNext) {
   const card = document.getElementById("camp-character-card");
   if (!player) {
     card.innerHTML = "";
@@ -469,6 +474,7 @@ function renderCamp(player) {
     <div class="camp-character-icon">${player.icon}</div>
     <div class="camp-character-name">${player.name}</div>
     <div class="camp-character-class">${player.class || ""}${player.subclass ? " — " + player.subclass : ""}</div>
+    <div class="camp-character-level">Poziom ${level} &nbsp;|&nbsp; ${xp}/${xpToNext} PD</div>
     <div class="camp-character-meta">
       ${player.gender ? "Płeć: " + player.gender + " &nbsp;|&nbsp; " : ""}HP: ${player.maxHP}
       &nbsp;|&nbsp; STR ${player.str} &nbsp; WYT ${player.wyt} &nbsp; ZRE ${player.zre} &nbsp; INT ${player.int} &nbsp; CHA ${player.cha}
@@ -486,16 +492,21 @@ function formatItemBonus(item) {
   return parts.join(", ");
 }
 
-function renderCharacterSheet(player, inventory, equipped, resources, handlers) {
+function renderCharacterSheet(player, inventory, equipped, resources, progress, handlers) {
   const body = document.getElementById("character-sheet-body");
   if (!player) {
     body.innerHTML = `<p class="creation-hint">Brak postaci.</p>`;
     return;
   }
 
+  const { level, xp, xpToNext, bonusStats, statPointsAvailable } = progress;
+  const spentPoints = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+  const unspentPoints = statPointsAvailable - spentPoints;
+
   const statsHtml = `
     <div class="sheet-section">
       <h4>${player.icon} ${player.name}</h4>
+      <div class="sheet-level-line">Poziom ${level} &nbsp;|&nbsp; ${xp}/${xpToNext} PD</div>
       <div class="sheet-stats-grid">
         <div>Klasa: ${player.class || "—"}${player.subclass ? " — " + player.subclass : ""}</div>
         <div>Płeć: ${player.gender || "—"}</div>
@@ -511,6 +522,22 @@ function renderCharacterSheet(player, inventory, equipped, resources, handlers) 
       </div>
     </div>
   `;
+
+  const baseStats = {
+    str: player.str - bonusStats.str,
+    wyt: player.wyt - bonusStats.wyt,
+    zre: player.zre - bonusStats.zre,
+    int: player.int - bonusStats.int,
+    cha: player.cha - bonusStats.cha,
+  };
+  const levelUpHtml = unspentPoints > 0
+    ? `
+      <div class="sheet-section">
+        <h4>Niewydane punkty statystyk</h4>
+        <div class="creation-stats" id="sheet-stat-allocator"></div>
+      </div>
+    `
+    : "";
 
   const slotsHtml = `
     <div class="sheet-section">
@@ -583,7 +610,11 @@ function renderCharacterSheet(player, inventory, equipped, resources, handlers) 
     </div>
   `;
 
-  body.innerHTML = statsHtml + slotsHtml + inventoryHtml + shopHtml;
+  body.innerHTML = statsHtml + levelUpHtml + slotsHtml + inventoryHtml + shopHtml;
+
+  if (unspentPoints > 0) {
+    renderStatAllocatorInto(document.getElementById("sheet-stat-allocator"), baseStats, bonusStats, statPointsAvailable, handlers.onAdjustStat);
+  }
 
   body.querySelectorAll(".unequip-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onUnequip(btn.dataset.slot));

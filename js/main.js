@@ -11,6 +11,24 @@ let currentLocation = null;
 let playerName = "";
 let playerGender = null;
 let bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+let level = 1;
+let xp = 0;
+let statPointsAvailable = 10;
+
+function xpToNextLevel(lvl) {
+  return lvl * 50;
+}
+
+function awardXp(amount) {
+  xp += amount;
+  appendLog(`Zdobywasz ${amount} PD.`, "system");
+  while (xp >= xpToNextLevel(level)) {
+    xp -= xpToNextLevel(level);
+    level++;
+    statPointsAvailable += 3;
+    appendLog(`Awans! Osiągasz poziom ${level} (+3 punkty statystyk do rozdania w obozie).`, "system");
+  }
+}
 
 const RESOURCES_STORAGE_KEY = "raj-sandbox-resources";
 const ACTIVE_RUN_KEY = "raj-sandbox-active-run";
@@ -101,7 +119,11 @@ function canAffordItem(item) {
 function refreshCharacterSheetIfOpen() {
   const overlay = document.getElementById("character-sheet-overlay");
   if (overlay.classList.contains("hidden")) return;
-  renderCharacterSheet(player, inventory, equipped, resources, { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot });
+  renderCharacterSheet(
+    player, inventory, equipped, resources,
+    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable },
+    { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat },
+  );
 }
 
 function buyEquipment(itemId) {
@@ -151,6 +173,9 @@ function saveActiveRun() {
     playerName,
     playerGender,
     bonusStats,
+    level,
+    xp,
+    statPointsAvailable,
     locationKey: currentLocation ? currentLocation.key : null,
     savedAt: Date.now(),
   };
@@ -184,6 +209,9 @@ function applyActiveRunData(data) {
   playerName = data.playerName || "";
   playerGender = data.playerGender || null;
   bonusStats = data.bonusStats || { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  level = data.level || 1;
+  xp = data.xp || 0;
+  statPointsAvailable = data.statPointsAvailable || 10;
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey) || null;
   phase = data.phase;
 
@@ -245,6 +273,9 @@ function startNewGame() {
   playerName = "";
   playerGender = null;
   bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  level = 1;
+  xp = 0;
+  statPointsAvailable = 10;
   phase = "character-creation";
   render();
 }
@@ -266,9 +297,11 @@ function adjustBonusStat(key, delta) {
   const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
   const next = bonusStats[key] + delta;
   if (next < 0) return;
-  if (delta > 0 && spent >= 10) return;
+  if (delta > 0 && spent >= statPointsAvailable) return;
   bonusStats[key] = next;
+  if (player && phase === "camp") player = buildPlayerCharacter();
   render();
+  refreshCharacterSheetIfOpen();
 }
 
 function setPlayerName(value) {
@@ -303,16 +336,22 @@ function closeSettingsModal() {
 }
 
 function clearAllProgress() {
-  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby i zapisana gra zostaną utracone bezpowrotnie.")) return;
+  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek i zapisana gra zostaną utracone bezpowrotnie.")) return;
   clearActiveRun();
   resources = {};
   saveResources();
+  inventory = [];
+  equipped = { zbroja: null, amulet: null };
+  saveEquipmentState();
   selectedClassName = null;
   selectedSubclassName = null;
   currentLocation = null;
   playerName = "";
   playerGender = null;
   bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  level = 1;
+  xp = 0;
+  statPointsAvailable = 10;
   closeSettingsModal();
   phase = "main-menu";
   render();
@@ -529,7 +568,7 @@ function render() {
     locationScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderCharacterCreation(
-      { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats },
+      { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats, statPointsAvailable },
       { onSelectClass: selectCreationClass, onSelectSubclass: selectCreationSubclass, onAdjustStat: adjustBonusStat },
     );
     return;
@@ -540,7 +579,7 @@ function render() {
     campScreen.classList.remove("hidden");
     locationScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
-    renderCamp(player);
+    renderCamp(player, level, xp, xpToNextLevel(level));
     saveActiveRun();
     return;
   }
@@ -656,6 +695,8 @@ function finishPlayerAction(target) {
     playVictorySound();
     battleOver = true;
     awardLocationResources();
+    const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
+    awardXp(xpGained);
     render();
     return;
   }

@@ -913,11 +913,24 @@ button:disabled {
   margin-top: 0.2rem;
 }
 
+.camp-character-level {
+  color: #c9a24b;
+  font-size: 0.88rem;
+  text-align: center;
+  margin-top: 0.2rem;
+}
+
 .camp-character-meta {
   color: #a89c8f;
   font-size: 0.88rem;
   text-align: center;
   margin-top: 0.5rem;
+}
+
+.sheet-level-line {
+  color: #c9a24b;
+  font-size: 0.92rem;
+  margin-bottom: 0.6rem;
 }
 
 .camp-buttons {
