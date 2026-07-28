@@ -247,6 +247,11 @@ h1 { text-align: center; }
   min-width: 0;
 }
 
+#enemies-list {
+  height: 460px;
+  overflow-y: auto;
+}
+
 .fighter {
   border: 1px solid #3a3542;
   border-radius: 6px;
