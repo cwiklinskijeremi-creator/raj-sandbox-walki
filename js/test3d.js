@@ -1,5 +1,15 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+let THREE = null;
+let OrbitControls = null;
+
+async function loadThree() {
+  if (THREE) return;
+  const [threeModule, controlsModule] = await Promise.all([
+    import("three"),
+    import("three/addons/controls/OrbitControls.js"),
+  ]);
+  THREE = threeModule;
+  OrbitControls = controlsModule.OrbitControls;
+}
 
 let renderer = null;
 let scene = null;
@@ -89,9 +99,13 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-window.mountTest3D = function mountTest3D() {
+window.mountTest3D = async function mountTest3D() {
   const container = document.getElementById("test3d-canvas-container");
   if (!container) return;
+
+  await loadThree();
+  if (document.getElementById("test3d-screen").classList.contains("hidden")) return;
+
   container.innerHTML = "";
 
   if (!OBSTACLES || OBSTACLES.length === 0) {
