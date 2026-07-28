@@ -43,20 +43,22 @@ function saveActiveRun() {
   const data = {
     phase,
     player,
-    enemies,
-    selectedTargetIndex,
-    battleOver,
-    playerActionsRemaining,
     selectedClassName,
     selectedSubclassName,
     playerName,
     playerGender,
     bonusStats,
     locationKey: currentLocation ? currentLocation.key : null,
-    obstacles: OBSTACLES,
-    obstacleTypes: [...OBSTACLE_TYPES.entries()],
     savedAt: Date.now(),
   };
+  if (phase === "deployment" || phase === "battle") {
+    data.enemies = enemies;
+    data.selectedTargetIndex = selectedTargetIndex;
+    data.battleOver = battleOver;
+    data.playerActionsRemaining = playerActionsRemaining;
+    data.obstacles = OBSTACLES;
+    data.obstacleTypes = [...OBSTACLE_TYPES.entries()];
+  }
   localStorage.setItem(ACTIVE_RUN_KEY, JSON.stringify(data));
 }
 
@@ -74,23 +76,27 @@ function clearActiveRun() {
 
 function applyActiveRunData(data) {
   player = data.player;
-  enemies = data.enemies;
-  selectedTargetIndex = data.selectedTargetIndex;
-  battleOver = data.battleOver;
-  playerActionsRemaining = data.playerActionsRemaining;
   selectedClassName = data.selectedClassName;
   selectedSubclassName = data.selectedSubclassName;
   playerName = data.playerName || "";
   playerGender = data.playerGender || null;
   bonusStats = data.bonusStats || { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey) || null;
-  restoreObstacles(data.obstacles, data.obstacleTypes);
   phase = data.phase;
 
-  resetTokenLayer();
   closeRadialMenu();
   radialMenuOpen = false;
   clearLog();
+
+  if (phase === "deployment" || phase === "battle") {
+    enemies = data.enemies;
+    selectedTargetIndex = data.selectedTargetIndex;
+    battleOver = data.battleOver;
+    playerActionsRemaining = data.playerActionsRemaining;
+    restoreObstacles(data.obstacles, data.obstacleTypes);
+    resetTokenLayer();
+  }
+
   appendLog("Wznowiono grę.", "system");
   render();
 }
@@ -116,6 +122,13 @@ function backToLocationSelect() {
 
 function goToMainMenu() {
   phase = "main-menu";
+  closeRadialMenu();
+  radialMenuOpen = false;
+  render();
+}
+
+function goToCamp() {
+  phase = "camp";
   closeRadialMenu();
   radialMenuOpen = false;
   render();
@@ -167,7 +180,12 @@ function setPlayerGender(gender) {
 
 function confirmCharacterCreation() {
   if (!playerName.trim() || !playerGender || !selectedSubclassName) return;
-  phase = "location-select";
+  player = createPlayer(playerName, playerGender);
+  const sub = findSubclassData(selectedClassName, selectedSubclassName);
+  if (sub) applyClassProfile(player, sub, bonusStats);
+  player.class = selectedClassName;
+  player.subclass = selectedSubclassName;
+  phase = "camp";
   render();
 }
 
@@ -210,7 +228,7 @@ function openLoadGameModal() {
     confirmBtn.classList.add("hidden");
   } else {
     const loc = LOCATIONS.find((l) => l.key === data.locationKey);
-    const locText = loc ? `${loc.icon} ${loc.name}` : "nieznana lokacja";
+    const locText = loc ? `${loc.icon} ${loc.name}` : "🏕️ Obóz";
     const classText = data.selectedClassName
       ? `${data.selectedClassName}${data.selectedSubclassName ? " — " + data.selectedSubclassName : ""}`
       : "brak wybranej klasy";
@@ -395,12 +413,14 @@ function render() {
 
   const mainMenuScreen = document.getElementById("main-menu-screen");
   const creationScreen = document.getElementById("character-creation-screen");
+  const campScreen = document.getElementById("camp-screen");
   const locationScreen = document.getElementById("location-screen");
   const gameScreen = document.getElementById("game-screen");
 
   if (phase === "main-menu") {
     mainMenuScreen.classList.remove("hidden");
     creationScreen.classList.add("hidden");
+    campScreen.classList.add("hidden");
     locationScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderMainMenuState(loadActiveRunData());
@@ -410,6 +430,7 @@ function render() {
 
   if (phase === "character-creation") {
     creationScreen.classList.remove("hidden");
+    campScreen.classList.add("hidden");
     locationScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderCharacterCreation(
@@ -420,10 +441,21 @@ function render() {
   }
   creationScreen.classList.add("hidden");
 
+  if (phase === "camp") {
+    campScreen.classList.remove("hidden");
+    locationScreen.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    renderCamp(player);
+    saveActiveRun();
+    return;
+  }
+  campScreen.classList.add("hidden");
+
   if (phase === "location-select") {
     locationScreen.classList.remove("hidden");
     gameScreen.classList.add("hidden");
     renderLocationPicker(LOCATIONS, currentLocation, selectLocation);
+    saveActiveRun();
     return;
   }
   locationScreen.classList.add("hidden");
@@ -699,8 +731,12 @@ document.getElementById("mute-btn").addEventListener("click", (e) => {
   e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
   document.getElementById("settings-mute-btn").textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
 });
-document.getElementById("change-location-btn").addEventListener("click", backToLocationSelect);
+document.getElementById("change-location-btn").addEventListener("click", goToCamp);
 document.getElementById("main-menu-btn").addEventListener("click", goToMainMenu);
+document.getElementById("camp-expedition-btn").addEventListener("click", backToLocationSelect);
+document.getElementById("camp-codex-btn").addEventListener("click", openCodex);
+document.getElementById("camp-main-menu-btn").addEventListener("click", goToMainMenu);
+document.getElementById("location-back-btn").addEventListener("click", goToCamp);
 
 document.getElementById("new-game-btn").addEventListener("click", startNewGame);
 document.getElementById("resume-btn").addEventListener("click", resumeGame);

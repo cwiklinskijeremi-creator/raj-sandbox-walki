@@ -454,9 +454,26 @@ function renderMainMenuState(activeRunData) {
   }
   resumeBtn.disabled = false;
   const loc = LOCATIONS.find((l) => l.key === activeRunData.locationKey);
-  const locText = loc ? `${loc.icon} ${loc.name}` : "nieznana lokacja";
+  const locText = loc ? `${loc.icon} ${loc.name}` : "🏕️ Obóz";
   const when = new Date(activeRunData.savedAt).toLocaleString("pl-PL");
   infoEl.textContent = `Ostatni zapis: ${locText} — ${when}`;
+}
+
+function renderCamp(player) {
+  const card = document.getElementById("camp-character-card");
+  if (!player) {
+    card.innerHTML = "";
+    return;
+  }
+  card.innerHTML = `
+    <div class="camp-character-icon">${player.icon}</div>
+    <div class="camp-character-name">${player.name}</div>
+    <div class="camp-character-class">${player.class || ""}${player.subclass ? " — " + player.subclass : ""}</div>
+    <div class="camp-character-meta">
+      ${player.gender ? "Płeć: " + player.gender + " &nbsp;|&nbsp; " : ""}HP: ${player.maxHP}
+      &nbsp;|&nbsp; STR ${player.str} &nbsp; WYT ${player.wyt} &nbsp; ZRE ${player.zre} &nbsp; INT ${player.int} &nbsp; CHA ${player.cha}
+    </div>
+  `;
 }
 
 function renderLocationPicker(locations, currentLocation, onSelect) {

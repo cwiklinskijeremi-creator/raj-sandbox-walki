@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
@@ -52,9 +52,21 @@
     <button type="button" id="creation-confirm-btn" class="creation-confirm-btn" disabled>Rozpocznij grę</button>
   </section>
 
+  <section class="camp-screen hidden" id="camp-screen">
+    <h2>🏕️ Obóz Gildii</h2>
+    <p class="camp-flavor">Obóz Gildii Poszukiwaczy Przygód, rozbity w cieniu kryształowych wież Aetherionu. Stąd wyruszają grupy najemników i łowców, by polować na aberracje many i odzyskiwać zaginione kryształy esencji — a Ty, ukryty pod maską nowego rekruta, dołączasz do ich szeregów.</p>
+    <div class="camp-character-card" id="camp-character-card"></div>
+    <div class="camp-buttons">
+      <button type="button" id="camp-expedition-btn">🗺️ Wyrusz na wyprawę</button>
+      <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
+      <button type="button" id="camp-main-menu-btn">🏠 Menu główne</button>
+    </div>
+  </section>
+
   <section class="location-screen hidden" id="location-screen">
     <h2>Wybierz cel wyprawy</h2>
     <div class="location-grid" id="location-grid"></div>
+    <button type="button" id="location-back-btn" class="location-back-btn">🏕️ Powrót do obozu</button>
   </section>
 
   <div class="hidden" id="game-screen">
@@ -91,7 +103,7 @@
       <button id="attack-btn">Atakuj wybrany cel</button>
       <button id="end-turn-btn">Zakończ turę</button>
       <button id="reset-btn">Nowa walka</button>
-      <button id="change-location-btn" type="button">🗺️ Zmień lokację</button>
+      <button id="change-location-btn" type="button">🏕️ Wróć do obozu</button>
       <button id="main-menu-btn" type="button">🏠 Menu główne</button>
       <button id="mute-btn" type="button">🔊 Dźwięk</button>
       <button id="codex-btn" type="button">📜 Kodeks świata</button>
@@ -145,15 +157,15 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=13"></script>
-  <script src="js/dice.js?v=13"></script>
-  <script src="js/grid.js?v=13"></script>
-  <script src="js/classes.js?v=13"></script>
-  <script src="js/lore.js?v=13"></script>
-  <script src="js/locations.js?v=13"></script>
-  <script src="js/characters.js?v=13"></script>
-  <script src="js/combat.js?v=13"></script>
-  <script src="js/ui.js?v=13"></script>
-  <script src="js/main.js?v=13"></script>
+  <script src="js/audio.js?v=14"></script>
+  <script src="js/dice.js?v=14"></script>
+  <script src="js/grid.js?v=14"></script>
+  <script src="js/classes.js?v=14"></script>
+  <script src="js/lore.js?v=14"></script>
+  <script src="js/locations.js?v=14"></script>
+  <script src="js/characters.js?v=14"></script>
+  <script src="js/combat.js?v=14"></script>
+  <script src="js/ui.js?v=14"></script>
+  <script src="js/main.js?v=14"></script>
 </body>
 </html>
