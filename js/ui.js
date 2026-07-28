@@ -645,6 +645,40 @@ function renderLocationBanner(location) {
     : "";
 }
 
+function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance) {
+  const title = document.getElementById("dungeon-title");
+  title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";
+
+  const pathEl = document.getElementById("dungeon-path");
+  const pathIcons = rooms.map((room, i) => ({ icon: room.icon, state: i < index ? "done" : i === index ? "current" : "upcoming" }));
+  pathIcons.push({ icon: "⚔️", state: index >= rooms.length ? "current" : "upcoming" });
+  pathEl.innerHTML = pathIcons.map((p) => `<span class="dungeon-path-icon dungeon-path-${p.state}">${p.icon}</span>`).join("");
+
+  const roomEl = document.getElementById("dungeon-room");
+  const room = rooms[index];
+  if (room) {
+    roomEl.innerHTML = `
+      <div class="dungeon-room-icon">${room.icon}</div>
+      <div class="dungeon-room-label">${room.label}</div>
+      <p class="dungeon-room-outcome">${resolved ? outcomeText : "Nieznana komnata przed Tobą — coś tu jest."}</p>
+    `;
+  } else {
+    roomEl.innerHTML = `
+      <div class="dungeon-room-icon">⚔️</div>
+      <div class="dungeon-room-label">Komnata walki</div>
+      <p class="dungeon-room-outcome">Słychać za drzwiami warczenie. To już ostatni krok.</p>
+    `;
+  }
+
+  const advanceBtn = document.getElementById("dungeon-advance-btn");
+  advanceBtn.textContent = !resolved
+    ? "🔍 Zbadaj komnatę"
+    : index >= rooms.length - 1
+      ? "⚔️ Wejdź do walki"
+      : "➡️ Idź dalej";
+  advanceBtn.onclick = onAdvance;
+}
+
 function formatResourceBar(resources) {
   const entries = Object.entries(resources);
   return entries.length === 0

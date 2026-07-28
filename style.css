@@ -1163,3 +1163,61 @@ button:disabled {
   width: 100%;
   height: 100%;
 }
+
+.dungeon-screen {
+  background: #232028;
+  border: 1px solid #3a3542;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.dungeon-path {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.dungeon-path-icon {
+  font-size: 1.6rem;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.dungeon-path-done {
+  opacity: 0.7;
+  filter: none;
+}
+
+.dungeon-path-current {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.3);
+}
+
+.dungeon-room {
+  background: #1c1a20;
+  border: 1px solid #3a3542;
+  border-radius: 10px;
+  padding: 1.5rem;
+  max-width: 420px;
+  margin: 0 auto 1.3rem;
+}
+
+.dungeon-room-icon {
+  font-size: 2.4rem;
+}
+
+.dungeon-room-label {
+  font-weight: 600;
+  color: #f0be3c;
+  margin-top: 0.3rem;
+}
+
+.dungeon-room-outcome {
+  color: #d8d0c8;
+  margin: 0.6rem 0 0;
+  line-height: 1.5;
+}

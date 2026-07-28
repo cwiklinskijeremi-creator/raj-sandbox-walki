@@ -14,9 +14,87 @@ let bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
 let level = 1;
 let xp = 0;
 let statPointsAvailable = 10;
+let dungeonRooms = [];
+let dungeonIndex = 0;
+let dungeonHpLoss = 0;
+let dungeonRoomResolved = false;
+let dungeonOutcomeText = "";
 
 function xpToNextLevel(lvl) {
   return lvl * 50;
+}
+
+const DUNGEON_ROOM_TYPES = [
+  { type: "empty", icon: "🚪", weight: 3, label: "Pusty korytarz" },
+  { type: "trap", icon: "⚠️", weight: 2, label: "Pułapka" },
+  { type: "find", icon: "✨", weight: 2, label: "Znalezisko" },
+];
+
+function pickWeightedRoomType() {
+  const totalWeight = DUNGEON_ROOM_TYPES.reduce((sum, r) => sum + r.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const roomType of DUNGEON_ROOM_TYPES) {
+    if (roll < roomType.weight) return roomType;
+    roll -= roomType.weight;
+  }
+  return DUNGEON_ROOM_TYPES[0];
+}
+
+function generateDungeonRooms() {
+  return [0, 1, 2].map(() => {
+    const { type, icon, label } = pickWeightedRoomType();
+    return { type, icon, label };
+  });
+}
+
+function startDungeonCrawl() {
+  dungeonRooms = generateDungeonRooms();
+  dungeonIndex = 0;
+  dungeonHpLoss = 0;
+  dungeonRoomResolved = false;
+  dungeonOutcomeText = "";
+  phase = "dungeon";
+  render();
+}
+
+function resolveDungeonRoom() {
+  const room = dungeonRooms[dungeonIndex];
+  if (room.type === "empty") {
+    dungeonOutcomeText = "Korytarz jest pusty. Cisza aż dzwoni w uszach.";
+  } else if (room.type === "trap") {
+    const roll = rollD20();
+    if (roll >= 11) {
+      dungeonOutcomeText = `Wyczuwasz pułapkę w ostatniej chwili i ją omijasz (K20=${roll}).`;
+    } else {
+      const dmg = rollD6() * 3;
+      dungeonHpLoss += dmg;
+      dungeonOutcomeText = `Pułapka! Nie zdążyłeś zareagować (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
+    }
+  } else if (room.type === "find") {
+    const { name, icon, min, max } = currentLocation.resource;
+    const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 2));
+    const existing = resources[name] ? resources[name].amount : 0;
+    resources[name] = { icon, amount: existing + amount };
+    saveResources();
+    dungeonOutcomeText = `Znajdujesz coś w gruzach: +${amount} × ${icon} ${name}.`;
+  }
+  dungeonRoomResolved = true;
+  render();
+}
+
+function advanceDungeon() {
+  if (!dungeonRoomResolved) {
+    resolveDungeonRoom();
+    return;
+  }
+  dungeonIndex++;
+  dungeonRoomResolved = false;
+  dungeonOutcomeText = "";
+  if (dungeonIndex >= dungeonRooms.length) {
+    startNewBattle();
+  } else {
+    render();
+  }
 }
 
 function awardXp(amount) {
@@ -202,6 +280,13 @@ function saveActiveRun() {
     locationKey: currentLocation ? currentLocation.key : null,
     savedAt: Date.now(),
   };
+  if (phase === "dungeon") {
+    data.dungeonRooms = dungeonRooms;
+    data.dungeonIndex = dungeonIndex;
+    data.dungeonHpLoss = dungeonHpLoss;
+    data.dungeonRoomResolved = dungeonRoomResolved;
+    data.dungeonOutcomeText = dungeonOutcomeText;
+  }
   if (phase === "deployment" || phase === "battle") {
     data.enemies = enemies;
     data.selectedTargetIndex = selectedTargetIndex;
@@ -242,6 +327,14 @@ function applyActiveRunData(data) {
   radialMenuOpen = false;
   clearLog();
 
+  if (phase === "dungeon") {
+    dungeonRooms = data.dungeonRooms || [];
+    dungeonIndex = data.dungeonIndex || 0;
+    dungeonHpLoss = data.dungeonHpLoss || 0;
+    dungeonRoomResolved = data.dungeonRoomResolved || false;
+    dungeonOutcomeText = data.dungeonOutcomeText || "";
+  }
+
   if (phase === "deployment" || phase === "battle") {
     enemies = data.enemies;
     selectedTargetIndex = data.selectedTargetIndex;
@@ -264,7 +357,7 @@ function resumeGame() {
 function selectLocation(location) {
   currentLocation = location;
   appendLog(`${location.icon} ${location.name}: ${location.description}`, "system");
-  startNewBattle();
+  startDungeonCrawl();
 }
 
 function backToLocationSelect() {
@@ -471,6 +564,11 @@ function startNewBattle() {
   if (level > 1) {
     appendLog(`Przeciwnicy są silniejsi, dopasowani do Twojego poziomu (${level}).`, "system");
   }
+  if (dungeonHpLoss > 0) {
+    player.currentHP = Math.max(1, player.currentHP - dungeonHpLoss);
+    appendLog(`Wchodzisz do walki osłabiony po przejściu przez lochy (-${dungeonHpLoss} HP).`, "system");
+    dungeonHpLoss = 0;
+  }
   render();
 }
 
@@ -589,6 +687,7 @@ function render() {
   const creationScreen = document.getElementById("character-creation-screen");
   const campScreen = document.getElementById("camp-screen");
   const locationScreen = document.getElementById("location-screen");
+  const dungeonScreen = document.getElementById("dungeon-screen");
   const gameScreen = document.getElementById("game-screen");
 
   if (phase === "test3d") {
@@ -597,6 +696,7 @@ function render() {
     creationScreen.classList.add("hidden");
     campScreen.classList.add("hidden");
     locationScreen.classList.add("hidden");
+    dungeonScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     return;
   }
@@ -607,6 +707,7 @@ function render() {
     creationScreen.classList.add("hidden");
     campScreen.classList.add("hidden");
     locationScreen.classList.add("hidden");
+    dungeonScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderMainMenuState(loadActiveRunData());
     return;
@@ -617,6 +718,7 @@ function render() {
     creationScreen.classList.remove("hidden");
     campScreen.classList.add("hidden");
     locationScreen.classList.add("hidden");
+    dungeonScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderCharacterCreation(
       { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats, statPointsAvailable },
@@ -629,6 +731,7 @@ function render() {
   if (phase === "camp") {
     campScreen.classList.remove("hidden");
     locationScreen.classList.add("hidden");
+    dungeonScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderCamp(player, level, xp, xpToNextLevel(level));
     saveActiveRun();
@@ -638,12 +741,22 @@ function render() {
 
   if (phase === "location-select") {
     locationScreen.classList.remove("hidden");
+    dungeonScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderLocationPicker(LOCATIONS, currentLocation, selectLocation);
     saveActiveRun();
     return;
   }
   locationScreen.classList.add("hidden");
+
+  if (phase === "dungeon") {
+    dungeonScreen.classList.remove("hidden");
+    gameScreen.classList.add("hidden");
+    renderDungeon(currentLocation, dungeonRooms, dungeonIndex, dungeonRoomResolved, dungeonOutcomeText, advanceDungeon);
+    saveActiveRun();
+    return;
+  }
+  dungeonScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   renderLocationBanner(currentLocation);
 
@@ -953,6 +1066,7 @@ document.getElementById("clear-progress-btn").addEventListener("click", clearAll
 document.getElementById("exit-game-btn").addEventListener("click", exitGame);
 document.getElementById("test3d-btn").addEventListener("click", openTest3D);
 document.getElementById("test3d-back-btn").addEventListener("click", closeTest3D);
+document.getElementById("dungeon-advance-btn").addEventListener("click", advanceDungeon);
 
 document.getElementById("creation-name-input").addEventListener("input", (e) => setPlayerName(e.target.value));
 document.querySelectorAll(".gender-btn").forEach((btn) => {

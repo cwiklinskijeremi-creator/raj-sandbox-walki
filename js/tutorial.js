@@ -30,6 +30,7 @@ const TUTORIAL_DATA = {
     paragraphs: [
       "Obóz Gildii to Twoja baza — stąd wyruszasz na wyprawy, przeglądasz ekwipunek i postać, oraz zaglądasz do kodeksu świata. Po zakończonej walce (zwycięskiej lub nie) wracasz właśnie tutaj.",
       "Każda lokacja wyprawy ma inną pulę przeciwników, dominujący typ terenu (skały/drzewa/woda) oraz inny surowiec przyznawany za zwycięstwo — warto odwiedzać różne miejsca, żeby zebrać komplet zasobów potrzebnych u kupca.",
+      "Po wybraniu lokacji nie trafiasz od razu do walki — najpierw przechodzisz przez kilka komnat lochu. Puste korytarze to tylko klimat, znaleziska dają dodatkowy surowiec, a pułapki mogą Cię zranić jeszcze przed starciem — obrażenia z pułapek przechodzą na Twoje HP w nadchodzącej walce, więc lepiej nie liczyć na szczęście za każdym razem.",
     ],
   },
   combat: {
