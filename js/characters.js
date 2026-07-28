@@ -166,6 +166,194 @@ const ENEMY_TEMPLATES = {
     hp: 95,
     icon: "🧙",
   }),
+
+  // Kopalnie Esencji
+  kopacz: () => createCharacter({
+    name: "Skażony Kopacz",
+    str: 6, wyt: 7, zre: 6, int: 0, cha: 0,
+    weapons: [
+      { name: "Zardzewiały Oskard", minDmg: 7, maxDmg: 12, range: 1 },
+      { name: "Toczący Głaz", minDmg: 5, maxDmg: 9, range: 2 },
+    ],
+    pancerz: 0.09, przebicie: 0, hp: 130, icon: "🧟‍♂️",
+  }),
+  pelzacz: () => createCharacter({
+    name: "Kryształowy Pełzacz",
+    str: 8, wyt: 3, zre: 13, int: 0, cha: 3,
+    weapons: [
+      { name: "Kolce Kryształu", minDmg: 7, maxDmg: 13, range: 1 },
+      { name: "Odłamek Esencji", minDmg: 5, maxDmg: 9, range: 3 },
+    ],
+    pancerz: 0.02, przebicie: 0.08, hp: 85, icon: "🦂",
+  }),
+  nadzorca: () => createCharacter({
+    name: "Nadzorca Niewolników",
+    str: 9, wyt: 7, zre: 9, int: 2, cha: 8,
+    weapons: [
+      { name: "Bicz Kolczasty", minDmg: 8, maxDmg: 13, range: 1 },
+      { name: "Rzucony Hak", minDmg: 6, maxDmg: 10, range: 2 },
+    ],
+    pancerz: 0.10, przebicie: 0.05, hp: 135, icon: "🦹",
+  }),
+  pijawka: () => createCharacter({
+    name: "Esencjowa Pijawka",
+    str: 4, wyt: 6, zre: 8, int: 0, cha: 0,
+    weapons: [
+      { name: "Wysysające Szczęki", minDmg: 6, maxDmg: 11, range: 1 },
+      { name: "Pluskanie Kwasem", minDmg: 5, maxDmg: 9, range: 2 },
+    ],
+    pancerz: 0.04, przebicie: 0.02, hp: 105, icon: "🐛",
+  }),
+  kolos: () => createCharacter({
+    name: "Głębinowy Kolos",
+    str: 12, wyt: 11, zre: 4, int: 0, cha: 0,
+    weapons: [
+      { name: "Kamienna Pięść", minDmg: 12, maxDmg: 18, range: 1 },
+      { name: "Uderzenie Ogonem", minDmg: 9, maxDmg: 14, range: 1 },
+    ],
+    pancerz: 0.14, przebicie: 0, hp: 170, icon: "🗿",
+  }),
+
+  // Skażony Las
+  wilk: () => createCharacter({
+    name: "Splamiony Wilk",
+    str: 8, wyt: 4, zre: 15, int: 0, cha: 4,
+    weapons: [
+      { name: "Zębiska", minDmg: 8, maxDmg: 13, range: 1 },
+      { name: "Skok Drapieżnika", minDmg: 6, maxDmg: 10, range: 2 },
+    ],
+    pancerz: 0.03, przebicie: 0.06, hp: 95, icon: "🐺",
+  }),
+  konstrukt: () => createCharacter({
+    name: "Pnączowy Konstrukt",
+    str: 7, wyt: 9, zre: 5, int: 0, cha: 0,
+    weapons: [
+      { name: "Zaciskające Pnącze", minDmg: 7, maxDmg: 12, range: 2 },
+      { name: "Kolce", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.10, przebicie: 0, hp: 140, icon: "🥀",
+  }),
+  szarancza: () => createCharacter({
+    name: "Szarańcza Many",
+    str: 5, wyt: 3, zre: 14, int: 0, cha: 6,
+    weapons: [
+      { name: "Żądło", minDmg: 6, maxDmg: 10, range: 1 },
+      { name: "Rój", minDmg: 5, maxDmg: 8, range: 2 },
+    ],
+    pancerz: 0.02, przebicie: 0.10, hp: 80, icon: "🦗",
+  }),
+  pomiot: () => createCharacter({
+    name: "Leśny Pomiot",
+    str: 6, wyt: 5, zre: 11, int: 0, cha: 2,
+    weapons: [
+      { name: "Jadowite Ukąszenie", minDmg: 7, maxDmg: 12, range: 1 },
+      { name: "Owinięcie", minDmg: 5, maxDmg: 9, range: 1 },
+    ],
+    pancerz: 0.05, przebicie: 0.05, hp: 100, icon: "🐍",
+  }),
+  traper: () => createCharacter({
+    name: "Zdziczały Traper",
+    str: 6, wyt: 6, zre: 9, int: 3, cha: 4,
+    weapons: [
+      { name: "Wnyki", minDmg: 6, maxDmg: 11, range: 2 },
+      { name: "Nóż Myśliwski", minDmg: 7, maxDmg: 11, range: 1 },
+    ],
+    pancerz: 0.08, przebicie: 0.05, hp: 115, icon: "🪤",
+  }),
+
+  // Szlak Gildii
+  zwiadowca: () => createCharacter({
+    name: "Zwiadowca Gildii",
+    str: 6, wyt: 5, zre: 12, int: 4, cha: 7,
+    weapons: [
+      { name: "Rzutki", minDmg: 7, maxDmg: 11, range: 3 },
+      { name: "Krótki Miecz", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.09, przebicie: 0.06, hp: 110, icon: "🔪",
+  }),
+  egzekutor: () => createCharacter({
+    name: "Egzekutor Gildii",
+    str: 11, wyt: 8, zre: 8, int: 1, cha: 5,
+    weapons: [
+      { name: "Buława Bojowa", minDmg: 10, maxDmg: 16, range: 1 },
+      { name: "Pięści Wzmocnione", minDmg: 8, maxDmg: 12, range: 1 },
+    ],
+    pancerz: 0.13, przebicie: 0.10, hp: 150, icon: "👊",
+  }),
+  tropiciel: () => createCharacter({
+    name: "Tropiciel Bestii",
+    str: 7, wyt: 6, zre: 11, int: 5, cha: 6,
+    weapons: [
+      { name: "Oszczep", minDmg: 8, maxDmg: 13, range: 3 },
+      { name: "Topór Rzucany", minDmg: 7, maxDmg: 11, range: 2 },
+    ],
+    pancerz: 0.08, przebicie: 0.05, hp: 120, icon: "🐾",
+  }),
+  strzelec: () => createCharacter({
+    name: "Najemny Ostrzał",
+    str: 6, wyt: 5, zre: 10, int: 6, cha: 8,
+    weapons: [
+      { name: "Kusza Snajperska", minDmg: 10, maxDmg: 16, range: 7 },
+      { name: "Sztylet", minDmg: 6, maxDmg: 9, range: 1 },
+    ],
+    pancerz: 0.10, przebicie: 0.08, hp: 105, icon: "🎯",
+  }),
+  kapitan: () => createCharacter({
+    name: "Kapitan Patrolu",
+    str: 10, wyt: 9, zre: 10, int: 6, cha: 11,
+    weapons: [
+      { name: "Miecz Kapitański", minDmg: 10, maxDmg: 16, range: 1 },
+      { name: "Kusza Boczna", minDmg: 7, maxDmg: 11, range: 5 },
+    ],
+    pancerz: 0.14, przebicie: 0.09, hp: 160, icon: "🎖️",
+  }),
+
+  // Placówka Zakonu Światła
+  nowicjusz: () => createCharacter({
+    name: "Nowicjusz Światła",
+    str: 3, wyt: 4, zre: 5, int: 9, cha: 6,
+    weapons: [
+      { name: "Iskra Światła", minDmg: 6, maxDmg: 10, range: 5 },
+      { name: "Laska Nowicjusza", minDmg: 4, maxDmg: 8, range: 1 },
+    ],
+    pancerz: 0.05, przebicie: 0.05, hp: 80, icon: "🕯️",
+  }),
+  egzekutorwiary: () => createCharacter({
+    name: "Egzekutor Wiary",
+    str: 10, wyt: 8, zre: 6, int: 4, cha: 6,
+    weapons: [
+      { name: "Młot Sądu", minDmg: 10, maxDmg: 15, range: 1 },
+      { name: "Tarcza Okuta", minDmg: 7, maxDmg: 11, range: 1 },
+    ],
+    pancerz: 0.12, przebicie: 0.08, hp: 140, icon: "🔨",
+  }),
+  inkwizytor: () => createCharacter({
+    name: "Inkwizytor",
+    str: 6, wyt: 6, zre: 7, int: 13, cha: 9,
+    weapons: [
+      { name: "Płomień Oczyszczający", minDmg: 9, maxDmg: 14, range: 6 },
+      { name: "Sztylet Rytualny", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.09, przebicie: 0.10, hp: 115, icon: "📿",
+  }),
+  straznik: () => createCharacter({
+    name: "Strażnik Relikwii",
+    str: 9, wyt: 12, zre: 5, int: 3, cha: 5,
+    weapons: [
+      { name: "Halabarda Strażnicza", minDmg: 9, maxDmg: 14, range: 1 },
+      { name: "Uderzenie Tarczą", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.16, przebicie: 0.03, hp: 155, icon: "🏛️",
+  }),
+  kaplanka: () => createCharacter({
+    name: "Kapłanka Oczyszczenia",
+    str: 4, wyt: 6, zre: 7, int: 12, cha: 13,
+    weapons: [
+      { name: "Promień Oczyszczenia", minDmg: 8, maxDmg: 13, range: 6 },
+      { name: "Laska Kapłańska", minDmg: 5, maxDmg: 9, range: 1 },
+    ],
+    pancerz: 0.07, przebicie: 0.06, hp: 110, icon: "🕊️",
+  }),
 };
 
 function createEnemies(location = null) {
