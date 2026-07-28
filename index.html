@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
@@ -15,6 +15,7 @@
       <button id="new-game-btn" type="button">Nowa gra</button>
       <button id="resume-btn" type="button">Wznów</button>
       <button id="load-game-btn" type="button">Wczytaj grę</button>
+      <button id="tutorial-btn-menu" type="button">📖 Jak grać</button>
       <button id="settings-btn" type="button">Ustawienia</button>
       <button id="exit-game-btn" type="button">Wyjdź z gry</button>
     </div>
@@ -58,6 +59,7 @@
       <button type="button" id="camp-expedition-btn">🗺️ Wyrusz na wyprawę</button>
       <button type="button" id="camp-character-btn">🎒 Ekwipunek i postać</button>
       <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
+      <button type="button" id="tutorial-btn-camp">📖 Jak grać</button>
       <button type="button" id="camp-main-menu-btn">🏠 Menu główne</button>
     </div>
   </section>
@@ -124,6 +126,16 @@
     </div>
   </div>
 
+  <div class="codex-overlay hidden" id="tutorial-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs" id="tutorial-tabs"></div>
+        <button class="codex-close" id="tutorial-close" type="button">✕</button>
+      </div>
+      <div class="codex-body" id="tutorial-body"></div>
+    </div>
+  </div>
+
   <div class="codex-overlay hidden" id="character-sheet-overlay">
     <div class="codex-modal">
       <div class="codex-header">
@@ -166,16 +178,17 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=17"></script>
-  <script src="js/dice.js?v=17"></script>
-  <script src="js/grid.js?v=17"></script>
-  <script src="js/classes.js?v=17"></script>
-  <script src="js/lore.js?v=17"></script>
-  <script src="js/locations.js?v=17"></script>
-  <script src="js/equipment.js?v=17"></script>
-  <script src="js/characters.js?v=17"></script>
-  <script src="js/combat.js?v=17"></script>
-  <script src="js/ui.js?v=17"></script>
-  <script src="js/main.js?v=17"></script>
+  <script src="js/audio.js?v=18"></script>
+  <script src="js/dice.js?v=18"></script>
+  <script src="js/grid.js?v=18"></script>
+  <script src="js/classes.js?v=18"></script>
+  <script src="js/lore.js?v=18"></script>
+  <script src="js/locations.js?v=18"></script>
+  <script src="js/equipment.js?v=18"></script>
+  <script src="js/tutorial.js?v=18"></script>
+  <script src="js/characters.js?v=18"></script>
+  <script src="js/combat.js?v=18"></script>
+  <script src="js/ui.js?v=18"></script>
+  <script src="js/main.js?v=18"></script>
 </body>
 </html>

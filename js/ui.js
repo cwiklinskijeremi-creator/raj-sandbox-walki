@@ -748,5 +748,45 @@ document.getElementById("codex-overlay").addEventListener("click", (e) => {
   if (e.target.id === "codex-overlay") closeCodex();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeCodex();
+  if (e.key === "Escape") {
+    closeCodex();
+    closeTutorial();
+  }
+});
+
+let tutorialActiveTab = "basics";
+
+function renderTutorial() {
+  const tabsEl = document.getElementById("tutorial-tabs");
+  const bodyEl = document.getElementById("tutorial-body");
+  tabsEl.innerHTML = "";
+  TUTORIAL_TABS.forEach((tab) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `codex-tab-btn${tab.key === tutorialActiveTab ? " selected" : ""}`;
+    btn.textContent = tab.label;
+    btn.addEventListener("click", () => {
+      tutorialActiveTab = tab.key;
+      renderTutorial();
+    });
+    tabsEl.appendChild(btn);
+  });
+  const section = TUTORIAL_DATA[tutorialActiveTab];
+  bodyEl.innerHTML = `<h3>${section.icon} ${section.title}</h3>` + section.paragraphs.map((p) => `<p>${p}</p>`).join("");
+}
+
+function openTutorial() {
+  renderTutorial();
+  document.getElementById("tutorial-overlay").classList.remove("hidden");
+}
+
+function closeTutorial() {
+  document.getElementById("tutorial-overlay").classList.add("hidden");
+}
+
+document.getElementById("tutorial-btn-menu").addEventListener("click", openTutorial);
+document.getElementById("tutorial-btn-camp").addEventListener("click", openTutorial);
+document.getElementById("tutorial-close").addEventListener("click", closeTutorial);
+document.getElementById("tutorial-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "tutorial-overlay") closeTutorial();
 });
