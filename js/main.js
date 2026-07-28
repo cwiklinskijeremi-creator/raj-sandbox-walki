@@ -543,8 +543,6 @@ function findSubclassData(className, subclassName) {
 }
 
 function render() {
-  renderResourceBar(resources);
-
   const mainMenuScreen = document.getElementById("main-menu-screen");
   const creationScreen = document.getElementById("character-creation-screen");
   const campScreen = document.getElementById("camp-screen");

@@ -539,6 +539,13 @@ function renderCharacterSheet(player, inventory, equipped, resources, progress, 
     `
     : "";
 
+  const resourcesHtml = `
+    <div class="sheet-section">
+      <h4>Twoje zasoby</h4>
+      <div class="resource-bar">${formatResourceBar(resources)}</div>
+    </div>
+  `;
+
   const slotsHtml = `
     <div class="sheet-section">
       <h4>Ekwipunek założony</h4>
@@ -610,7 +617,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, progress, 
     </div>
   `;
 
-  body.innerHTML = statsHtml + levelUpHtml + slotsHtml + inventoryHtml + shopHtml;
+  body.innerHTML = statsHtml + levelUpHtml + resourcesHtml + slotsHtml + inventoryHtml + shopHtml;
 
   if (unspentPoints > 0) {
     renderStatAllocatorInto(document.getElementById("sheet-stat-allocator"), baseStats, bonusStats, statPointsAvailable, handlers.onAdjustStat);
@@ -652,10 +659,9 @@ function renderLocationBanner(location) {
     : "";
 }
 
-function renderResourceBar(resources) {
-  const bar = document.getElementById("resource-bar");
+function formatResourceBar(resources) {
   const entries = Object.entries(resources);
-  bar.innerHTML = entries.length === 0
+  return entries.length === 0
     ? `<span class="resource-empty">Brak zebranych zasobów — wyrusz na wyprawę.</span>`
     : entries.map(([name, data]) => `<span class="resource-chip">${data.icon} ${name}: <strong>${data.amount}</strong></span>`).join("");
 }
