@@ -476,6 +476,126 @@ function renderCamp(player) {
   `;
 }
 
+function formatItemBonus(item) {
+  const parts = [];
+  if (item.bonus.pancerz) parts.push(`+${(item.bonus.pancerz * 100).toFixed(0)}% pancerza`);
+  if (item.bonus.przebicie) parts.push(`+${(item.bonus.przebicie * 100).toFixed(0)}% przebicia`);
+  ["str", "wyt", "zre", "int", "cha"].forEach((k) => {
+    if (item.bonus[k]) parts.push(`+${item.bonus[k]} ${k.toUpperCase()}`);
+  });
+  return parts.join(", ");
+}
+
+function renderCharacterSheet(player, inventory, equipped, resources, handlers) {
+  const body = document.getElementById("character-sheet-body");
+  if (!player) {
+    body.innerHTML = `<p class="creation-hint">Brak postaci.</p>`;
+    return;
+  }
+
+  const statsHtml = `
+    <div class="sheet-section">
+      <h4>${player.icon} ${player.name}</h4>
+      <div class="sheet-stats-grid">
+        <div>Klasa: ${player.class || "—"}${player.subclass ? " — " + player.subclass : ""}</div>
+        <div>Płeć: ${player.gender || "—"}</div>
+        <div>HP: ${player.maxHP}</div>
+        <div>Pancerz: ${(player.pancerz * 100).toFixed(0)}%</div>
+        <div>Przebicie: ${(player.przebicie * 100).toFixed(0)}%</div>
+        <div>Ruch: ${player.moveRange}</div>
+        <div>STR: ${player.str}</div>
+        <div>WYT: ${player.wyt}</div>
+        <div>ZRE: ${player.zre}</div>
+        <div>INT: ${player.int}</div>
+        <div>CHA: ${player.cha}</div>
+      </div>
+    </div>
+  `;
+
+  const slotsHtml = `
+    <div class="sheet-section">
+      <h4>Ekwipunek założony</h4>
+      <div class="sheet-slots">
+        ${EQUIPMENT_SLOTS.map((slot) => {
+          const itemId = equipped[slot.key];
+          const item = itemId ? EQUIPMENT_ITEMS.find((i) => i.id === itemId) : null;
+          return `
+            <div class="sheet-slot">
+              <div class="sheet-slot-label">${slot.label}</div>
+              ${item
+                ? `<div class="sheet-slot-item">
+                    <div>
+                      <div class="sheet-item-name">${item.icon} ${item.name}</div>
+                      <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+                    </div>
+                    <button type="button" class="sheet-action-btn unequip-btn" data-slot="${slot.key}">Zdejmij</button>
+                  </div>`
+                : `<div class="sheet-slot-empty">Puste</div>`}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+
+  const ownedUnequipped = inventory.filter((id) => !Object.values(equipped).includes(id));
+  const inventoryHtml = `
+    <div class="sheet-section">
+      <h4>Plecak</h4>
+      ${ownedUnequipped.length === 0
+        ? `<p class="sheet-empty-note">Brak przedmiotów w plecaku.</p>`
+        : ownedUnequipped.map((id) => {
+            const item = EQUIPMENT_ITEMS.find((i) => i.id === id);
+            return `
+              <div class="sheet-item-row">
+                <div class="sheet-item-info">
+                  <div class="sheet-item-name">${item.icon} ${item.name}</div>
+                  <div class="sheet-item-desc">${item.description}</div>
+                  <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+                </div>
+                <button type="button" class="sheet-action-btn equip-btn" data-item="${item.id}">Załóż</button>
+              </div>
+            `;
+          }).join("")}
+    </div>
+  `;
+
+  const notOwned = EQUIPMENT_ITEMS.filter((item) => !inventory.includes(item.id));
+  const shopHtml = `
+    <div class="sheet-section">
+      <h4>Kupiec obozowy</h4>
+      ${notOwned.length === 0 ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>` : ""}
+      ${notOwned.map((item) => {
+        const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
+        const affordable = owned >= item.cost.amount;
+        return `
+          <div class="sheet-item-row">
+            <div class="sheet-item-info">
+              <div class="sheet-item-name">${item.icon} ${item.name}</div>
+              <div class="sheet-item-desc">${item.description}</div>
+              <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+              <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
+            </div>
+            <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable ? "" : "disabled"}>Kup</button>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  body.innerHTML = statsHtml + slotsHtml + inventoryHtml + shopHtml;
+
+  body.querySelectorAll(".unequip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onUnequip(btn.dataset.slot));
+  });
+  body.querySelectorAll(".equip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onEquip(btn.dataset.item));
+  });
+  body.querySelectorAll(".buy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onBuy(btn.dataset.item));
+  });
+}
+
 function renderLocationPicker(locations, currentLocation, onSelect) {
   const grid = document.getElementById("location-grid");
   grid.innerHTML = "";

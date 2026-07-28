@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
@@ -58,6 +58,7 @@
     <div class="camp-character-card" id="camp-character-card"></div>
     <div class="camp-buttons">
       <button type="button" id="camp-expedition-btn">🗺️ Wyrusz na wyprawę</button>
+      <button type="button" id="camp-character-btn">🎒 Ekwipunek i postać</button>
       <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
       <button type="button" id="camp-main-menu-btn">🏠 Menu główne</button>
     </div>
@@ -125,6 +126,16 @@
     </div>
   </div>
 
+  <div class="codex-overlay hidden" id="character-sheet-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs"><span class="modal-title">Ekwipunek i postać</span></div>
+        <button class="codex-close" id="character-sheet-close" type="button">✕</button>
+      </div>
+      <div class="codex-body" id="character-sheet-body"></div>
+    </div>
+  </div>
+
   <div class="codex-overlay hidden" id="settings-overlay">
     <div class="codex-modal">
       <div class="codex-header">
@@ -157,15 +168,16 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=14"></script>
-  <script src="js/dice.js?v=14"></script>
-  <script src="js/grid.js?v=14"></script>
-  <script src="js/classes.js?v=14"></script>
-  <script src="js/lore.js?v=14"></script>
-  <script src="js/locations.js?v=14"></script>
-  <script src="js/characters.js?v=14"></script>
-  <script src="js/combat.js?v=14"></script>
-  <script src="js/ui.js?v=14"></script>
-  <script src="js/main.js?v=14"></script>
+  <script src="js/audio.js?v=15"></script>
+  <script src="js/dice.js?v=15"></script>
+  <script src="js/grid.js?v=15"></script>
+  <script src="js/classes.js?v=15"></script>
+  <script src="js/lore.js?v=15"></script>
+  <script src="js/locations.js?v=15"></script>
+  <script src="js/equipment.js?v=15"></script>
+  <script src="js/characters.js?v=15"></script>
+  <script src="js/combat.js?v=15"></script>
+  <script src="js/ui.js?v=15"></script>
+  <script src="js/main.js?v=15"></script>
 </body>
 </html>

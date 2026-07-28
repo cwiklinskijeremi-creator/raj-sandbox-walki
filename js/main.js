@@ -39,6 +39,109 @@ function awardLocationResources() {
   appendLog(`Zdobywasz ${amount} × ${icon} ${name}.`, "system");
 }
 
+const EQUIPMENT_STORAGE_KEY = "raj-sandbox-equipment";
+
+function loadEquipmentState() {
+  try {
+    const data = JSON.parse(localStorage.getItem(EQUIPMENT_STORAGE_KEY));
+    return {
+      inventory: (data && data.inventory) || [],
+      equipped: (data && data.equipped) || { zbroja: null, amulet: null },
+    };
+  } catch {
+    return { inventory: [], equipped: { zbroja: null, amulet: null } };
+  }
+}
+
+function saveEquipmentState() {
+  localStorage.setItem(EQUIPMENT_STORAGE_KEY, JSON.stringify({ inventory, equipped }));
+}
+
+let { inventory, equipped } = loadEquipmentState();
+
+function getEquipmentStatBonuses() {
+  const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
+  Object.values(equipped).forEach((itemId) => {
+    if (!itemId) return;
+    const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+    if (!item) return;
+    Object.entries(item.bonus).forEach(([key, value]) => {
+      totals[key] += value;
+    });
+  });
+  return totals;
+}
+
+function buildPlayerCharacter() {
+  const p = createPlayer(playerName, playerGender);
+  const sub = findSubclassData(selectedClassName, selectedSubclassName);
+  if (sub) {
+    const equipBonus = getEquipmentStatBonuses();
+    const totalBonus = {
+      str: bonusStats.str + equipBonus.str,
+      wyt: bonusStats.wyt + equipBonus.wyt,
+      zre: bonusStats.zre + equipBonus.zre,
+      int: bonusStats.int + equipBonus.int,
+      cha: bonusStats.cha + equipBonus.cha,
+    };
+    applyClassProfile(p, sub, totalBonus);
+    p.pancerz += equipBonus.pancerz;
+    p.przebicie += equipBonus.przebicie;
+  }
+  p.class = selectedClassName;
+  p.subclass = selectedSubclassName;
+  return p;
+}
+
+function canAffordItem(item) {
+  const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
+  return owned >= item.cost.amount;
+}
+
+function refreshCharacterSheetIfOpen() {
+  const overlay = document.getElementById("character-sheet-overlay");
+  if (overlay.classList.contains("hidden")) return;
+  renderCharacterSheet(player, inventory, equipped, resources, { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot });
+}
+
+function buyEquipment(itemId) {
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+  if (!item || inventory.includes(itemId) || !canAffordItem(item)) return;
+  resources[item.cost.currency].amount -= item.cost.amount;
+  saveResources();
+  inventory.push(itemId);
+  saveEquipmentState();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+function equipItem(itemId) {
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+  if (!item || !inventory.includes(itemId)) return;
+  equipped[item.slot] = itemId;
+  saveEquipmentState();
+  if (player && phase === "camp") player = buildPlayerCharacter();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+function unequipSlot(slotKey) {
+  equipped[slotKey] = null;
+  saveEquipmentState();
+  if (player && phase === "camp") player = buildPlayerCharacter();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+function openCharacterSheet() {
+  document.getElementById("character-sheet-overlay").classList.remove("hidden");
+  refreshCharacterSheetIfOpen();
+}
+
+function closeCharacterSheet() {
+  document.getElementById("character-sheet-overlay").classList.add("hidden");
+}
+
 function saveActiveRun() {
   const data = {
     phase,
@@ -180,11 +283,7 @@ function setPlayerGender(gender) {
 
 function confirmCharacterCreation() {
   if (!playerName.trim() || !playerGender || !selectedSubclassName) return;
-  player = createPlayer(playerName, playerGender);
-  const sub = findSubclassData(selectedClassName, selectedSubclassName);
-  if (sub) applyClassProfile(player, sub, bonusStats);
-  player.class = selectedClassName;
-  player.subclass = selectedSubclassName;
+  player = buildPlayerCharacter();
   phase = "camp";
   render();
 }
@@ -275,11 +374,7 @@ function startNewBattle() {
   closeRadialMenu();
   radialMenuOpen = false;
 
-  player = createPlayer(playerName, playerGender);
-  const savedSubclass = findSubclassData(selectedClassName, selectedSubclassName);
-  if (savedSubclass) applyClassProfile(player, savedSubclass, bonusStats);
-  player.class = selectedClassName;
-  player.subclass = selectedSubclassName;
+  player = buildPlayerCharacter();
   enemies = createEnemies(currentLocation);
 
   const defaultPos = getStartPositions().player;
@@ -736,6 +831,11 @@ document.getElementById("main-menu-btn").addEventListener("click", goToMainMenu)
 document.getElementById("camp-expedition-btn").addEventListener("click", backToLocationSelect);
 document.getElementById("camp-codex-btn").addEventListener("click", openCodex);
 document.getElementById("camp-main-menu-btn").addEventListener("click", goToMainMenu);
+document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
+document.getElementById("character-sheet-close").addEventListener("click", closeCharacterSheet);
+document.getElementById("character-sheet-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "character-sheet-overlay") closeCharacterSheet();
+});
 document.getElementById("location-back-btn").addEventListener("click", goToCamp);
 
 document.getElementById("new-game-btn").addEventListener("click", startNewGame);
