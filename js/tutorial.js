@@ -48,6 +48,7 @@ const TUTORIAL_DATA = {
     paragraphs: [
       "Zwycięstwo przynosi surowiec danej lokacji oraz punkty doświadczenia (PD) — im mocniejsi pokonani przeciwnicy, tym więcej PD. Kolejne poziomy wymagają coraz więcej PD i dają +3 punkty statystyk do rozdania w obozie.",
       "W „🎒 Ekwipunek i postać” (dostępnym z obozu) widzisz pełne statystyki, zakładasz zbroje i amulety kupione u kupca obozowego za zebrane surowce, oraz rozdzielasz niewydane punkty statystyk. Surowce i ekwipunek zostają na koncie nawet po rozpoczęciu nowej gry — resetuje się tylko poziom, doświadczenie i punkty statystyk aktualnej postaci.",
+      "Przeciwnicy skalują się razem z Tobą — im wyższy Twój poziom, tym więcej mają HP, STR, WYT, pancerza i przebicia, więc wyprawy pozostają wyzwaniem nawet gdy postać mocno się rozwinie.",
     ],
   },
   saves: {

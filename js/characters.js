@@ -190,3 +190,21 @@ function createEnemies(location = null) {
 
   return chosen;
 }
+
+function scaleEnemyForLevel(enemy, level) {
+  const tier = level - 1;
+  if (tier <= 0) return enemy;
+
+  const statMult = 1 + tier * 0.12;
+  const hpMult = 1 + tier * 0.15;
+  const defenseMult = 1 + tier * 0.08;
+
+  enemy.str = Math.round(enemy.str * statMult);
+  enemy.wyt = Math.round(enemy.wyt * statMult);
+  enemy.maxHP = Math.round(enemy.maxHP * hpMult);
+  enemy.currentHP = enemy.maxHP;
+  enemy.pancerz = Math.min(0.6, enemy.pancerz * defenseMult);
+  enemy.przebicie = Math.min(0.6, enemy.przebicie * defenseMult);
+
+  return enemy;
+}

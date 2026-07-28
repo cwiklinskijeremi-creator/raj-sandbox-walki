@@ -415,6 +415,7 @@ function startNewBattle() {
 
   player = buildPlayerCharacter();
   enemies = createEnemies(currentLocation);
+  enemies.forEach((enemy) => scaleEnemyForLevel(enemy, level));
 
   const defaultPos = getStartPositions().player;
   player.pos = isObstacle(defaultPos)
@@ -430,6 +431,9 @@ function startNewBattle() {
 
   clearLog();
   appendLog("Rozstawianie: kliknij pole w swojej strefie (3 lewe kolumny), żeby ustawić postać. Przeciwnik już się rozstawił.", "system");
+  if (level > 1) {
+    appendLog(`Przeciwnicy są silniejsi, dopasowani do Twojego poziomu (${level}).`, "system");
+  }
   render();
 }
 
