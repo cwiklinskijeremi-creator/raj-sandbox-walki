@@ -288,6 +288,18 @@ function goToCamp() {
   render();
 }
 
+function openTest3D() {
+  phase = "test3d";
+  render();
+  if (window.mountTest3D) window.mountTest3D();
+}
+
+function closeTest3D() {
+  if (window.stopTest3D) window.stopTest3D();
+  phase = "main-menu";
+  render();
+}
+
 function startNewGame() {
   clearActiveRun();
   selectedClassName = null;
@@ -573,10 +585,22 @@ function findSubclassData(className, subclassName) {
 
 function render() {
   const mainMenuScreen = document.getElementById("main-menu-screen");
+  const test3dScreen = document.getElementById("test3d-screen");
   const creationScreen = document.getElementById("character-creation-screen");
   const campScreen = document.getElementById("camp-screen");
   const locationScreen = document.getElementById("location-screen");
   const gameScreen = document.getElementById("game-screen");
+
+  if (phase === "test3d") {
+    mainMenuScreen.classList.add("hidden");
+    test3dScreen.classList.remove("hidden");
+    creationScreen.classList.add("hidden");
+    campScreen.classList.add("hidden");
+    locationScreen.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    return;
+  }
+  test3dScreen.classList.add("hidden");
 
   if (phase === "main-menu") {
     mainMenuScreen.classList.remove("hidden");
@@ -927,6 +951,8 @@ document.getElementById("settings-mute-btn").addEventListener("click", (e) => {
 });
 document.getElementById("clear-progress-btn").addEventListener("click", clearAllProgress);
 document.getElementById("exit-game-btn").addEventListener("click", exitGame);
+document.getElementById("test3d-btn").addEventListener("click", openTest3D);
+document.getElementById("test3d-back-btn").addEventListener("click", closeTest3D);
 
 document.getElementById("creation-name-input").addEventListener("input", (e) => setPlayerName(e.target.value));
 document.querySelectorAll(".gender-btn").forEach((btn) => {
