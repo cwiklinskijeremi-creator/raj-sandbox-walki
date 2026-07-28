@@ -11,13 +11,14 @@ function computeDerivedStats({ zre, int, cha, przebicie }) {
 
 function createCharacter({
   name, str, wyt, zre = 0, int = 0, cha = 0,
-  weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓",
+  weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓", gender = null,
 }) {
   const maxHP = hp !== null ? hp : 50 + str * 5 + wyt * 5;
   const derived = computeDerivedStats({ zre, int, cha, przebicie });
 
   return {
     name,
+    gender,
     str,
     wyt,
     zre,
@@ -49,16 +50,20 @@ function switchWeapon(character) {
   return true;
 }
 
-function applyClassProfile(character, profile) {
-  const derived = computeDerivedStats({
-    zre: profile.zre, int: profile.int, cha: profile.cha, przebicie: profile.przebicie,
-  });
+function applyClassProfile(character, profile, bonusStats = null) {
+  const bonus = bonusStats || { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  const str = profile.str + (bonus.str || 0);
+  const wyt = profile.wyt + (bonus.wyt || 0);
+  const zre = profile.zre + (bonus.zre || 0);
+  const int = profile.int + (bonus.int || 0);
+  const cha = profile.cha + (bonus.cha || 0);
+  const derived = computeDerivedStats({ zre, int, cha, przebicie: profile.przebicie });
 
-  character.str = profile.str;
-  character.wyt = profile.wyt;
-  character.zre = profile.zre;
-  character.int = profile.int;
-  character.cha = profile.cha;
+  character.str = str;
+  character.wyt = wyt;
+  character.zre = zre;
+  character.int = int;
+  character.cha = cha;
   character.weapons = profile.weapons;
   character.weaponIndex = 0;
   character.weapon = profile.weapons[0];
@@ -71,13 +76,14 @@ function applyClassProfile(character, profile) {
   character.d20Bonus = derived.d20Bonus;
   character.charismaExponent = derived.charismaExponent;
   character.moveRange = derived.moveRange;
-  character.maxHP = profile.hp;
-  character.currentHP = profile.hp;
+  character.maxHP = profile.hp + ((bonus.str || 0) + (bonus.wyt || 0)) * 5;
+  character.currentHP = character.maxHP;
 }
 
-function createPlayer() {
+function createPlayer(name, gender) {
   return createCharacter({
-    name: "Ty",
+    name: name && name.trim() ? name.trim() : "Bezimienny",
+    gender: gender || null,
     str: 8,
     wyt: 6,
     zre: 12,

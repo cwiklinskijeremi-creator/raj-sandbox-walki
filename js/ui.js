@@ -41,7 +41,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
   }
 
   const classLine = fighter.isPlayer && fighter.class
-    ? `<div class="stats class-line">Klasa: ${fighter.class}${fighter.subclass ? " — " + fighter.subclass : " (wybierz specjalizację poniżej)"}</div>`
+    ? `<div class="stats class-line">Klasa: ${fighter.class}${fighter.subclass ? " — " + fighter.subclass : ""}${fighter.gender ? " &nbsp;|&nbsp; Płeć: " + fighter.gender : ""}</div>`
     : "";
 
   el.innerHTML = `
@@ -343,8 +343,17 @@ function showRadialMenu(hex, options) {
   fxLayer.appendChild(menu);
 }
 
-function renderClassPicker(selectedClassName, selectedSubclassName, onSelectClass, onSelectSubclass) {
-  const wheel = document.getElementById("class-wheel");
+function renderCharacterCreation(state, handlers) {
+  const { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats } = state;
+
+  const nameInput = document.getElementById("creation-name-input");
+  if (document.activeElement !== nameInput) nameInput.value = playerName;
+
+  document.querySelectorAll(".gender-btn").forEach((btn) => {
+    btn.classList.toggle("selected", btn.dataset.gender === playerGender);
+  });
+
+  const wheel = document.getElementById("creation-class-wheel");
   const radius = 95;
   const center = radius + 32;
   wheel.style.width = `${center * 2}px`;
@@ -356,25 +365,24 @@ function renderClassPicker(selectedClassName, selectedSubclassName, onSelectClas
 
   CLASS_DATA.forEach((cls, i) => {
     const angle = startAngle + i * angleStep;
+    const isSelected = cls.name === selectedClassName;
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `class-wheel-btn${cls.name === selectedClassName ? " selected" : ""}`;
+    btn.className = `class-wheel-btn${isSelected ? " selected centered" : selectedClassName ? " dimmed" : ""}`;
     btn.textContent = cls.icon;
     btn.title = cls.name;
-    btn.style.left = `${center + radius * Math.cos(angle)}px`;
-    btn.style.top = `${center + radius * Math.sin(angle)}px`;
-    btn.addEventListener("click", () => onSelectClass(cls));
+    btn.style.left = `${isSelected ? center : center + radius * Math.cos(angle)}px`;
+    btn.style.top = `${isSelected ? center : center + radius * Math.sin(angle)}px`;
+    btn.addEventListener("click", () => handlers.onSelectClass(cls));
     wheel.appendChild(btn);
   });
 
-  const centerLabel = document.createElement("div");
-  centerLabel.className = "class-wheel-center";
+  const centerLabel = document.getElementById("creation-wheel-center");
   centerLabel.style.left = `${center}px`;
   centerLabel.style.top = `${center}px`;
-  centerLabel.textContent = selectedClassName || "Klasa";
-  wheel.appendChild(centerLabel);
+  centerLabel.textContent = selectedClassName ? "" : "Klasa";
 
-  const subRow = document.getElementById("subclass-row");
+  const subRow = document.getElementById("creation-subclass-row");
   subRow.innerHTML = "";
   const selectedClass = CLASS_DATA.find((c) => c.name === selectedClassName);
   if (selectedClass) {
@@ -383,17 +391,57 @@ function renderClassPicker(selectedClassName, selectedSubclassName, onSelectClas
       btn.type = "button";
       btn.className = `subclass-btn${sub.name === selectedSubclassName ? " selected" : ""}`;
       btn.textContent = `${sub.icon} ${sub.name}`;
-      btn.addEventListener("click", () => onSelectSubclass(sub));
+      btn.addEventListener("click", () => handlers.onSelectSubclass(sub));
       subRow.appendChild(btn);
     });
   }
 
-  const info = document.getElementById("class-selection-info");
-  info.textContent = !selectedClassName
-    ? "Wybierz klasę postaci."
-    : !selectedSubclassName
-      ? `Wybrana klasa: ${selectedClassName} — wybierz specjalizację poniżej.`
-      : `Postać: ${selectedClassName} — ${selectedSubclassName}`;
+  const descEl = document.getElementById("creation-description");
+  const selectedSub = selectedClass && selectedClass.subclasses.find((s) => s.name === selectedSubclassName);
+  if (!selectedClassName) {
+    descEl.innerHTML = `<p class="creation-hint">Wybierz klasę postaci.</p>`;
+  } else if (!selectedSub) {
+    descEl.innerHTML = `<p class="creation-hint">Wybrano: ${selectedClassName} — wybierz specjalizację, aby zobaczyć opis.</p>`;
+  } else {
+    descEl.innerHTML = `
+      <h4>${selectedSub.icon} ${selectedSub.name}</h4>
+      <p>${LORE_DATA.classFlavor[selectedSub.name] || ""}</p>
+      <div class="codex-subclass-gear">Broń: ${selectedSub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${selectedSub.skill.name}</div>
+    `;
+  }
+
+  const statsEl = document.getElementById("creation-stats");
+  const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+  const remaining = 10 - spent;
+  if (!selectedSub) {
+    statsEl.innerHTML = `<p class="creation-hint">Wybierz specjalizację, aby rozdzielić 10 punktów statystyk.</p>`;
+  } else {
+    const statMeta = [
+      { key: "str", label: "STR" },
+      { key: "wyt", label: "WYT" },
+      { key: "zre", label: "ZRE" },
+      { key: "int", label: "INT" },
+      { key: "cha", label: "CHA" },
+    ];
+    statsEl.innerHTML = `<div class="creation-points-remaining">Pozostałe punkty: <strong>${remaining}</strong>/10</div>` +
+      statMeta.map(({ key, label }) => `
+        <div class="stat-row">
+          <span class="stat-row-label">${label}</span>
+          <span class="stat-row-value">${selectedSub[key] + bonusStats[key]}</span>
+          <button type="button" class="stat-btn stat-minus" data-stat="${key}" ${bonusStats[key] <= 0 ? "disabled" : ""}>−</button>
+          <button type="button" class="stat-btn stat-plus" data-stat="${key}" ${remaining <= 0 ? "disabled" : ""}>+</button>
+        </div>
+      `).join("");
+    statsEl.querySelectorAll(".stat-minus").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onAdjustStat(btn.dataset.stat, -1));
+    });
+    statsEl.querySelectorAll(".stat-plus").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onAdjustStat(btn.dataset.stat, 1));
+    });
+  }
+
+  const confirmBtn = document.getElementById("creation-confirm-btn");
+  confirmBtn.disabled = !(playerName.trim().length > 0 && !!playerGender && !!selectedSub);
 }
 
 function renderMainMenuState(activeRunData) {

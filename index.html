@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
@@ -21,6 +21,35 @@
       <button id="exit-game-btn" type="button">Wyjdź z gry</button>
     </div>
     <p class="main-menu-save-info" id="main-menu-save-info"></p>
+  </section>
+
+  <section class="character-creation-screen hidden" id="character-creation-screen">
+    <h2>Stwórz postać</h2>
+
+    <div class="creation-row">
+      <label class="creation-label" for="creation-name-input">Imię</label>
+      <input type="text" id="creation-name-input" maxlength="24" placeholder="Wpisz imię postaci">
+    </div>
+
+    <div class="creation-row">
+      <span class="creation-label">Płeć</span>
+      <div class="gender-buttons">
+        <button type="button" class="gender-btn" data-gender="Mężczyzna">♂ Mężczyzna</button>
+        <button type="button" class="gender-btn" data-gender="Kobieta">♀ Kobieta</button>
+      </div>
+    </div>
+
+    <div class="creation-class-area">
+      <div class="class-wheel" id="creation-class-wheel"></div>
+      <div class="class-wheel-center" id="creation-wheel-center"></div>
+    </div>
+    <div class="subclass-row" id="creation-subclass-row"></div>
+
+    <div class="creation-description" id="creation-description"></div>
+
+    <div class="creation-stats" id="creation-stats"></div>
+
+    <button type="button" id="creation-confirm-btn" class="creation-confirm-btn" disabled>Rozpocznij grę</button>
   </section>
 
   <section class="location-screen hidden" id="location-screen">
@@ -67,13 +96,6 @@
       <button id="mute-btn" type="button">🔊 Dźwięk</button>
       <button id="codex-btn" type="button">📜 Kodeks świata</button>
     </div>
-
-    <section class="class-picker">
-      <h2>Klasa postaci</h2>
-      <div class="class-wheel" id="class-wheel"></div>
-      <div class="subclass-row" id="subclass-row"></div>
-      <div class="class-selection-info" id="class-selection-info"></div>
-    </section>
 
     <section class="log-panel collapsible">
       <h2>Log walki <button class="collapse-toggle" type="button">▾</button></h2>
@@ -123,15 +145,15 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=12"></script>
-  <script src="js/dice.js?v=12"></script>
-  <script src="js/grid.js?v=12"></script>
-  <script src="js/classes.js?v=12"></script>
-  <script src="js/lore.js?v=12"></script>
-  <script src="js/locations.js?v=12"></script>
-  <script src="js/characters.js?v=12"></script>
-  <script src="js/combat.js?v=12"></script>
-  <script src="js/ui.js?v=12"></script>
-  <script src="js/main.js?v=12"></script>
+  <script src="js/audio.js?v=13"></script>
+  <script src="js/dice.js?v=13"></script>
+  <script src="js/grid.js?v=13"></script>
+  <script src="js/classes.js?v=13"></script>
+  <script src="js/lore.js?v=13"></script>
+  <script src="js/locations.js?v=13"></script>
+  <script src="js/characters.js?v=13"></script>
+  <script src="js/combat.js?v=13"></script>
+  <script src="js/ui.js?v=13"></script>
+  <script src="js/main.js?v=13"></script>
 </body>
 </html>

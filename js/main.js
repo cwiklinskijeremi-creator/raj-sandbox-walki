@@ -8,6 +8,9 @@ let radialMenuOpen = false;
 let selectedClassName = null;
 let selectedSubclassName = null;
 let currentLocation = null;
+let playerName = "";
+let playerGender = null;
+let bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
 
 const RESOURCES_STORAGE_KEY = "raj-sandbox-resources";
 const ACTIVE_RUN_KEY = "raj-sandbox-active-run";
@@ -46,6 +49,9 @@ function saveActiveRun() {
     playerActionsRemaining,
     selectedClassName,
     selectedSubclassName,
+    playerName,
+    playerGender,
+    bonusStats,
     locationKey: currentLocation ? currentLocation.key : null,
     obstacles: OBSTACLES,
     obstacleTypes: [...OBSTACLE_TYPES.entries()],
@@ -74,6 +80,9 @@ function applyActiveRunData(data) {
   playerActionsRemaining = data.playerActionsRemaining;
   selectedClassName = data.selectedClassName;
   selectedSubclassName = data.selectedSubclassName;
+  playerName = data.playerName || "";
+  playerGender = data.playerGender || null;
+  bonusStats = data.bonusStats || { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey) || null;
   restoreObstacles(data.obstacles, data.obstacleTypes);
   phase = data.phase;
@@ -117,6 +126,47 @@ function startNewGame() {
   selectedClassName = null;
   selectedSubclassName = null;
   currentLocation = null;
+  playerName = "";
+  playerGender = null;
+  bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  phase = "character-creation";
+  render();
+}
+
+function selectCreationClass(cls) {
+  selectedClassName = cls.name;
+  selectedSubclassName = null;
+  bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  render();
+}
+
+function selectCreationSubclass(sub) {
+  selectedSubclassName = sub.name;
+  bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  render();
+}
+
+function adjustBonusStat(key, delta) {
+  const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+  const next = bonusStats[key] + delta;
+  if (next < 0) return;
+  if (delta > 0 && spent >= 10) return;
+  bonusStats[key] = next;
+  render();
+}
+
+function setPlayerName(value) {
+  playerName = value;
+  render();
+}
+
+function setPlayerGender(gender) {
+  playerGender = gender;
+  render();
+}
+
+function confirmCharacterCreation() {
+  if (!playerName.trim() || !playerGender || !selectedSubclassName) return;
   phase = "location-select";
   render();
 }
@@ -143,6 +193,9 @@ function clearAllProgress() {
   selectedClassName = null;
   selectedSubclassName = null;
   currentLocation = null;
+  playerName = "";
+  playerGender = null;
+  bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
   closeSettingsModal();
   phase = "main-menu";
   render();
@@ -204,9 +257,9 @@ function startNewBattle() {
   closeRadialMenu();
   radialMenuOpen = false;
 
-  player = createPlayer();
+  player = createPlayer(playerName, playerGender);
   const savedSubclass = findSubclassData(selectedClassName, selectedSubclassName);
-  if (savedSubclass) applyClassProfile(player, savedSubclass);
+  if (savedSubclass) applyClassProfile(player, savedSubclass, bonusStats);
   player.class = selectedClassName;
   player.subclass = selectedSubclassName;
   enemies = createEnemies(currentLocation);
@@ -337,46 +390,35 @@ function findSubclassData(className, subclassName) {
   return cls && cls.subclasses.find((s) => s.name === subclassName);
 }
 
-function selectClass(cls) {
-  if (phase !== "deployment") {
-    appendLog("Klasę można wybrać tylko przed rozpoczęciem walki.", "system");
-    return;
-  }
-  selectedClassName = cls.name;
-  selectedSubclassName = null;
-  player.class = selectedClassName;
-  player.subclass = null;
-  render();
-}
-
-function selectSubclass(sub) {
-  if (phase !== "deployment") {
-    appendLog("Specjalizację można wybrać tylko przed rozpoczęciem walki.", "system");
-    return;
-  }
-  selectedSubclassName = sub.name;
-  applyClassProfile(player, sub);
-  player.class = selectedClassName;
-  player.subclass = selectedSubclassName;
-  appendLog(`Wybrano klasę: ${selectedClassName} — ${selectedSubclassName}. Statystyki i broń zaktualizowane.`, "system");
-  render();
-}
-
 function render() {
   renderResourceBar(resources);
 
   const mainMenuScreen = document.getElementById("main-menu-screen");
+  const creationScreen = document.getElementById("character-creation-screen");
   const locationScreen = document.getElementById("location-screen");
   const gameScreen = document.getElementById("game-screen");
 
   if (phase === "main-menu") {
     mainMenuScreen.classList.remove("hidden");
+    creationScreen.classList.add("hidden");
     locationScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     renderMainMenuState(loadActiveRunData());
     return;
   }
   mainMenuScreen.classList.add("hidden");
+
+  if (phase === "character-creation") {
+    creationScreen.classList.remove("hidden");
+    locationScreen.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    renderCharacterCreation(
+      { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats },
+      { onSelectClass: selectCreationClass, onSelectSubclass: selectCreationSubclass, onAdjustStat: adjustBonusStat },
+    );
+    return;
+  }
+  creationScreen.classList.add("hidden");
 
   if (phase === "location-select") {
     locationScreen.classList.remove("hidden");
@@ -387,8 +429,6 @@ function render() {
   locationScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
   renderLocationBanner(currentLocation);
-
-  renderClassPicker(selectedClassName, selectedSubclassName, selectClass, selectSubclass);
 
   const playerContainer = document.getElementById("player-fighter");
   playerContainer.innerHTML = "";
@@ -682,5 +722,11 @@ document.getElementById("settings-mute-btn").addEventListener("click", (e) => {
 });
 document.getElementById("clear-progress-btn").addEventListener("click", clearAllProgress);
 document.getElementById("exit-game-btn").addEventListener("click", exitGame);
+
+document.getElementById("creation-name-input").addEventListener("input", (e) => setPlayerName(e.target.value));
+document.querySelectorAll(".gender-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setPlayerGender(btn.dataset.gender));
+});
+document.getElementById("creation-confirm-btn").addEventListener("click", confirmCharacterCreation);
 
 render();
