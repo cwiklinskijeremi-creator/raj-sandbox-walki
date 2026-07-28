@@ -95,8 +95,8 @@ function createPlayer() {
   });
 }
 
-const ENEMY_TEMPLATES = [
-  () => createCharacter({
+const ENEMY_TEMPLATES = {
+  gornik: () => createCharacter({
     name: "Zmutowany Górnik",
     str: 5,
     wyt: 5,
@@ -112,7 +112,7 @@ const ENEMY_TEMPLATES = [
     hp: 118,
     icon: "🧟",
   }),
-  () => createCharacter({
+  lowca: () => createCharacter({
     name: "Łowca Gildii",
     str: 6,
     wyt: 6,
@@ -128,7 +128,7 @@ const ENEMY_TEMPLATES = [
     hp: 155,
     icon: "🏹",
   }),
-  () => createCharacter({
+  aberracja: () => createCharacter({
     name: "Aberracja Many",
     str: 7,
     wyt: 4,
@@ -144,7 +144,7 @@ const ENEMY_TEMPLATES = [
     hp: 100,
     icon: "👹",
   }),
-  () => createCharacter({
+  adept: () => createCharacter({
     name: "Adept Zakonu Światła",
     str: 4,
     wyt: 5,
@@ -160,14 +160,15 @@ const ENEMY_TEMPLATES = [
     hp: 95,
     icon: "🧙",
   }),
-];
+};
 
-function createEnemies() {
+function createEnemies(location = null) {
+  const keys = location && location.enemyKeys ? location.enemyKeys : Object.keys(ENEMY_TEMPLATES);
   const count = 1 + Math.floor(Math.random() * 4);
   const chosen = [];
   for (let i = 0; i < count; i++) {
-    const template = ENEMY_TEMPLATES[Math.floor(Math.random() * ENEMY_TEMPLATES.length)];
-    chosen.push(template());
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    chosen.push(ENEMY_TEMPLATES[key]());
   }
 
   const nameCounts = {};

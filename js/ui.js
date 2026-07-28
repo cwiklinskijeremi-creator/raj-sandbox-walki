@@ -396,6 +396,39 @@ function renderClassPicker(selectedClassName, selectedSubclassName, onSelectClas
       : `Postać: ${selectedClassName} — ${selectedSubclassName}`;
 }
 
+function renderLocationPicker(locations, currentLocation, onSelect) {
+  const grid = document.getElementById("location-grid");
+  grid.innerHTML = "";
+  locations.forEach((loc) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = `location-card${currentLocation && currentLocation.key === loc.key ? " selected" : ""}`;
+    card.innerHTML = `
+      <div class="location-card-icon">${loc.icon}</div>
+      <div class="location-card-name">${loc.name}</div>
+      <div class="location-card-desc">${loc.description}</div>
+      <div class="location-card-resource">${loc.resource.icon} ${loc.resource.name} (${loc.resource.min}-${loc.resource.max})</div>
+    `;
+    card.addEventListener("click", () => onSelect(loc));
+    grid.appendChild(card);
+  });
+}
+
+function renderLocationBanner(location) {
+  const banner = document.getElementById("current-location-banner");
+  banner.innerHTML = location
+    ? `<span class="location-banner-icon">${location.icon}</span> <span class="location-banner-name">${location.name}</span>`
+    : "";
+}
+
+function renderResourceBar(resources) {
+  const bar = document.getElementById("resource-bar");
+  const entries = Object.entries(resources);
+  bar.innerHTML = entries.length === 0
+    ? `<span class="resource-empty">Brak zebranych zasobów — wyrusz na wyprawę.</span>`
+    : entries.map(([name, data]) => `<span class="resource-chip">${data.icon} ${name}: <strong>${data.amount}</strong></span>`).join("");
+}
+
 document.querySelectorAll(".collapse-toggle").forEach((btn) => {
   btn.addEventListener("click", () => {
     btn.closest(".collapsible").classList.toggle("collapsed");

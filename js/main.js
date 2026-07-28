@@ -3,10 +3,50 @@ let enemies;
 let selectedTargetIndex = null;
 let battleOver = false;
 let playerActionsRemaining = 1;
-let phase = "deployment";
+let phase = "location-select";
 let radialMenuOpen = false;
 let selectedClassName = null;
 let selectedSubclassName = null;
+let currentLocation = null;
+
+const RESOURCES_STORAGE_KEY = "raj-sandbox-resources";
+
+function loadResources() {
+  try {
+    return JSON.parse(localStorage.getItem(RESOURCES_STORAGE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveResources() {
+  localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resources));
+}
+
+let resources = loadResources();
+
+function awardLocationResources() {
+  if (!currentLocation) return;
+  const { name, icon, min, max } = currentLocation.resource;
+  const amount = min + Math.floor(Math.random() * (max - min + 1));
+  const existing = resources[name] ? resources[name].amount : 0;
+  resources[name] = { icon, amount: existing + amount };
+  saveResources();
+  appendLog(`Zdobywasz ${amount} × ${icon} ${name}.`, "system");
+}
+
+function selectLocation(location) {
+  currentLocation = location;
+  appendLog(`${location.icon} ${location.name}: ${location.description}`, "system");
+  startNewBattle();
+}
+
+function backToLocationSelect() {
+  phase = "location-select";
+  closeRadialMenu();
+  radialMenuOpen = false;
+  render();
+}
 
 function isOccupied(hex, excluding) {
   const all = [player, ...enemies];
@@ -30,7 +70,7 @@ function deployEnemiesRandomly() {
 }
 
 function startNewBattle() {
-  regenerateObstacles();
+  regenerateObstacles(currentLocation ? currentLocation.obstacleBias : null);
   resetTokenLayer();
   closeRadialMenu();
   radialMenuOpen = false;
@@ -40,7 +80,7 @@ function startNewBattle() {
   if (savedSubclass) applyClassProfile(player, savedSubclass);
   player.class = selectedClassName;
   player.subclass = selectedSubclassName;
-  enemies = createEnemies();
+  enemies = createEnemies(currentLocation);
 
   const defaultPos = getStartPositions().player;
   player.pos = isObstacle(defaultPos)
@@ -194,6 +234,21 @@ function selectSubclass(sub) {
 }
 
 function render() {
+  renderResourceBar(resources);
+
+  const locationScreen = document.getElementById("location-screen");
+  const gameScreen = document.getElementById("game-screen");
+
+  if (phase === "location-select") {
+    locationScreen.classList.remove("hidden");
+    gameScreen.classList.add("hidden");
+    renderLocationPicker(LOCATIONS, currentLocation, selectLocation);
+    return;
+  }
+  locationScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  renderLocationBanner(currentLocation);
+
   renderClassPicker(selectedClassName, selectedSubclassName, selectClass, selectSubclass);
 
   const playerContainer = document.getElementById("player-fighter");
@@ -292,6 +347,7 @@ function finishPlayerAction(target) {
     appendLog("Zwycięstwo! Wszyscy przeciwnicy pokonani.", "system");
     playVictorySound();
     battleOver = true;
+    awardLocationResources();
     render();
     return;
   }
@@ -461,5 +517,6 @@ document.getElementById("mute-btn").addEventListener("click", (e) => {
   const muted = toggleAudioMuted();
   e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
 });
+document.getElementById("change-location-btn").addEventListener("click", backToLocationSelect);
 
-startNewBattle();
+render();

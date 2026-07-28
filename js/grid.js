@@ -229,10 +229,17 @@ function findObstacleClusters(obstacles) {
   return clusters;
 }
 
-function assignObstacleTypes(obstacles) {
+function assignObstacleTypes(obstacles, biasType = null) {
   const types = new Map();
   for (const cluster of findObstacleClusters(obstacles)) {
-    const type = cluster.length === 1 ? "rock" : (Math.random() < 0.5 ? "tree" : "lake");
+    let type;
+    if (cluster.length === 1) {
+      type = "rock";
+    } else if (biasType && Math.random() < 0.7) {
+      type = biasType;
+    } else {
+      type = Math.random() < 0.5 ? "tree" : "lake";
+    }
     for (const hex of cluster) types.set(hexKey(hex), type);
   }
   return types;
@@ -242,10 +249,10 @@ let OBSTACLES = [];
 let OBSTACLE_KEYS = new Set();
 let OBSTACLE_TYPES = new Map();
 
-function regenerateObstacles() {
+function regenerateObstacles(biasType = null) {
   OBSTACLES = generateObstacles();
   OBSTACLE_KEYS = new Set(OBSTACLES.map(hexKey));
-  OBSTACLE_TYPES = assignObstacleTypes(OBSTACLES);
+  OBSTACLE_TYPES = assignObstacleTypes(OBSTACLES, biasType);
 }
 
 function isObstacle(hex) {

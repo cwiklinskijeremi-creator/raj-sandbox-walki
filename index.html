@@ -3,44 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
   <h1>Sandbox Walki — K6 + K20 + Siatka</h1>
 
-  <div class="arena">
-    <section class="panel player-panel collapsible" id="player-panel">
-      <h2>Gracz <button class="collapse-toggle" type="button">▾</button></h2>
-      <div class="fighter collapsible-content" id="player-fighter"></div>
+  <div class="resource-bar" id="resource-bar"></div>
+
+  <section class="location-screen" id="location-screen">
+    <h2>Wybierz cel wyprawy</h2>
+    <div class="location-grid" id="location-grid"></div>
+  </section>
+
+  <div class="hidden" id="game-screen">
+    <div class="current-location-banner" id="current-location-banner"></div>
+
+    <div class="arena">
+      <section class="panel player-panel collapsible" id="player-panel">
+        <h2>Gracz <button class="collapse-toggle" type="button">▾</button></h2>
+        <div class="fighter collapsible-content" id="player-fighter"></div>
+      </section>
+
+      <section class="map-panel">
+        <div class="map-stage">
+          <svg id="battle-map"></svg>
+          <div id="fx-layer"></div>
+        </div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-swatch swatch-obstacle"></span>Przeszkoda (osłona)</span>
+          <span class="legend-item"><span class="legend-swatch swatch-reachable"></span>Osiągalne ruchem</span>
+          <span class="legend-item"><span class="legend-swatch swatch-deploy"></span>Strefa rozstawienia</span>
+          <span class="legend-item"><span class="legend-swatch swatch-player"></span>Ty</span>
+          <span class="legend-item"><span class="legend-swatch swatch-enemy"></span>Przeciwnik</span>
+        </div>
+      </section>
+
+      <section class="panel enemies-panel collapsible">
+        <h2>Przeciwnicy <button class="collapse-toggle" type="button">▾</button></h2>
+        <div class="collapsible-content" id="enemies-list"></div>
+      </section>
+    </div>
+
+    <div class="controls">
+      <button id="start-battle-btn">Rozpocznij walkę</button>
+      <button id="attack-btn">Atakuj wybrany cel</button>
+      <button id="end-turn-btn">Zakończ turę</button>
+      <button id="reset-btn">Nowa walka</button>
+      <button id="change-location-btn" type="button">🗺️ Zmień lokację</button>
+      <button id="mute-btn" type="button">🔊 Dźwięk</button>
+      <button id="codex-btn" type="button">📜 Kodeks świata</button>
+    </div>
+
+    <section class="class-picker">
+      <h2>Klasa postaci</h2>
+      <div class="class-wheel" id="class-wheel"></div>
+      <div class="subclass-row" id="subclass-row"></div>
+      <div class="class-selection-info" id="class-selection-info"></div>
     </section>
 
-    <section class="map-panel">
-      <div class="map-stage">
-        <svg id="battle-map"></svg>
-        <div id="fx-layer"></div>
-      </div>
-      <div class="map-legend">
-        <span class="legend-item"><span class="legend-swatch swatch-obstacle"></span>Przeszkoda (osłona)</span>
-        <span class="legend-item"><span class="legend-swatch swatch-reachable"></span>Osiągalne ruchem</span>
-        <span class="legend-item"><span class="legend-swatch swatch-deploy"></span>Strefa rozstawienia</span>
-        <span class="legend-item"><span class="legend-swatch swatch-player"></span>Ty</span>
-        <span class="legend-item"><span class="legend-swatch swatch-enemy"></span>Przeciwnik</span>
-      </div>
+    <section class="log-panel collapsible">
+      <h2>Log walki <button class="collapse-toggle" type="button">▾</button></h2>
+      <div class="collapsible-content" id="combat-log"></div>
     </section>
-
-    <section class="panel enemies-panel collapsible">
-      <h2>Przeciwnicy <button class="collapse-toggle" type="button">▾</button></h2>
-      <div class="collapsible-content" id="enemies-list"></div>
-    </section>
-  </div>
-
-  <div class="controls">
-    <button id="start-battle-btn">Rozpocznij walkę</button>
-    <button id="attack-btn">Atakuj wybrany cel</button>
-    <button id="end-turn-btn">Zakończ turę</button>
-    <button id="reset-btn">Nowa walka</button>
-    <button id="mute-btn" type="button">🔊 Dźwięk</button>
-    <button id="codex-btn" type="button">📜 Kodeks świata</button>
   </div>
 
   <div class="codex-overlay hidden" id="codex-overlay">
@@ -53,26 +77,15 @@
     </div>
   </div>
 
-  <section class="class-picker">
-    <h2>Klasa postaci</h2>
-    <div class="class-wheel" id="class-wheel"></div>
-    <div class="subclass-row" id="subclass-row"></div>
-    <div class="class-selection-info" id="class-selection-info"></div>
-  </section>
-
-  <section class="log-panel collapsible">
-    <h2>Log walki <button class="collapse-toggle" type="button">▾</button></h2>
-    <div class="collapsible-content" id="combat-log"></div>
-  </section>
-
-  <script src="js/audio.js?v=10"></script>
-  <script src="js/dice.js?v=10"></script>
-  <script src="js/grid.js?v=10"></script>
-  <script src="js/classes.js?v=10"></script>
-  <script src="js/lore.js?v=10"></script>
-  <script src="js/characters.js?v=10"></script>
-  <script src="js/combat.js?v=10"></script>
-  <script src="js/ui.js?v=10"></script>
-  <script src="js/main.js?v=10"></script>
+  <script src="js/audio.js?v=11"></script>
+  <script src="js/dice.js?v=11"></script>
+  <script src="js/grid.js?v=11"></script>
+  <script src="js/classes.js?v=11"></script>
+  <script src="js/lore.js?v=11"></script>
+  <script src="js/locations.js?v=11"></script>
+  <script src="js/characters.js?v=11"></script>
+  <script src="js/combat.js?v=11"></script>
+  <script src="js/ui.js?v=11"></script>
+  <script src="js/main.js?v=11"></script>
 </body>
 </html>

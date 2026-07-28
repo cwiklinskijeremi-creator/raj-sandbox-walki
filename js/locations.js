@@ -1,0 +1,38 @@
+const LOCATIONS = [
+  {
+    key: "kopalnie",
+    name: "Kopalnie Esencji",
+    icon: "⛏️",
+    description: "Podziemne szyby, gdzie niewolnicy wydobywają pulsujące kryształy. Promieniowanie esencji mutowało niejednego górnika w coś, co dawno przestało być człowiekiem.",
+    enemyKeys: ["gornik", "aberracja"],
+    obstacleBias: "rock",
+    resource: { name: "Kryształy Esencji", icon: "💎", min: 8, max: 16 },
+  },
+  {
+    key: "las",
+    name: "Skażony Las",
+    icon: "🌲",
+    description: "Poza murami Aetherionu powietrze trzeszczy od niestabilnej many. Fauna tych lasów dawno przestała być fauną — aberracje czają się między drzewami.",
+    enemyKeys: ["aberracja", "gornik"],
+    obstacleBias: "tree",
+    resource: { name: "Spaczone Zioła", icon: "🌿", min: 6, max: 12 },
+  },
+  {
+    key: "szlak",
+    name: "Szlak Gildii",
+    icon: "🗺️",
+    description: "Trasa patrolowana przez Gildię Poszukiwaczy Przygód — brutalnych łowców nagród, lojalnych wobec Rady za ochłapy esencji.",
+    enemyKeys: ["lowca"],
+    obstacleBias: "lake",
+    resource: { name: "Nagroda Gildii", icon: "🪙", min: 10, max: 20 },
+  },
+  {
+    key: "placowka",
+    name: "Placówka Zakonu Światła",
+    icon: "⛪",
+    description: "Skromna misja Zakonu Światła, gdzie adepci „leczą” niewolników słabymi czarami — wystarczająco, by mogli wrócić do kopania.",
+    enemyKeys: ["adept"],
+    obstacleBias: "rock",
+    resource: { name: "Fiolki Światła", icon: "🧴", min: 5, max: 10 },
+  },
+];
