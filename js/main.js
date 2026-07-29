@@ -817,7 +817,21 @@ function openPlayerActionMenu() {
         castSkill();
       },
     },
+    {
+      icon: "🧪",
+      label: potionButtonLabel(),
+      disabled: playerActionsRemaining <= 0 || Object.keys(potionInventory).length === 0,
+      onClick: () => {
+        radialMenuOpen = false;
+        openPotionMenu();
+      },
+    },
   ]);
+}
+
+function potionButtonLabel() {
+  const totalCount = Object.values(potionInventory).reduce((a, b) => a + b, 0);
+  return totalCount > 0 ? `Mikstury (${totalCount})` : "Mikstury (brak)";
 }
 
 function playerSkill() {
@@ -1031,11 +1045,8 @@ function render() {
 
   const attackBtn = document.getElementById("attack-btn");
   const endTurnBtn = document.getElementById("end-turn-btn");
-  const potionsBtn = document.getElementById("potions-btn");
   attackBtn.style.display = phase === "battle" ? "" : "none";
   endTurnBtn.style.display = phase === "battle" ? "" : "none";
-  potionsBtn.style.display = phase === "battle" ? "" : "none";
-  potionsBtn.disabled = battleOver || playerActionsRemaining <= 0;
   attackBtn.disabled = battleOver || playerActionsRemaining <= 0 || !targetInRange;
   attackBtn.textContent = targetInRange || !target
     ? `Atakuj wybrany cel (akcje: ${playerActionsRemaining}/${1 + player.extraActions})`
@@ -1374,7 +1385,6 @@ function enemyPhase() {
 }
 
 document.getElementById("attack-btn").addEventListener("click", playerAttack);
-document.getElementById("potions-btn").addEventListener("click", openPotionMenu);
 document.getElementById("potions-close").addEventListener("click", closePotionMenu);
 document.getElementById("end-turn-btn").addEventListener("click", () => {
   if (battleOver) return;
@@ -1386,7 +1396,6 @@ document.getElementById("start-battle-btn").addEventListener("click", () => {
   appendLog("Walka rozpoczęta!", "system");
   render();
 });
-document.getElementById("reset-btn").addEventListener("click", startNewBattle);
 document.getElementById("mute-btn").addEventListener("click", (e) => {
   const muted = toggleAudioMuted();
   e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
