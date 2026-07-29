@@ -286,6 +286,16 @@ h1 { text-align: center; }
   opacity: 0.4;
 }
 
+.fighter.boss-fighter {
+  border-color: #a83232;
+  box-shadow: 0 0 0 1px #a83232;
+}
+
+.fighter.boss-fighter.selected {
+  border-color: #e0574b;
+  box-shadow: 0 0 0 1px #e0574b;
+}
+
 .fighter + .fighter {
   margin-top: 0.75rem;
 }
@@ -788,6 +798,15 @@ button:disabled {
   font-style: italic;
 }
 
+.codex-boss-entry {
+  border-left: 2px solid #a83232;
+  padding-left: 0.6rem;
+}
+
+.codex-boss-entry .codex-subclass-title {
+  color: #e0574b;
+}
+
 .codex-subclass-gear {
   font-size: 0.85rem;
   color: #a89c8f;
@@ -970,6 +989,16 @@ button:disabled {
 
 .location-banner-icon {
   font-size: 1.2rem;
+}
+
+.boss-battle-badge {
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #a83232;
+  color: #f5e6c8;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .main-menu-screen {

@@ -7,6 +7,7 @@ const LOCATIONS = [
     enemyKeys: ["gornik", "aberracja", "kopacz", "pelzacz", "nadzorca", "pijawka", "kolos"],
     obstacleBias: "rock",
     resource: { name: "Kryształy Esencji", icon: "💎", min: 8, max: 16 },
+    bossKey: "boss_kopalnie",
   },
   {
     key: "las",
@@ -16,6 +17,7 @@ const LOCATIONS = [
     enemyKeys: ["aberracja", "gornik", "wilk", "konstrukt", "szarancza", "pomiot", "traper"],
     obstacleBias: "tree",
     resource: { name: "Spaczone Zioła", icon: "🌿", min: 6, max: 12 },
+    bossKey: "boss_las",
   },
   {
     key: "szlak",
@@ -25,6 +27,7 @@ const LOCATIONS = [
     enemyKeys: ["lowca", "zwiadowca", "egzekutor", "tropiciel", "strzelec", "kapitan"],
     obstacleBias: "lake",
     resource: { name: "Nagroda Gildii", icon: "🪙", min: 10, max: 20 },
+    bossKey: "boss_szlak",
   },
   {
     key: "placowka",
@@ -34,5 +37,6 @@ const LOCATIONS = [
     enemyKeys: ["adept", "nowicjusz", "egzekutorwiary", "inkwizytor", "straznik", "kaplanka"],
     obstacleBias: "rock",
     resource: { name: "Fiolki Światła", icon: "🧴", min: 5, max: 10 },
+    bossKey: "boss_placowka",
   },
 ];

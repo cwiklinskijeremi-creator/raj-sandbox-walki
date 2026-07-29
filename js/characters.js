@@ -359,6 +359,88 @@ const ENEMY_TEMPLATES = {
   }),
 };
 
+const BOSS_TEMPLATES = {
+  boss_kopalnie: () => {
+    const c = createCharacter({
+      name: "Pradawny Strażnik Kryształów",
+      str: 16, wyt: 14, zre: 6, int: 4, cha: 6,
+      weapons: [
+        { name: "Kryształowa Pięść", minDmg: 16, maxDmg: 24, range: 1 },
+        { name: "Fala Wstrząsu", minDmg: 11, maxDmg: 17, range: 2 },
+      ],
+      pancerz: 0.20, przebicie: 0.10, hp: 320, icon: "🗿",
+    });
+    c.isBoss = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Krystalizacja", icon: "💠", cooldown: 4,
+      effectType: "self_buff", stat: "pancerz", effectValue: 0.20, effectTurns: 3,
+      label: "krystalizacja",
+    };
+    return c;
+  },
+  boss_las: () => {
+    const c = createCharacter({
+      name: "Matka Rojowiska",
+      str: 11, wyt: 9, zre: 12, int: 3, cha: 5,
+      weapons: [
+        { name: "Żądła Rojowiska", minDmg: 13, maxDmg: 19, range: 1 },
+        { name: "Plucie Jadem", minDmg: 9, maxDmg: 14, range: 3 },
+      ],
+      pancerz: 0.10, przebicie: 0.12, hp: 260, icon: "🕷️",
+    });
+    c.isBoss = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Zaraza Rojowiska", icon: "☠️", cooldown: 4,
+      minDmg: 6, maxDmg: 10, range: 4,
+      effectType: "poison_dot", effectValue: 12, effectTurns: 3,
+      label: "zaraza rojowiska",
+    };
+    return c;
+  },
+  boss_szlak: () => {
+    const c = createCharacter({
+      name: "Zdradziecki Łowca-Mistrz",
+      str: 13, wyt: 10, zre: 14, int: 6, cha: 10,
+      weapons: [
+        { name: "Zaklęta Kusza", minDmg: 14, maxDmg: 20, range: 6 },
+        { name: "Katowski Topór", minDmg: 12, maxDmg: 17, range: 1 },
+      ],
+      pancerz: 0.16, przebicie: 0.18, hp: 290, icon: "🏹",
+    });
+    c.isBoss = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Rozdzierający Strzał", icon: "🎯", cooldown: 4,
+      minDmg: 10, maxDmg: 15, range: 6,
+      effectType: "armor_shred", effectValue: 0.20, effectTurns: 3,
+      label: "rozdarty pancerz",
+    };
+    return c;
+  },
+  boss_placowka: () => {
+    const c = createCharacter({
+      name: "Skorumpowany Arcykapłan",
+      str: 9, wyt: 10, zre: 8, int: 14, cha: 14,
+      weapons: [
+        { name: "Spaczony Promień", minDmg: 12, maxDmg: 18, range: 6 },
+        { name: "Rytualny Sztylet", minDmg: 9, maxDmg: 14, range: 1 },
+      ],
+      pancerz: 0.14, przebicie: 0.12, hp: 270, icon: "🕯️",
+    });
+    c.isBoss = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Mroczne Wysysanie", icon: "🩸", cooldown: 4,
+      minDmg: 11, maxDmg: 16, range: 5,
+      effectType: "lifesteal", effectValue: 0.6,
+      label: "mroczne wysysanie",
+    };
+    return c;
+  },
+};
+
 function createEnemies(location = null) {
   const keys = location && location.enemyKeys ? location.enemyKeys : Object.keys(ENEMY_TEMPLATES);
   const count = 1 + Math.floor(Math.random() * 4);

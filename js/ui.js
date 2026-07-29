@@ -5,6 +5,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
   if (selectable && !dead) el.classList.add("selectable");
   if (selected) el.classList.add("selected");
   if (dead) el.classList.add("dead");
+  if (fighter.isBoss) el.classList.add("boss-fighter");
 
   const hpPct = Math.max(0, (fighter.currentHP / fighter.maxHP) * 100);
 
@@ -40,12 +41,17 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
   if (fighter.poison && fighter.poison.turnsLeft > 0) {
     effectParts.push(`☠️ trucizna ${fighter.poison.dmgPerTurn}/turę (${fighter.poison.turnsLeft})`);
   }
+  if (fighter.isBoss && fighter.special) {
+    effectParts.push(fighter.specialCooldown > 0
+      ? `${fighter.special.icon} ${fighter.special.name} (odnowienie: ${fighter.specialCooldown})`
+      : `${fighter.special.icon} ${fighter.special.name} (gotowe)`);
+  }
   const effectsHtml = effectParts.length && !dead
     ? `<div class="stats fighter-effects">Efekty: ${effectParts.join(", ")}</div>`
     : "";
 
   el.innerHTML = `
-    <strong>${fighter.name}</strong> ${dead ? "(martwy)" : ""}
+    <strong>${fighter.isBoss ? "👑 " : ""}${fighter.name}</strong> ${dead ? "(martwy)" : ""}
     <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${hpPct}%"></div>${hpBarPreview}</div>
     ${bodyHtml}
     ${effectsHtml}
@@ -721,11 +727,14 @@ function renderLocationPicker(locations, currentLocation, onSelect) {
   });
 }
 
-function renderLocationBanner(location) {
+function renderLocationBanner(location, isBossBattle = false) {
   const banner = document.getElementById("current-location-banner");
-  banner.innerHTML = location
-    ? `<span class="location-banner-icon">${location.icon}</span> <span class="location-banner-name">${location.name}</span>`
-    : "";
+  if (!location) {
+    banner.innerHTML = "";
+    return;
+  }
+  const bossBadge = isBossBattle ? `<span class="boss-battle-badge">👑 Walka z bossem</span>` : "";
+  banner.innerHTML = `<span class="location-banner-icon">${location.icon}</span> <span class="location-banner-name">${location.name}</span>${bossBadge}`;
 }
 
 function renderCityPicker(places, onSelect) {
@@ -902,6 +911,28 @@ function renderCodexTabBody(tabKey) {
             </div>
           `;
         }).join("")}
+        ${loc.bossKey ? (() => {
+          if (!discoveredEnemies.includes(loc.bossKey)) {
+            return `
+              <div class="codex-subclass codex-boss-entry">
+                <div class="codex-subclass-title codex-undiscovered">👑❓ Nieznany boss</div>
+                <div class="codex-subclass-gear">Rzadka, groźna komnata bossa czasem pojawia się w trakcie przemierzania tej lokacji — pokonaj go, aby odkryć jego dane.</div>
+              </div>
+            `;
+          }
+          const b = BOSS_TEMPLATES[loc.bossKey]();
+          return `
+            <div class="codex-subclass codex-boss-entry">
+              <div class="codex-subclass-title">👑 ${b.icon} ${b.name}</div>
+              <div class="codex-subclass-gear">
+                HP: ${b.maxHP} &nbsp;|&nbsp; STR: ${b.str} &nbsp; WYT: ${b.wyt} &nbsp; ZRE: ${b.zre} &nbsp; INT: ${b.int} &nbsp; CHA: ${b.cha}
+                &nbsp;|&nbsp; Pancerz: ${(b.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(b.przebicie * 100).toFixed(0)}%
+              </div>
+              <div class="codex-subclass-gear">Broń: ${b.weapons.map((w) => `${w.name} (${w.minDmg}-${w.maxDmg}, zas.${w.range})`).join(", ")}</div>
+              <div class="codex-subclass-gear">Zdolność specjalna: ${b.special.icon} ${b.special.name} (co ${turnsLabel(b.special.cooldown)})</div>
+            </div>
+          `;
+        })() : ""}
       </div>
     `).join("") + `<p class="creation-hint">Staty przeciwników rosną wraz z Twoim poziomem — powyżej pokazane są wartości bazowe. Pokonani przeciwnicy zostają odkryci na stałe.</p>`;
   }

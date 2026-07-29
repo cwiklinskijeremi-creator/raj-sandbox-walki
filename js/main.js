@@ -21,6 +21,8 @@ let dungeonHpLoss = 0;
 let dungeonBattleBuff = { pancerz: 0 };
 let dungeonRoomResolved = false;
 let dungeonOutcomeText = "";
+let pendingBossFight = false;
+let isBossBattle = false;
 
 function xpToNextLevel(lvl) {
   return lvl * 50;
@@ -65,7 +67,16 @@ function pickWeightedRoomType() {
 }
 
 function generateDungeonRooms() {
-  return [0, 1, 2].map(() => pickWeightedRoomType());
+  const rooms = [0, 1, 2].map(() => pickWeightedRoomType());
+  if (currentLocation && currentLocation.bossKey && Math.random() < 0.2) {
+    const boss = BOSS_TEMPLATES[currentLocation.bossKey]();
+    rooms.push({
+      type: "boss", icon: "👑", label: "Komnata Bossa",
+      prompt: `W głębi wyczuwasz przytłaczającą obecność — to legowisko ${boss.icon} ${boss.name}. Możesz go wyzwać już teraz, zanim wrócisz do zwykłej walki, albo zostawić go w spokoju.`,
+      optionALabel: "⚔️ Wyzwij bossa", optionBLabel: "🚪 Odejdź, nie ryzykuj",
+    });
+  }
+  return rooms;
 }
 
 function startDungeonCrawl() {
@@ -75,6 +86,7 @@ function startDungeonCrawl() {
   dungeonBattleBuff = { pancerz: 0 };
   dungeonRoomResolved = false;
   dungeonOutcomeText = "";
+  pendingBossFight = false;
   phase = "dungeon";
   render();
 }
@@ -165,6 +177,14 @@ function chooseDungeonOption(choice) {
       dungeonOutcomeText = "Ołtarz przyjmuje ofiarę — czujesz, jak coś niewidzialnego otacza twoją skórę (-8 HP, +8% pancerza na nadchodzącą walkę).";
     } else {
       dungeonOutcomeText = "Odchodzisz od ołtarza — wolisz nie ryzykować.";
+    }
+  } else if (room.type === "boss") {
+    if (choice === "A") {
+      pendingBossFight = true;
+      dungeonOutcomeText = "Wyzywasz bossa na pojedynek. Następna walka będzie tą najcięższą.";
+    } else {
+      pendingBossFight = false;
+      dungeonOutcomeText = "Odwracasz się i odchodzisz — ten pojedynek poczeka na inną okazję.";
     }
   }
 
@@ -462,6 +482,7 @@ function saveActiveRun() {
     data.dungeonBattleBuff = dungeonBattleBuff;
     data.dungeonRoomResolved = dungeonRoomResolved;
     data.dungeonOutcomeText = dungeonOutcomeText;
+    data.pendingBossFight = pendingBossFight;
   }
   if (phase === "deployment" || phase === "battle") {
     data.enemies = enemies;
@@ -470,6 +491,7 @@ function saveActiveRun() {
     data.playerActionsRemaining = playerActionsRemaining;
     data.obstacles = OBSTACLES;
     data.obstacleTypes = [...OBSTACLE_TYPES.entries()];
+    data.isBossBattle = isBossBattle;
   }
   localStorage.setItem(ACTIVE_RUN_KEY, JSON.stringify(data));
 }
@@ -511,10 +533,12 @@ function applyActiveRunData(data) {
     dungeonBattleBuff = data.dungeonBattleBuff || { pancerz: 0 };
     dungeonRoomResolved = data.dungeonRoomResolved || false;
     dungeonOutcomeText = data.dungeonOutcomeText || "";
+    pendingBossFight = data.pendingBossFight || false;
   }
 
   if (phase === "deployment" || phase === "battle") {
     enemies = data.enemies;
+    isBossBattle = data.isBossBattle || false;
     selectedTargetIndex = data.selectedTargetIndex;
     battleOver = data.battleOver;
     playerActionsRemaining = data.playerActionsRemaining;
@@ -737,7 +761,16 @@ function startNewBattle() {
   radialMenuOpen = false;
 
   player = buildPlayerCharacter();
-  enemies = createEnemies(currentLocation);
+  if (pendingBossFight && currentLocation && currentLocation.bossKey) {
+    const boss = BOSS_TEMPLATES[currentLocation.bossKey]();
+    boss.templateKey = currentLocation.bossKey;
+    enemies = [boss];
+    isBossBattle = true;
+  } else {
+    enemies = createEnemies(currentLocation);
+    isBossBattle = false;
+  }
+  pendingBossFight = false;
   enemies.forEach((enemy) => scaleEnemyForLevel(enemy, level));
 
   const defaultPos = getStartPositions().player;
@@ -754,6 +787,9 @@ function startNewBattle() {
 
   clearLog();
   appendLog("Rozstawianie: kliknij pole w swojej strefie (3 lewe kolumny), żeby ustawić postać. Przeciwnik już się rozstawił.", "system");
+  if (isBossBattle) {
+    appendLog(`👑 To walka z bossem: ${enemies[0].icon} ${enemies[0].name}!`, "system");
+  }
   if (level > 1) {
     appendLog(`Przeciwnicy są silniejsi, dopasowani do Twojego poziomu (${level}).`, "system");
   }
@@ -981,7 +1017,7 @@ function render() {
   }
 
   hideAllExcept(gameScreen);
-  renderLocationBanner(currentLocation);
+  renderLocationBanner(currentLocation, isBossBattle);
 
   const playerContainer = document.getElementById("player-fighter");
   playerContainer.innerHTML = "";
@@ -1086,6 +1122,11 @@ function awardVictory(message) {
   playVictorySound();
   battleOver = true;
   awardLocationResources();
+  if (isBossBattle) {
+    awardLocationResources();
+    awardLocationResources();
+    appendLog("👑 Pokonanie bossa przynosi potrójną nagrodę surowców!", "system");
+  }
   const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
   awardXp(xpGained);
 }
@@ -1151,6 +1192,38 @@ function tickTimedEffectsFor(target) {
     appendLog(`☠️ ${target.name} traci ${dmg} PD od trucizny.`, "damage");
     target.poison.turnsLeft--;
     if (target.poison.turnsLeft <= 0) target.poison = null;
+  }
+}
+
+function applyBossSpecialEffect(boss, result) {
+  const special = boss.special;
+
+  if (special.effectType === "self_buff") {
+    applyTimedEffect(boss, special.stat, special.effectValue, special.effectTurns, special.label);
+    const amountText = special.stat === "pancerz" ? `${Math.round(special.effectValue * 100)}%` : `+${special.effectValue}`;
+    appendLog(`${special.icon} ${boss.name} używa: ${special.name} (${amountText} ${special.stat.toUpperCase()} na ${turnsLabel(special.effectTurns)}).`, "system");
+    return;
+  }
+
+  if (special.effectType === "heal_self") {
+    const healAmount = Math.round(boss.maxHP * special.effectValue);
+    boss.currentHP = Math.min(boss.maxHP, boss.currentHP + healAmount);
+    appendLog(`${special.icon} ${boss.name} używa: ${special.name} — odzyskuje ${healAmount} PD.`, "system");
+    return;
+  }
+
+  if (!result || !result.hit) return;
+
+  if (special.effectType === "armor_shred") {
+    applyTimedEffect(player, "pancerz", -special.effectValue, special.effectTurns, special.label);
+    appendLog(`Twój pancerz słabnie o ${Math.round(special.effectValue * 100)}% na ${turnsLabel(special.effectTurns)}.`, "system");
+  } else if (special.effectType === "poison_dot") {
+    applyPoison(player, special.effectValue, special.effectTurns);
+    appendLog(`☠️ Zostajesz zatruty (${special.effectValue} PD/turę na ${turnsLabel(special.effectTurns)}).`, "system");
+  } else if (special.effectType === "lifesteal") {
+    const healAmount = Math.round(result.damage * special.effectValue);
+    boss.currentHP = Math.min(boss.maxHP, boss.currentHP + healAmount);
+    appendLog(`🩸 ${boss.name} wysysa ${healAmount} PD.`, "system");
   }
 }
 
@@ -1354,6 +1427,29 @@ function enemyPhase() {
       continue;
     }
 
+    if (enemy.isBoss && enemy.special && enemy.specialCooldown <= 0 && actionsRemaining > 0) {
+      actionsRemaining--;
+      enemy.specialCooldown = enemy.special.cooldown;
+
+      if (enemy.special.effectType === "self_buff" || enemy.special.effectType === "heal_self") {
+        applyBossSpecialEffect(enemy, null);
+      } else {
+        const virtualAttacker = Object.assign({}, enemy, { weapon: enemy.special });
+        const result = resolveAttack(virtualAttacker, player, context);
+        const { text, cssClass } = formatAttackResult(result);
+        appendLog(`${enemy.special.icon} ${enemy.name} używa: ${enemy.special.name}! ${text}`, cssClass);
+        triggerAttackFx(result, player.pos);
+        if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
+        applyBossSpecialEffect(enemy, result);
+
+        if (player.currentHP <= 0) {
+          appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");
+          playDeathSound();
+          battleOver = true;
+        }
+      }
+    }
+
     for (let i = 0; i < actionsRemaining; i++) {
       if (player.currentHP <= 0 || battleOver) break;
       const result = resolveAttack(enemy, player, context);
@@ -1373,7 +1469,10 @@ function enemyPhase() {
   if (!battleOver) {
     if (player.skillCooldown > 0) player.skillCooldown--;
     tickTimedEffectsFor(player);
-    enemies.forEach((enemy) => tickTimedEffectsFor(enemy));
+    enemies.forEach((enemy) => {
+      tickTimedEffectsFor(enemy);
+      if (enemy.specialCooldown > 0) enemy.specialCooldown--;
+    });
 
     if (enemies.every((e) => e.currentHP <= 0)) {
       awardVictory("Zwycięstwo! Trucizna dokonała reszty.");

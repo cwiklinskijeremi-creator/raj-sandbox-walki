@@ -32,6 +32,7 @@ const TUTORIAL_DATA = {
       "Każda lokacja wyprawy ma inną pulę przeciwników, dominujący typ terenu (skały/drzewa/woda) oraz inny surowiec przyznawany za zwycięstwo — warto odwiedzać różne miejsca, żeby zebrać komplet zasobów potrzebnych u kupca.",
       "Po wybraniu lokacji nie trafiasz od razu do walki — najpierw przechodzisz przez kilka komnat lochu, a w każdej z nich wybierasz między opcją bezpieczną a ryzykowną. Cichy korytarz możesz przeszukać (szansa na drobny łup, bez ryzyka) albo iść dalej. Pułapkę możesz rozbroić (łup przy sukcesie, obrażenia przy porażce) albo bezpiecznie ominąć. Znalezisko możesz zbadać dokładnie (większa nagroda, ale ryzyko pułapki) albo zabrać szybko i bezpiecznie. Zasadzkę możesz stoczyć (doświadczenie i surowiec przy zwycięstwie, obrażenia przy porażce) albo ominąć. Zapomniany ołtarz przyjmie ofiarę z Twojego zdrowia w zamian za tymczasowe wzmocnienie pancerza na nadchodzącą walkę.",
       "Obrażenia z nieudanych wyborów przechodzą na Twoje HP w nadchodzącej walce, więc ryzykowne opcje naprawdę coś kosztują, jeśli się nie powiedzie.",
+      "Czasem (rzadko) po trzech komnatach trafisz na 👑 Komnatę Bossa — unikalnego, dużo silniejszego przeciwnika z własną zdolnością specjalną, właściwego dla danej lokacji. Możesz go wyzwać od razu (samotna, ciężka walka, ale potrójna nagroda surowców za zwycięstwo) albo odejść i zmierzyć się ze zwykłą walką jak zawsze.",
     ],
   },
   combat: {
