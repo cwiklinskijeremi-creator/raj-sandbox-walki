@@ -62,7 +62,6 @@ function buildBoard() {
     const { x, y } = axialToPixel(hex);
     const mat = new THREE.MeshStandardMaterial({ color: GROUND_COLOR, roughness: 0.85 });
     const mesh = new THREE.Mesh(hexGeo, mat);
-    mesh.rotation.y = -Math.PI / 6;
     mesh.position.set(x - boardCenter.x, 0, y - boardCenter.z);
     mesh.userData.hex = hex;
     scene.add(mesh);
