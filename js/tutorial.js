@@ -42,7 +42,7 @@ const TUTORIAL_DATA = {
       "Każda tura to pula akcji (zależna od ZRE) — ruch o jedno pole i atak/umiejętność/zmiana broni kosztują po jednej akcji. Atak wymaga, żeby cel był w zasięgu broni; jeśli nie jest, podejdź bliżej albo kliknij swój token, żeby otworzyć menu zmiany broni lub rzucenia umiejętności specjalizacji.",
       "Umiejętność specjalizacji to coś więcej niż zwykły atak na dystans — każda klasa ma swój unikalny efekt: odpryski ognia na sąsiednie cele, osłabienie pancerza wroga, samoleczenie, wysysanie HP z celu, ignorowanie pancerza, chwilowa wściekłość (+SIŁ), gwarantowane trafienie krytyczne albo trucizna zadająca obrażenia co turę (także w formie trującego oparu na kilka celów naraz). Po użyciu umiejętność wchodzi w odnowienie na kilka tur — czas odnowienia widać w menu i w opisie specjalizacji przy tworzeniu postaci.",
       "Obrażenia liczone są z dwóch kostek: K6 trafia w część ciała (nogi/ręce/brzuch/klatka/głowa — głowa to krytyk x2), a K20 daje mnożnik obrażeń. Sojusznik stojący dokładnie po przeciwnej stronie celu daje +15% obrażeń (flankowanie), a przeszkoda na linii strzału przy ataku dystansowym daje celowi -25% obrażeń (osłona).",
-      "Walki są brutalne — nie ma auto-leczenia w trakcie starcia, więc każde trafienie się liczy.",
+      "Walki są brutalne — nie ma auto-leczenia w trakcie starcia, więc każde trafienie się liczy. Jedynym ratunkiem są mikstury: przycisk „🧪 Mikstury” otwiera plecak z eliksirami kupionymi u zielarza w obozie — wypicie kosztuje jedną akcję, tak jak atak czy ruch.",
       "Przycisk „🧊 Widok 3D” przełącza planszę w widok trójwymiarowy — to ta sama walka, tylko inaczej pokazana. Brązowe wzniesienia to skały, wysokie zielone bloki to drzewa, niebieskie pola to jeziora; złota kula to Ty, czerwone stożki to przeciwnicy. Klikasz pola tak samo jak w 2D, a myszą obracasz kamerę (przeciągnięcie) i przybliżasz (przewinięcie). „🗺️ Widok 2D” wraca do klasycznej planszy.",
     ],
   },
@@ -51,7 +51,8 @@ const TUTORIAL_DATA = {
     title: "Ekwipunek i rozwój",
     paragraphs: [
       "Zwycięstwo przynosi surowiec danej lokacji oraz punkty doświadczenia (PD) — im mocniejsi pokonani przeciwnicy, tym więcej PD. Kolejne poziomy wymagają coraz więcej PD i dają +3 punkty statystyk do rozdania w obozie.",
-      "W „🎒 Ekwipunek i postać” (dostępnym z obozu) widzisz pełne statystyki, zakładasz zbroje i amulety kupione u kupca obozowego za zebrane surowce, oraz rozdzielasz niewydane punkty statystyk. Surowce i ekwipunek zostają na koncie nawet po rozpoczęciu nowej gry — resetuje się tylko poziom, doświadczenie i punkty statystyk aktualnej postaci.",
+      "W „🎒 Ekwipunek i postać” (dostępnym z obozu) widzisz pełne statystyki, zakładasz zbroje i amulety kupione u kupca obozowego za zebrane surowce, oraz rozdzielasz niewydane punkty statystyk. Tam samo znajdziesz też zielarza — sprzedaje mikstury lecznicze i eliksiry chwilowo wzmacniające SIŁ/WYT/pancerz, które trafiają do plecaka i czekają na użycie w trakcie walki.",
+      "Surowce, ekwipunek i mikstury zostają na koncie nawet po rozpoczęciu nowej gry — resetuje się tylko poziom, doświadczenie i punkty statystyk aktualnej postaci.",
       "Przeciwnicy skalują się razem z Tobą — im wyższy Twój poziom, tym więcej mają HP, STR, WYT, pancerza i przebicia, więc wyprawy pozostają wyzwaniem nawet gdy postać mocno się rozwinie.",
     ],
   },

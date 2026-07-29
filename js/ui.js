@@ -498,7 +498,7 @@ function formatItemBonus(item) {
   return parts.join(", ");
 }
 
-function renderCharacterSheet(player, inventory, equipped, resources, progress, handlers) {
+function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, progress, handlers) {
   const body = document.getElementById("character-sheet-body");
   if (!player) {
     body.innerHTML = `<p class="creation-hint">Brak postaci.</p>`;
@@ -623,7 +623,45 @@ function renderCharacterSheet(player, inventory, equipped, resources, progress, 
     </div>
   `;
 
-  body.innerHTML = statsHtml + levelUpHtml + resourcesHtml + slotsHtml + inventoryHtml + shopHtml;
+  const ownedPotions = POTION_ITEMS.filter((p) => potionInventory[p.id] > 0);
+  const potionInventoryHtml = `
+    <div class="sheet-section">
+      <h4>Twoje mikstury</h4>
+      ${ownedPotions.length === 0
+        ? `<p class="sheet-empty-note">Brak mikstur w plecaku — pijesz je w trakcie walki.</p>`
+        : ownedPotions.map((potion) => `
+            <div class="sheet-item-row">
+              <div class="sheet-item-info">
+                <div class="sheet-item-name">${potion.icon} ${potion.name} <span class="potion-count">×${potionInventory[potion.id]}</span></div>
+                <div class="sheet-item-bonus">${formatPotionEffect(potion)}</div>
+              </div>
+            </div>
+          `).join("")}
+    </div>
+  `;
+
+  const potionShopHtml = `
+    <div class="sheet-section">
+      <h4>Zielarz obozowy</h4>
+      ${POTION_ITEMS.map((potion) => {
+        const owned = resources[potion.cost.currency] ? resources[potion.cost.currency].amount : 0;
+        const affordable = owned >= potion.cost.amount;
+        return `
+          <div class="sheet-item-row">
+            <div class="sheet-item-info">
+              <div class="sheet-item-name">${potion.icon} ${potion.name}</div>
+              <div class="sheet-item-desc">${potion.description}</div>
+              <div class="sheet-item-bonus">${formatPotionEffect(potion)}</div>
+              <div class="sheet-item-cost">Koszt: ${potion.cost.amount} × ${potion.cost.currency} (masz: ${owned})</div>
+            </div>
+            <button type="button" class="sheet-action-btn buy-potion-btn" data-potion="${potion.id}" ${affordable ? "" : "disabled"}>Kup</button>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  body.innerHTML = statsHtml + levelUpHtml + resourcesHtml + slotsHtml + inventoryHtml + shopHtml + potionInventoryHtml + potionShopHtml;
 
   if (unspentPoints > 0) {
     renderStatAllocatorInto(document.getElementById("sheet-stat-allocator"), baseStats, bonusStats, statPointsAvailable, handlers.onAdjustStat);
@@ -637,6 +675,31 @@ function renderCharacterSheet(player, inventory, equipped, resources, progress, 
   });
   body.querySelectorAll(".buy-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onBuy(btn.dataset.item));
+  });
+  body.querySelectorAll(".buy-potion-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onBuyPotion(btn.dataset.potion));
+  });
+}
+
+function renderPotionMenu(potionInventory, onUse) {
+  const body = document.getElementById("potions-body");
+  const owned = POTION_ITEMS.filter((p) => potionInventory[p.id] > 0);
+
+  body.innerHTML = owned.length === 0
+    ? `<p class="sheet-empty-note">Brak mikstur w plecaku — kup je u zielarza w obozie (🎒 Ekwipunek i postać).</p>`
+    : owned.map((potion) => `
+        <div class="sheet-item-row">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name">${potion.icon} ${potion.name} <span class="potion-count">×${potionInventory[potion.id]}</span></div>
+            <div class="sheet-item-desc">${potion.description}</div>
+            <div class="sheet-item-bonus">${formatPotionEffect(potion)}</div>
+          </div>
+          <button type="button" class="sheet-action-btn use-potion-btn" data-potion="${potion.id}">Wypij</button>
+        </div>
+      `).join("");
+
+  body.querySelectorAll(".use-potion-btn").forEach((btn) => {
+    btn.addEventListener("click", () => onUse(btn.dataset.potion));
   });
 }
 

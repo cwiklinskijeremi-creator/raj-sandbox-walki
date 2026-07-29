@@ -283,6 +283,75 @@ function saveEquipmentState() {
 
 let { inventory, equipped } = loadEquipmentState();
 
+const POTION_STORAGE_KEY = "raj-sandbox-potions";
+
+function loadPotionInventory() {
+  try {
+    return JSON.parse(localStorage.getItem(POTION_STORAGE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function savePotionInventory() {
+  localStorage.setItem(POTION_STORAGE_KEY, JSON.stringify(potionInventory));
+}
+
+let potionInventory = loadPotionInventory();
+
+function buyPotion(potionId) {
+  const potion = POTION_ITEMS.find((p) => p.id === potionId);
+  if (!potion || !canAffordItem(potion)) return;
+  resources[potion.cost.currency].amount -= potion.cost.amount;
+  saveResources();
+  potionInventory[potionId] = (potionInventory[potionId] || 0) + 1;
+  savePotionInventory();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+function applyPotionEffect(potion) {
+  if (potion.effectType === "heal_self") {
+    const healAmount = Math.round(player.maxHP * potion.effectValue);
+    player.currentHP = Math.min(player.maxHP, player.currentHP + healAmount);
+    appendLog(`${potion.icon} Wypijasz ${potion.name}: odzyskujesz ${healAmount} PD.`, "system");
+  } else if (potion.effectType === "self_buff") {
+    applyTimedEffect(player, potion.stat, potion.effectValue, potion.effectTurns, potion.label);
+    const amountText = potion.stat === "pancerz" ? `${Math.round(potion.effectValue * 100)}%` : `+${potion.effectValue}`;
+    appendLog(`${potion.icon} Wypijasz ${potion.name}: ${amountText} ${potion.stat.toUpperCase()} na ${turnsLabel(potion.effectTurns)}.`, "system");
+  }
+}
+
+function usePotion(potionId) {
+  if (battleOver || playerActionsRemaining <= 0) return;
+  const potion = POTION_ITEMS.find((p) => p.id === potionId);
+  if (!potion || !potionInventory[potionId]) return;
+
+  potionInventory[potionId]--;
+  if (potionInventory[potionId] <= 0) delete potionInventory[potionId];
+  savePotionInventory();
+
+  playerActionsRemaining--;
+  applyPotionEffect(potion);
+  playSpellCastSound();
+  closePotionMenu();
+
+  if (playerActionsRemaining <= 0) {
+    enemyPhase();
+  } else {
+    render();
+  }
+}
+
+function openPotionMenu() {
+  document.getElementById("potions-overlay").classList.remove("hidden");
+  renderPotionMenu(potionInventory, usePotion);
+}
+
+function closePotionMenu() {
+  document.getElementById("potions-overlay").classList.add("hidden");
+}
+
 function getEquipmentStatBonuses() {
   const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
   Object.values(equipped).forEach((itemId) => {
@@ -326,9 +395,9 @@ function refreshCharacterSheetIfOpen() {
   const overlay = document.getElementById("character-sheet-overlay");
   if (overlay.classList.contains("hidden")) return;
   renderCharacterSheet(
-    player, inventory, equipped, resources,
+    player, inventory, equipped, resources, potionInventory,
     { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable },
-    { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat },
+    { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat, onBuyPotion: buyPotion },
   );
 }
 
@@ -480,6 +549,7 @@ function goToMainMenu() {
   phase = "main-menu";
   closeRadialMenu();
   radialMenuOpen = false;
+  closePotionMenu();
   render();
 }
 
@@ -487,6 +557,7 @@ function goToCamp() {
   phase = "camp";
   closeRadialMenu();
   radialMenuOpen = false;
+  closePotionMenu();
   render();
 }
 
@@ -584,13 +655,15 @@ function closeSettingsModal() {
 }
 
 function clearAllProgress() {
-  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek, bestiariusz i zapisana gra zostaną utracone bezpowrotnie.")) return;
+  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek, mikstury, bestiariusz i zapisana gra zostaną utracone bezpowrotnie.")) return;
   clearActiveRun();
   resources = {};
   saveResources();
   inventory = [];
   equipped = defaultEquippedState();
   saveEquipmentState();
+  potionInventory = {};
+  savePotionInventory();
   discoveredEnemies = [];
   saveDiscoveredEnemies();
   selectedClassName = null;
@@ -958,8 +1031,11 @@ function render() {
 
   const attackBtn = document.getElementById("attack-btn");
   const endTurnBtn = document.getElementById("end-turn-btn");
+  const potionsBtn = document.getElementById("potions-btn");
   attackBtn.style.display = phase === "battle" ? "" : "none";
   endTurnBtn.style.display = phase === "battle" ? "" : "none";
+  potionsBtn.style.display = phase === "battle" ? "" : "none";
+  potionsBtn.disabled = battleOver || playerActionsRemaining <= 0;
   attackBtn.disabled = battleOver || playerActionsRemaining <= 0 || !targetInRange;
   attackBtn.textContent = targetInRange || !target
     ? `Atakuj wybrany cel (akcje: ${playerActionsRemaining}/${1 + player.extraActions})`
@@ -1298,6 +1374,8 @@ function enemyPhase() {
 }
 
 document.getElementById("attack-btn").addEventListener("click", playerAttack);
+document.getElementById("potions-btn").addEventListener("click", openPotionMenu);
+document.getElementById("potions-close").addEventListener("click", closePotionMenu);
 document.getElementById("end-turn-btn").addEventListener("click", () => {
   if (battleOver) return;
   enemyPhase();

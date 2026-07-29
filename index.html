@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=30">
+<link rel="stylesheet" href="style.css?v=31">
 <script type="importmap">
 {
   "imports": {
@@ -144,6 +144,7 @@
     <div class="controls">
       <button id="start-battle-btn">Rozpocznij walkę</button>
       <button id="attack-btn">Atakuj wybrany cel</button>
+      <button id="potions-btn" type="button">🧪 Mikstury</button>
       <button id="end-turn-btn">Zakończ turę</button>
       <button id="reset-btn">Nowa walka</button>
       <button id="change-location-btn" type="button">🏕️ Wróć do obozu</button>
@@ -189,6 +190,16 @@
     </div>
   </div>
 
+  <div class="codex-overlay hidden" id="potions-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs"><span class="modal-title">Mikstury</span></div>
+        <button class="codex-close" id="potions-close" type="button">✕</button>
+      </div>
+      <div class="codex-body" id="potions-body"></div>
+    </div>
+  </div>
+
   <div class="codex-overlay hidden" id="settings-overlay">
     <div class="codex-modal">
       <div class="codex-header">
@@ -221,20 +232,21 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=30"></script>
-  <script src="js/dice.js?v=30"></script>
-  <script src="js/grid.js?v=30"></script>
-  <script src="js/classes.js?v=30"></script>
-  <script src="js/lore.js?v=30"></script>
-  <script src="js/locations.js?v=30"></script>
-  <script src="js/city.js?v=30"></script>
-  <script src="js/equipment.js?v=30"></script>
-  <script src="js/tutorial.js?v=30"></script>
-  <script src="js/characters.js?v=30"></script>
-  <script src="js/combat.js?v=30"></script>
-  <script src="js/ui.js?v=30"></script>
-  <script src="js/main.js?v=30"></script>
-  <script type="module" src="js/test3d.js?v=30"></script>
-  <script type="module" src="js/board3d.js?v=30"></script>
+  <script src="js/audio.js?v=31"></script>
+  <script src="js/dice.js?v=31"></script>
+  <script src="js/grid.js?v=31"></script>
+  <script src="js/classes.js?v=31"></script>
+  <script src="js/lore.js?v=31"></script>
+  <script src="js/locations.js?v=31"></script>
+  <script src="js/city.js?v=31"></script>
+  <script src="js/equipment.js?v=31"></script>
+  <script src="js/potions.js?v=31"></script>
+  <script src="js/tutorial.js?v=31"></script>
+  <script src="js/characters.js?v=31"></script>
+  <script src="js/combat.js?v=31"></script>
+  <script src="js/ui.js?v=31"></script>
+  <script src="js/main.js?v=31"></script>
+  <script type="module" src="js/test3d.js?v=31"></script>
+  <script type="module" src="js/board3d.js?v=31"></script>
 </body>
 </html>

@@ -1117,6 +1117,11 @@ button:disabled {
   color: #c9a24b;
 }
 
+.potion-count {
+  color: #b48ce0;
+  font-weight: 400;
+}
+
 .sheet-item-row {
   display: flex;
   align-items: center;
