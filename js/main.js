@@ -246,15 +246,34 @@ function discoverEnemy(templateKey) {
 
 const EQUIPMENT_STORAGE_KEY = "raj-sandbox-equipment";
 
+function defaultEquippedState() {
+  const state = {};
+  EQUIPMENT_SLOTS.forEach((slot) => { state[slot.key] = null; });
+  return state;
+}
+
+function migrateEquippedState(rawEquipped) {
+  const state = defaultEquippedState();
+  if (!rawEquipped) return state;
+  // Old saves used "zbroja"/"amulet" as the only two slots — carry them
+  // over to their renamed replacements so existing loadouts aren't lost.
+  if (rawEquipped.zbroja) state.napiersnik = rawEquipped.zbroja;
+  if (rawEquipped.amulet) state.naszyjnik = rawEquipped.amulet;
+  EQUIPMENT_SLOTS.forEach((slot) => {
+    if (rawEquipped[slot.key]) state[slot.key] = rawEquipped[slot.key];
+  });
+  return state;
+}
+
 function loadEquipmentState() {
   try {
     const data = JSON.parse(localStorage.getItem(EQUIPMENT_STORAGE_KEY));
     return {
       inventory: (data && data.inventory) || [],
-      equipped: (data && data.equipped) || { zbroja: null, amulet: null },
+      equipped: migrateEquippedState(data && data.equipped),
     };
   } catch {
-    return { inventory: [], equipped: { zbroja: null, amulet: null } };
+    return { inventory: [], equipped: defaultEquippedState() };
   }
 }
 
@@ -327,7 +346,7 @@ function buyEquipment(itemId) {
 function equipItem(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
   if (!item || !inventory.includes(itemId)) return;
-  equipped[item.slot] = itemId;
+  equipped[resolveEquipSlotKey(item)] = itemId;
   saveEquipmentState();
   if (player && phase === "camp") player = buildPlayerCharacter();
   render();
@@ -570,7 +589,7 @@ function clearAllProgress() {
   resources = {};
   saveResources();
   inventory = [];
-  equipped = { zbroja: null, amulet: null };
+  equipped = defaultEquippedState();
   saveEquipmentState();
   discoveredEnemies = [];
   saveDiscoveredEnemies();
