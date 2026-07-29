@@ -695,7 +695,7 @@ function renderCityPlace(place, inventory, resources, onBuy) {
   });
 }
 
-function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance) {
+function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance, onChoose) {
   const title = document.getElementById("dungeon-title");
   title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";
 
@@ -706,11 +706,16 @@ function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance)
 
   const roomEl = document.getElementById("dungeon-room");
   const room = rooms[index];
+  const choiceButtons = document.getElementById("dungeon-choice-buttons");
+  const advanceBtn = document.getElementById("dungeon-advance-btn");
+  const optionABtn = document.getElementById("dungeon-option-a-btn");
+  const optionBBtn = document.getElementById("dungeon-option-b-btn");
+
   if (room) {
     roomEl.innerHTML = `
       <div class="dungeon-room-icon">${room.icon}</div>
       <div class="dungeon-room-label">${room.label}</div>
-      <p class="dungeon-room-outcome">${resolved ? outcomeText : "Nieznana komnata przed Tobą — coś tu jest."}</p>
+      <p class="dungeon-room-outcome">${resolved ? outcomeText : room.prompt}</p>
     `;
   } else {
     roomEl.innerHTML = `
@@ -720,13 +725,19 @@ function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance)
     `;
   }
 
-  const advanceBtn = document.getElementById("dungeon-advance-btn");
-  advanceBtn.textContent = !resolved
-    ? "🔍 Zbadaj komnatę"
-    : index >= rooms.length - 1
-      ? "⚔️ Wejdź do walki"
-      : "➡️ Idź dalej";
-  advanceBtn.onclick = onAdvance;
+  if (room && !resolved) {
+    choiceButtons.classList.remove("hidden");
+    advanceBtn.classList.add("hidden");
+    optionABtn.textContent = room.optionALabel;
+    optionABtn.onclick = () => onChoose("A");
+    optionBBtn.textContent = room.optionBLabel;
+    optionBBtn.onclick = () => onChoose("B");
+  } else {
+    choiceButtons.classList.add("hidden");
+    advanceBtn.classList.remove("hidden");
+    advanceBtn.textContent = index >= rooms.length - 1 ? "⚔️ Wejdź do walki" : "➡️ Idź dalej";
+    advanceBtn.onclick = onAdvance;
+  }
 }
 
 function formatResourceBar(resources) {

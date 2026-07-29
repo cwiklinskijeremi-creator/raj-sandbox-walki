@@ -18,6 +18,7 @@ let statPointsAvailable = 10;
 let dungeonRooms = [];
 let dungeonIndex = 0;
 let dungeonHpLoss = 0;
+let dungeonBattleBuff = { pancerz: 0 };
 let dungeonRoomResolved = false;
 let dungeonOutcomeText = "";
 
@@ -26,9 +27,31 @@ function xpToNextLevel(lvl) {
 }
 
 const DUNGEON_ROOM_TYPES = [
-  { type: "empty", icon: "🚪", weight: 3, label: "Pusty korytarz" },
-  { type: "trap", icon: "⚠️", weight: 2, label: "Pułapka" },
-  { type: "find", icon: "✨", weight: 2, label: "Znalezisko" },
+  {
+    type: "empty", icon: "🚪", weight: 2, label: "Cichy korytarz",
+    prompt: "Korytarz ciągnie się w ciszy — coś tu może być, ale trudno powiedzieć co.",
+    optionALabel: "🔍 Przeszukaj kąty", optionBLabel: "➡️ Idź dalej bez zwłoki",
+  },
+  {
+    type: "trap", icon: "⚠️", weight: 2, label: "Pułapka",
+    prompt: "Coś w tym korytarzu wygląda podejrzanie — wyczuwasz mechanizm w podłodze.",
+    optionALabel: "🛠️ Rozbrój pułapkę", optionBLabel: "🚶 Omiń ostrożnie",
+  },
+  {
+    type: "find", icon: "✨", weight: 2, label: "Znalezisko",
+    prompt: "Coś błyszczy w gruzach na końcu korytarza.",
+    optionALabel: "🧐 Zbadaj dokładnie", optionBLabel: "🤏 Zabierz szybko i idź dalej",
+  },
+  {
+    type: "skirmish", icon: "🗡️", weight: 2, label: "Zasadzka",
+    prompt: "Słyszysz kroki w ciemności — coś się zbliża.",
+    optionALabel: "⚔️ Walcz", optionBLabel: "🤫 Wymknij się chyłkiem",
+  },
+  {
+    type: "shrine", icon: "🩸", weight: 1, label: "Zapomniany ołtarz",
+    prompt: "Stary, zapomniany ołtarz stoi w mroku — wciąż pulsuje esencją.",
+    optionALabel: "🩸 Złóż ofiarę z krwi", optionBLabel: "🙅 Odejdź",
+  },
 ];
 
 function pickWeightedRoomType() {
@@ -42,52 +65,114 @@ function pickWeightedRoomType() {
 }
 
 function generateDungeonRooms() {
-  return [0, 1, 2].map(() => {
-    const { type, icon, label } = pickWeightedRoomType();
-    return { type, icon, label };
-  });
+  return [0, 1, 2].map(() => pickWeightedRoomType());
 }
 
 function startDungeonCrawl() {
   dungeonRooms = generateDungeonRooms();
   dungeonIndex = 0;
   dungeonHpLoss = 0;
+  dungeonBattleBuff = { pancerz: 0 };
   dungeonRoomResolved = false;
   dungeonOutcomeText = "";
   phase = "dungeon";
   render();
 }
 
-function resolveDungeonRoom() {
+function chooseDungeonOption(choice) {
   const room = dungeonRooms[dungeonIndex];
+
   if (room.type === "empty") {
-    dungeonOutcomeText = "Korytarz jest pusty. Cisza aż dzwoni w uszach.";
-  } else if (room.type === "trap") {
-    const roll = rollD20();
-    if (roll >= 11) {
-      dungeonOutcomeText = `Wyczuwasz pułapkę w ostatniej chwili i ją omijasz (K20=${roll}).`;
+    if (choice === "A") {
+      const roll = rollD20();
+      if (roll >= 14) {
+        const { name, icon, min, max } = currentLocation.resource;
+        const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 3));
+        const existing = resources[name] ? resources[name].amount : 0;
+        resources[name] = { icon, amount: existing + amount };
+        saveResources();
+        dungeonOutcomeText = `Znajdujesz drobny skarb w pęknięciu muru: +${amount} × ${icon} ${name}.`;
+      } else {
+        dungeonOutcomeText = "Nic tu nie ma poza kurzem i twoim czasem.";
+      }
     } else {
-      const dmg = rollD6() * 3;
-      dungeonHpLoss += dmg;
-      dungeonOutcomeText = `Pułapka! Nie zdążyłeś zareagować (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
+      dungeonOutcomeText = "Nie tracisz czasu na szukanie po kątach.";
+    }
+  } else if (room.type === "trap") {
+    if (choice === "A") {
+      const roll = rollD20();
+      if (roll >= 11) {
+        const { name, icon, min, max } = currentLocation.resource;
+        const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 2));
+        const existing = resources[name] ? resources[name].amount : 0;
+        resources[name] = { icon, amount: existing + amount };
+        saveResources();
+        dungeonOutcomeText = `Rozbrajasz pułapkę i wyciągasz z niej użyteczne części (K20=${roll}): +${amount} × ${icon} ${name}.`;
+      } else {
+        const dmg = rollD6() * 3;
+        dungeonHpLoss += dmg;
+        dungeonOutcomeText = `Nie zdążyłeś rozbroić mechanizmu (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
+      }
+    } else {
+      dungeonOutcomeText = "Ostrożnie omijasz zagrożenie, nie ryzykując niczego.";
     }
   } else if (room.type === "find") {
-    const { name, icon, min, max } = currentLocation.resource;
-    const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 2));
-    const existing = resources[name] ? resources[name].amount : 0;
-    resources[name] = { icon, amount: existing + amount };
-    saveResources();
-    dungeonOutcomeText = `Znajdujesz coś w gruzach: +${amount} × ${icon} ${name}.`;
+    if (choice === "A") {
+      const roll = rollD20();
+      if (roll >= 11) {
+        const { name, icon, min, max } = currentLocation.resource;
+        const amount = min + Math.floor(Math.random() * (max - min + 1));
+        const existing = resources[name] ? resources[name].amount : 0;
+        resources[name] = { icon, amount: existing + amount };
+        saveResources();
+        dungeonOutcomeText = `Dokładne poszukiwania się opłacają (K20=${roll}): +${amount} × ${icon} ${name}.`;
+      } else {
+        const dmg = rollD6() * 3;
+        dungeonHpLoss += dmg;
+        dungeonOutcomeText = `To była pułapka na złodziei (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
+      }
+    } else {
+      const { name, icon, min, max } = currentLocation.resource;
+      const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 2));
+      const existing = resources[name] ? resources[name].amount : 0;
+      resources[name] = { icon, amount: existing + amount };
+      saveResources();
+      dungeonOutcomeText = `Zabierasz co się da bez ryzyka: +${amount} × ${icon} ${name}.`;
+    }
+  } else if (room.type === "skirmish") {
+    if (choice === "A") {
+      const roll = rollD20();
+      if (roll >= 11) {
+        awardXp(20);
+        const { name, icon, min, max } = currentLocation.resource;
+        const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 2));
+        const existing = resources[name] ? resources[name].amount : 0;
+        resources[name] = { icon, amount: existing + amount };
+        saveResources();
+        dungeonOutcomeText = `Pokonujesz napastnika w krótkiej walce (K20=${roll}): +${amount} × ${icon} ${name}.`;
+      } else {
+        const dmg = rollD6() * 4;
+        dungeonHpLoss += dmg;
+        dungeonOutcomeText = `Starcie idzie źle (K20=${roll}) — tracisz ${dmg} HP przed właściwą walką.`;
+      }
+    } else {
+      dungeonOutcomeText = "Udaje ci się przemknąć niezauważenie.";
+    }
+  } else if (room.type === "shrine") {
+    if (choice === "A") {
+      dungeonHpLoss += 8;
+      dungeonBattleBuff.pancerz += 0.08;
+      dungeonOutcomeText = "Ołtarz przyjmuje ofiarę — czujesz, jak coś niewidzialnego otacza twoją skórę (-8 HP, +8% pancerza na nadchodzącą walkę).";
+    } else {
+      dungeonOutcomeText = "Odchodzisz od ołtarza — wolisz nie ryzykować.";
+    }
   }
+
   dungeonRoomResolved = true;
   render();
 }
 
 function advanceDungeon() {
-  if (!dungeonRoomResolved) {
-    resolveDungeonRoom();
-    return;
-  }
   dungeonIndex++;
   dungeonRoomResolved = false;
   dungeonOutcomeText = "";
@@ -286,6 +371,7 @@ function saveActiveRun() {
     data.dungeonRooms = dungeonRooms;
     data.dungeonIndex = dungeonIndex;
     data.dungeonHpLoss = dungeonHpLoss;
+    data.dungeonBattleBuff = dungeonBattleBuff;
     data.dungeonRoomResolved = dungeonRoomResolved;
     data.dungeonOutcomeText = dungeonOutcomeText;
   }
@@ -334,6 +420,7 @@ function applyActiveRunData(data) {
     dungeonRooms = data.dungeonRooms || [];
     dungeonIndex = data.dungeonIndex || 0;
     dungeonHpLoss = data.dungeonHpLoss || 0;
+    dungeonBattleBuff = data.dungeonBattleBuff || { pancerz: 0 };
     dungeonRoomResolved = data.dungeonRoomResolved || false;
     dungeonOutcomeText = data.dungeonOutcomeText || "";
   }
@@ -583,6 +670,11 @@ function startNewBattle() {
     appendLog(`Wchodzisz do walki osłabiony po przejściu przez lochy (-${dungeonHpLoss} HP).`, "system");
     dungeonHpLoss = 0;
   }
+  if (dungeonBattleBuff.pancerz > 0) {
+    player.pancerz += dungeonBattleBuff.pancerz;
+    appendLog(`Błogosławieństwo ołtarza wzmacnia twój pancerz na tę walkę (+${Math.round(dungeonBattleBuff.pancerz * 100)}%).`, "system");
+    dungeonBattleBuff = { pancerz: 0 };
+  }
   render();
 }
 
@@ -764,7 +856,7 @@ function render() {
 
   if (phase === "dungeon") {
     hideAllExcept(dungeonScreen);
-    renderDungeon(currentLocation, dungeonRooms, dungeonIndex, dungeonRoomResolved, dungeonOutcomeText, advanceDungeon);
+    renderDungeon(currentLocation, dungeonRooms, dungeonIndex, dungeonRoomResolved, dungeonOutcomeText, advanceDungeon, chooseDungeonOption);
     saveActiveRun();
     return;
   }
@@ -1081,7 +1173,6 @@ document.getElementById("clear-progress-btn").addEventListener("click", clearAll
 document.getElementById("exit-game-btn").addEventListener("click", exitGame);
 document.getElementById("test3d-btn").addEventListener("click", openTest3D);
 document.getElementById("test3d-back-btn").addEventListener("click", closeTest3D);
-document.getElementById("dungeon-advance-btn").addEventListener("click", advanceDungeon);
 
 document.getElementById("creation-name-input").addEventListener("input", (e) => setPlayerName(e.target.value));
 document.querySelectorAll(".gender-btn").forEach((btn) => {
