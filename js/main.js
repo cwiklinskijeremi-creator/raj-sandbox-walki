@@ -8,6 +8,7 @@ let radialMenuOpen = false;
 let selectedClassName = null;
 let selectedSubclassName = null;
 let currentLocation = null;
+let currentCityPlace = null;
 let playerName = "";
 let playerGender = null;
 let bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
@@ -278,6 +279,7 @@ function saveActiveRun() {
     xp,
     statPointsAvailable,
     locationKey: currentLocation ? currentLocation.key : null,
+    cityPlaceKey: currentCityPlace ? currentCityPlace.key : null,
     savedAt: Date.now(),
   };
   if (phase === "dungeon") {
@@ -321,6 +323,7 @@ function applyActiveRunData(data) {
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey) || null;
+  currentCityPlace = CITY_PLACES.find((p) => p.key === data.cityPlaceKey) || null;
   phase = data.phase;
 
   closeRadialMenu();
@@ -378,6 +381,17 @@ function goToCamp() {
   phase = "camp";
   closeRadialMenu();
   radialMenuOpen = false;
+  render();
+}
+
+function goToCitySelect() {
+  phase = "city-select";
+  render();
+}
+
+function selectCityPlace(place) {
+  currentCityPlace = place;
+  phase = "city-place";
   render();
 }
 
@@ -686,78 +700,76 @@ function render() {
   const test3dScreen = document.getElementById("test3d-screen");
   const creationScreen = document.getElementById("character-creation-screen");
   const campScreen = document.getElementById("camp-screen");
+  const cityScreen = document.getElementById("city-screen");
+  const cityPlaceScreen = document.getElementById("city-place-screen");
   const locationScreen = document.getElementById("location-screen");
   const dungeonScreen = document.getElementById("dungeon-screen");
   const gameScreen = document.getElementById("game-screen");
 
+  const allScreens = [mainMenuScreen, test3dScreen, creationScreen, campScreen, cityScreen, cityPlaceScreen, locationScreen, dungeonScreen, gameScreen];
+  const hideAllExcept = (visible) => {
+    allScreens.forEach((el) => {
+      if (el === visible) el.classList.remove("hidden");
+      else el.classList.add("hidden");
+    });
+  };
+
   if (phase === "test3d") {
-    mainMenuScreen.classList.add("hidden");
-    test3dScreen.classList.remove("hidden");
-    creationScreen.classList.add("hidden");
-    campScreen.classList.add("hidden");
-    locationScreen.classList.add("hidden");
-    dungeonScreen.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+    hideAllExcept(test3dScreen);
     return;
   }
-  test3dScreen.classList.add("hidden");
 
   if (phase === "main-menu") {
-    mainMenuScreen.classList.remove("hidden");
-    creationScreen.classList.add("hidden");
-    campScreen.classList.add("hidden");
-    locationScreen.classList.add("hidden");
-    dungeonScreen.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+    hideAllExcept(mainMenuScreen);
     renderMainMenuState(loadActiveRunData());
     return;
   }
-  mainMenuScreen.classList.add("hidden");
 
   if (phase === "character-creation") {
-    creationScreen.classList.remove("hidden");
-    campScreen.classList.add("hidden");
-    locationScreen.classList.add("hidden");
-    dungeonScreen.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+    hideAllExcept(creationScreen);
     renderCharacterCreation(
       { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats, statPointsAvailable },
       { onSelectClass: selectCreationClass, onSelectSubclass: selectCreationSubclass, onAdjustStat: adjustBonusStat },
     );
     return;
   }
-  creationScreen.classList.add("hidden");
 
   if (phase === "camp") {
-    campScreen.classList.remove("hidden");
-    locationScreen.classList.add("hidden");
-    dungeonScreen.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+    hideAllExcept(campScreen);
     renderCamp(player, level, xp, xpToNextLevel(level));
     saveActiveRun();
     return;
   }
-  campScreen.classList.add("hidden");
+
+  if (phase === "city-select") {
+    hideAllExcept(cityScreen);
+    renderCityPicker(CITY_PLACES, selectCityPlace);
+    saveActiveRun();
+    return;
+  }
+
+  if (phase === "city-place") {
+    hideAllExcept(cityPlaceScreen);
+    renderCityPlace(currentCityPlace, inventory, resources, buyEquipment);
+    saveActiveRun();
+    return;
+  }
 
   if (phase === "location-select") {
-    locationScreen.classList.remove("hidden");
-    dungeonScreen.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+    hideAllExcept(locationScreen);
     renderLocationPicker(LOCATIONS, currentLocation, selectLocation);
     saveActiveRun();
     return;
   }
-  locationScreen.classList.add("hidden");
 
   if (phase === "dungeon") {
-    dungeonScreen.classList.remove("hidden");
-    gameScreen.classList.add("hidden");
+    hideAllExcept(dungeonScreen);
     renderDungeon(currentLocation, dungeonRooms, dungeonIndex, dungeonRoomResolved, dungeonOutcomeText, advanceDungeon);
     saveActiveRun();
     return;
   }
-  dungeonScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
+
+  hideAllExcept(gameScreen);
   renderLocationBanner(currentLocation);
 
   const playerContainer = document.getElementById("player-fighter");
@@ -1035,6 +1047,9 @@ document.getElementById("mute-btn").addEventListener("click", (e) => {
 document.getElementById("change-location-btn").addEventListener("click", goToCamp);
 document.getElementById("main-menu-btn").addEventListener("click", goToMainMenu);
 document.getElementById("camp-expedition-btn").addEventListener("click", backToLocationSelect);
+document.getElementById("camp-city-btn").addEventListener("click", goToCitySelect);
+document.getElementById("city-back-btn").addEventListener("click", goToCamp);
+document.getElementById("city-place-back-btn").addEventListener("click", goToCitySelect);
 document.getElementById("camp-codex-btn").addEventListener("click", openCodex);
 document.getElementById("camp-main-menu-btn").addEventListener("click", goToMainMenu);
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
