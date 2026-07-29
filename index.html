@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=26">
+<link rel="stylesheet" href="style.css?v=27">
 <script type="importmap">
 {
   "imports": {
@@ -33,7 +33,7 @@
 
   <section class="test3d-screen hidden" id="test3d-screen">
     <h2>🧪 Test 3D (eksperymentalne)</h2>
-    <p class="camp-flavor">Podgląd tej samej siatki heksagonalnej wyrenderowanej w Three.js czystą geometrią (bez plików modeli) — kostki dla heksów, kula dla gracza, stożki dla przeciwników. Przeciągnij myszą, żeby obrócić kamerę, przewiń, żeby przybliżyć.</p>
+    <p class="camp-flavor">Podgląd pola bitwy w trzech wymiarach. Brązowe wzniesienia to skały, wysokie zielone bloki to drzewa, niebieskie pola to jeziora. Złota kula to Ty, czerwone stożki to przeciwnicy. Przeciągnij myszą, żeby obrócić kamerę, przewiń, żeby przybliżyć.</p>
     <div id="test3d-canvas-container"></div>
     <button type="button" id="test3d-back-btn">🏠 Powrót do menu</button>
   </section>
@@ -105,6 +105,7 @@
       <section class="map-panel">
         <div class="map-stage">
           <svg id="battle-map"></svg>
+          <div id="battle-map-3d" class="hidden"></div>
           <div id="fx-layer"></div>
         </div>
         <div class="map-legend">
@@ -130,6 +131,7 @@
       <button id="change-location-btn" type="button">🏕️ Wróć do obozu</button>
       <button id="main-menu-btn" type="button">🏠 Menu główne</button>
       <button id="mute-btn" type="button">🔊 Dźwięk</button>
+      <button id="view-toggle-btn" type="button">🧊 Widok 3D</button>
       <button id="codex-btn" type="button">📜 Kodeks świata</button>
     </div>
 
@@ -208,11 +210,12 @@
   <script src="js/lore.js?v=26"></script>
   <script src="js/locations.js?v=26"></script>
   <script src="js/equipment.js?v=26"></script>
-  <script src="js/tutorial.js?v=26"></script>
+  <script src="js/tutorial.js?v=27"></script>
   <script src="js/characters.js?v=26"></script>
   <script src="js/combat.js?v=26"></script>
-  <script src="js/ui.js?v=26"></script>
-  <script src="js/main.js?v=26"></script>
+  <script src="js/ui.js?v=27"></script>
+  <script src="js/main.js?v=27"></script>
   <script type="module" src="js/test3d.js?v=26"></script>
+  <script type="module" src="js/board3d.js?v=27"></script>
 </body>
 </html>
