@@ -30,7 +30,8 @@ const TUTORIAL_DATA = {
     paragraphs: [
       "Obóz Gildii to Twoja baza — stąd wyruszasz na wyprawy, przeglądasz ekwipunek i postać, oraz zaglądasz do kodeksu świata. Po zakończonej walce (zwycięskiej lub nie) wracasz właśnie tutaj.",
       "Każda lokacja wyprawy ma inną pulę przeciwników, dominujący typ terenu (skały/drzewa/woda) oraz inny surowiec przyznawany za zwycięstwo — warto odwiedzać różne miejsca, żeby zebrać komplet zasobów potrzebnych u kupca.",
-      "Po wybraniu lokacji nie trafiasz od razu do walki — najpierw przechodzisz przez kilka komnat lochu. Puste korytarze to tylko klimat, znaleziska dają dodatkowy surowiec, a pułapki mogą Cię zranić jeszcze przed starciem — obrażenia z pułapek przechodzą na Twoje HP w nadchodzącej walce, więc lepiej nie liczyć na szczęście za każdym razem.",
+      "Po wybraniu lokacji nie trafiasz od razu do walki — najpierw przechodzisz przez kilka komnat lochu, a w każdej z nich wybierasz między opcją bezpieczną a ryzykowną. Cichy korytarz możesz przeszukać (szansa na drobny łup, bez ryzyka) albo iść dalej. Pułapkę możesz rozbroić (łup przy sukcesie, obrażenia przy porażce) albo bezpiecznie ominąć. Znalezisko możesz zbadać dokładnie (większa nagroda, ale ryzyko pułapki) albo zabrać szybko i bezpiecznie. Zasadzkę możesz stoczyć (doświadczenie i surowiec przy zwycięstwie, obrażenia przy porażce) albo ominąć. Zapomniany ołtarz przyjmie ofiarę z Twojego zdrowia w zamian za tymczasowe wzmocnienie pancerza na nadchodzącą walkę.",
+      "Obrażenia z nieudanych wyborów przechodzą na Twoje HP w nadchodzącej walce, więc ryzykowne opcje naprawdę coś kosztują, jeśli się nie powiedzie.",
     ],
   },
   combat: {

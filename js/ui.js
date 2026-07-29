@@ -586,7 +586,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, progress, 
     </div>
   `;
 
-  const notOwned = EQUIPMENT_ITEMS.filter((item) => !inventory.includes(item.id));
+  const notOwned = EQUIPMENT_ITEMS.filter((item) => item.vendor === "camp" && !inventory.includes(item.id));
   const shopHtml = `
     <div class="sheet-section">
       <h4>Kupiec obozowy</h4>
@@ -651,7 +651,57 @@ function renderLocationBanner(location) {
     : "";
 }
 
-function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance) {
+function renderCityPicker(places, onSelect) {
+  const grid = document.getElementById("city-grid");
+  grid.innerHTML = "";
+  places.forEach((place) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "location-card";
+    card.innerHTML = `
+      <div class="location-card-icon">${place.icon}</div>
+      <div class="location-card-name">${place.name}</div>
+      <div class="location-card-desc">${place.description}</div>
+    `;
+    card.addEventListener("click", () => onSelect(place));
+    grid.appendChild(card);
+  });
+}
+
+function renderCityPlace(place, inventory, resources, onBuy) {
+  if (!place) return;
+  document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
+  document.getElementById("city-place-description").textContent = place.description;
+
+  const shopEl = document.getElementById("city-place-shop");
+  const items = EQUIPMENT_ITEMS.filter((item) => item.vendor === place.key);
+  const notOwned = items.filter((item) => !inventory.includes(item.id));
+
+  shopEl.innerHTML = `<h4>Towar na sprzedaż</h4>` +
+    (notOwned.length === 0
+      ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>`
+      : notOwned.map((item) => {
+          const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
+          const affordable = owned >= item.cost.amount;
+          return `
+            <div class="sheet-item-row">
+              <div class="sheet-item-info">
+                <div class="sheet-item-name">${item.icon} ${item.name}</div>
+                <div class="sheet-item-desc">${item.description}</div>
+                <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+                <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
+              </div>
+              <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable ? "" : "disabled"}>Kup</button>
+            </div>
+          `;
+        }).join(""));
+
+  shopEl.querySelectorAll(".buy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => onBuy(btn.dataset.item));
+  });
+}
+
+function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance, onChoose) {
   const title = document.getElementById("dungeon-title");
   title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";
 
@@ -662,11 +712,16 @@ function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance)
 
   const roomEl = document.getElementById("dungeon-room");
   const room = rooms[index];
+  const choiceButtons = document.getElementById("dungeon-choice-buttons");
+  const advanceBtn = document.getElementById("dungeon-advance-btn");
+  const optionABtn = document.getElementById("dungeon-option-a-btn");
+  const optionBBtn = document.getElementById("dungeon-option-b-btn");
+
   if (room) {
     roomEl.innerHTML = `
       <div class="dungeon-room-icon">${room.icon}</div>
       <div class="dungeon-room-label">${room.label}</div>
-      <p class="dungeon-room-outcome">${resolved ? outcomeText : "Nieznana komnata przed Tobą — coś tu jest."}</p>
+      <p class="dungeon-room-outcome">${resolved ? outcomeText : room.prompt}</p>
     `;
   } else {
     roomEl.innerHTML = `
@@ -676,13 +731,19 @@ function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance)
     `;
   }
 
-  const advanceBtn = document.getElementById("dungeon-advance-btn");
-  advanceBtn.textContent = !resolved
-    ? "🔍 Zbadaj komnatę"
-    : index >= rooms.length - 1
-      ? "⚔️ Wejdź do walki"
-      : "➡️ Idź dalej";
-  advanceBtn.onclick = onAdvance;
+  if (room && !resolved) {
+    choiceButtons.classList.remove("hidden");
+    advanceBtn.classList.add("hidden");
+    optionABtn.textContent = room.optionALabel;
+    optionABtn.onclick = () => onChoose("A");
+    optionBBtn.textContent = room.optionBLabel;
+    optionBBtn.onclick = () => onChoose("B");
+  } else {
+    choiceButtons.classList.add("hidden");
+    advanceBtn.classList.remove("hidden");
+    advanceBtn.textContent = index >= rooms.length - 1 ? "⚔️ Wejdź do walki" : "➡️ Idź dalej";
+    advanceBtn.onclick = onAdvance;
+  }
 }
 
 function formatResourceBar(resources) {
