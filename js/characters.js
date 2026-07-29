@@ -40,6 +40,9 @@ function createCharacter({
     currentHP: maxHP,
     moveRange: derived.moveRange,
     pos: null,
+    activeEffects: [],
+    poison: null,
+    skillCooldown: 0,
   };
 }
 

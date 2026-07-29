@@ -737,8 +737,8 @@ function openPlayerActionMenu() {
     },
     {
       icon: playerSkill() ? playerSkill().icon : "✨",
-      label: playerSkill() ? playerSkill().name : "Umiejętności (wybierz klasę)",
-      disabled: playerActionsRemaining <= 0,
+      label: skillButtonLabel(),
+      disabled: playerActionsRemaining <= 0 || (playerSkill() && player.skillCooldown > 0),
       onClick: () => {
         radialMenuOpen = false;
         castSkill();
@@ -750,6 +750,13 @@ function openPlayerActionMenu() {
 function playerSkill() {
   const subclassData = findSubclassData(player.class, player.subclass);
   return subclassData && subclassData.skill;
+}
+
+function skillButtonLabel() {
+  const skill = playerSkill();
+  if (!skill) return "Umiejętności (wybierz klasę)";
+  if (player.skillCooldown > 0) return `${skill.name} (odnowienie: ${player.skillCooldown})`;
+  return skill.name;
 }
 
 function handleHexClick(hex) {
@@ -987,6 +994,15 @@ function playerAttack() {
   finishPlayerAction(target);
 }
 
+function awardVictory(message) {
+  appendLog(message, "system");
+  playVictorySound();
+  battleOver = true;
+  awardLocationResources();
+  const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
+  awardXp(xpGained);
+}
+
 function finishPlayerAction(target) {
   if (target.currentHP <= 0) {
     appendLog(`${target.name} pada martwy.`, "system");
@@ -997,12 +1013,7 @@ function finishPlayerAction(target) {
   }
 
   if (enemies.every((e) => e.currentHP <= 0)) {
-    appendLog("Zwycięstwo! Wszyscy przeciwnicy pokonani.", "system");
-    playVictorySound();
-    battleOver = true;
-    awardLocationResources();
-    const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
-    awardXp(xpGained);
+    awardVictory("Zwycięstwo! Wszyscy przeciwnicy pokonani.");
     render();
     return;
   }
@@ -1014,6 +1025,116 @@ function finishPlayerAction(target) {
   }
 }
 
+function turnsLabel(n) {
+  if (n === 1) return "1 turę";
+  if (n >= 2 && n <= 4) return `${n} tury`;
+  return `${n} tur`;
+}
+
+function applyTimedEffect(target, stat, amount, turns, label) {
+  target[stat] += amount;
+  target.activeEffects = target.activeEffects || [];
+  target.activeEffects.push({ stat, amount, turnsLeft: turns, label });
+}
+
+function applyPoison(target, dmgPerTurn, turns) {
+  target.poison = { dmgPerTurn, turnsLeft: turns };
+}
+
+function tickTimedEffectsFor(target) {
+  if (target.currentHP <= 0) return;
+
+  if (target.activeEffects && target.activeEffects.length) {
+    const stillActive = [];
+    for (const eff of target.activeEffects) {
+      eff.turnsLeft--;
+      if (eff.turnsLeft <= 0) {
+        target[eff.stat] -= eff.amount;
+        appendLog(`${target.name}: efekt „${eff.label}” wygasa.`, "system");
+      } else {
+        stillActive.push(eff);
+      }
+    }
+    target.activeEffects = stillActive;
+  }
+
+  if (target.poison && target.poison.turnsLeft > 0) {
+    const dmg = target.poison.dmgPerTurn;
+    target.currentHP = Math.max(0, target.currentHP - dmg);
+    appendLog(`☠️ ${target.name} traci ${dmg} PD od trucizny.`, "damage");
+    target.poison.turnsLeft--;
+    if (target.poison.turnsLeft <= 0) target.poison = null;
+  }
+}
+
+function applySkillEffect(skill, target, result, context) {
+  if (!result.hit || !skill.effectType) return;
+
+  switch (skill.effectType) {
+    case "armor_shred":
+      applyTimedEffect(target, "pancerz", -skill.effectValue, skill.effectTurns, "osłabiony pancerz");
+      appendLog(`${target.name}: pancerz osłabiony o ${Math.round(skill.effectValue * 100)}% na ${turnsLabel(skill.effectTurns)}.`, "system");
+      break;
+
+    case "heal_self": {
+      const healAmount = Math.round(player.maxHP * skill.effectValue);
+      player.currentHP = Math.min(player.maxHP, player.currentHP + healAmount);
+      appendLog(`✨ Odzyskujesz ${healAmount} PD.`, "system");
+      break;
+    }
+
+    case "lifesteal": {
+      const healAmount = Math.round(result.damage * skill.effectValue);
+      player.currentHP = Math.min(player.maxHP, player.currentHP + healAmount);
+      appendLog(`🩸 Wysysasz ${healAmount} PD z ${target.name}.`, "system");
+      break;
+    }
+
+    case "self_buff_str":
+      applyTimedEffect(player, "str", skill.effectValue, skill.effectTurns, "wściekłość");
+      appendLog(`😡 Wpadasz we wściekłość: +${skill.effectValue} SIŁ na ${turnsLabel(skill.effectTurns)}.`, "system");
+      break;
+
+    case "poison_dot":
+      applyPoison(target, skill.effectValue, skill.effectTurns);
+      appendLog(`☠️ ${target.name} zostaje zatruty (${skill.effectValue} PD/turę na ${turnsLabel(skill.effectTurns)}).`, "system");
+      break;
+
+    case "aoe_damage": {
+      const secondary = enemies.filter((e) => e !== target && e.currentHP > 0 && hexDistance(e.pos, target.pos) <= skill.effectRadius);
+      secondary.forEach((e) => {
+        const splashWeapon = {
+          ...skill,
+          minDmg: Math.round(skill.minDmg * skill.effectValue),
+          maxDmg: Math.round(skill.maxDmg * skill.effectValue),
+        };
+        const splashAttacker = Object.assign({}, player, { weapon: splashWeapon });
+        const splashResult = resolveAttack(splashAttacker, e, context);
+        const { text, cssClass } = formatAttackResult(splashResult);
+        appendLog(`🔥 Odprysk ognia → ${text}`, cssClass);
+        triggerAttackFx(splashResult, e.pos);
+        if (splashResult.defenderDied) {
+          appendLog(`${e.name} pada martwy od odprysku.`, "system");
+          discoverEnemy(e.templateKey);
+        }
+      });
+      break;
+    }
+
+    case "aoe_poison": {
+      applyPoison(target, skill.effectValue, skill.effectTurns);
+      const secondary = enemies.filter((e) => e !== target && e.currentHP > 0 && hexDistance(e.pos, target.pos) <= skill.effectRadius);
+      secondary.forEach((e) => applyPoison(e, skill.effectValue, skill.effectTurns));
+      const count = 1 + secondary.length;
+      appendLog(`☠️ Trujący opar ogarnia ${count} ${count === 1 ? "przeciwnika" : "przeciwników"}.`, "system");
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
 function castSkill() {
   if (battleOver || playerActionsRemaining <= 0) return;
   closeRadialMenu();
@@ -1022,6 +1143,12 @@ function castSkill() {
   const skill = playerSkill();
   if (!skill) {
     appendLog("Wybierz najpierw klasę i specjalizację, żeby odblokować czar.", "system");
+    render();
+    return;
+  }
+
+  if (player.skillCooldown > 0) {
+    appendLog(`${skill.name} jeszcze się odnawia (pozostało ${turnsLabel(player.skillCooldown)}).`, "system");
     render();
     return;
   }
@@ -1041,8 +1168,11 @@ function castSkill() {
 
   const context = { allCombatants: [player, ...enemies], obstacles: OBSTACLES };
   const virtualAttacker = Object.assign({}, player, { weapon: skill });
+  if (skill.effectType === "guaranteed_crit") virtualAttacker.d6Bonus = 6;
+  if (skill.effectType === "ignore_armor") virtualAttacker.przebicie = 1;
 
   playerActionsRemaining--;
+  player.skillCooldown = skill.cooldown;
   playSpellCastSound();
   render();
 
@@ -1052,6 +1182,7 @@ function castSkill() {
     appendLog(`${skill.icon} ${skill.name}! ${text}`, cssClass);
     triggerAttackFx(result, target.pos);
     if (result.hit) playSpellImpactSound(); else playMissSound();
+    applySkillEffect(skill, target, result, context);
     finishPlayerAction(target);
   });
 }
@@ -1149,6 +1280,16 @@ function enemyPhase() {
         playDeathSound();
         battleOver = true;
       }
+    }
+  }
+
+  if (!battleOver) {
+    if (player.skillCooldown > 0) player.skillCooldown--;
+    tickTimedEffectsFor(player);
+    enemies.forEach((enemy) => tickTimedEffectsFor(enemy));
+
+    if (enemies.every((e) => e.currentHP <= 0)) {
+      awardVictory("Zwycięstwo! Trucizna dokonała reszty.");
     }
   }
 

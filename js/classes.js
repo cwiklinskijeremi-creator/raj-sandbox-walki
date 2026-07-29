@@ -14,7 +14,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Kula Ognia", icon: "🔥", colorClass: "spell-fire",
-          minDmg: 12, maxDmg: 18, range: 6,
+          minDmg: 12, maxDmg: 18, range: 6, cooldown: 3,
+          effectType: "aoe_damage", effectValue: 0.6, effectRadius: 1,
         },
       },
       {
@@ -28,7 +29,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Mroczny Pocisk", icon: "🌀", colorClass: "spell-dark",
-          minDmg: 13, maxDmg: 19, range: 6,
+          minDmg: 13, maxDmg: 19, range: 6, cooldown: 3,
+          effectType: "armor_shred", effectValue: 0.15, effectTurns: 2,
         },
       },
     ],
@@ -48,7 +50,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Promień Osądu", icon: "✨", colorClass: "spell-holy",
-          minDmg: 10, maxDmg: 15, range: 5,
+          minDmg: 10, maxDmg: 15, range: 5, cooldown: 4,
+          effectType: "heal_self", effectValue: 0.2,
         },
       },
       {
@@ -62,7 +65,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Klątwa Krwi", icon: "🩸", colorClass: "spell-dark",
-          minDmg: 12, maxDmg: 17, range: 5,
+          minDmg: 12, maxDmg: 17, range: 5, cooldown: 3,
+          effectType: "lifesteal", effectValue: 0.5,
         },
       },
     ],
@@ -82,7 +86,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Celny Rzut", icon: "🔪", colorClass: "spell-physical",
-          minDmg: 10, maxDmg: 14, range: 5,
+          minDmg: 10, maxDmg: 14, range: 5, cooldown: 3,
+          effectType: "ignore_armor",
         },
       },
       {
@@ -96,7 +101,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Rzucony Topór", icon: "🪓", colorClass: "spell-physical",
-          minDmg: 14, maxDmg: 20, range: 4,
+          minDmg: 14, maxDmg: 20, range: 4, cooldown: 4,
+          effectType: "self_buff_str", effectValue: 6, effectTurns: 2,
         },
       },
     ],
@@ -116,7 +122,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Precyzyjny Strzał", icon: "🏹", colorClass: "spell-physical",
-          minDmg: 11, maxDmg: 16, range: 7,
+          minDmg: 11, maxDmg: 16, range: 7, cooldown: 3,
+          effectType: "guaranteed_crit",
         },
       },
       {
@@ -130,7 +137,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Zatruty Sztylet", icon: "☠️", colorClass: "spell-poison",
-          minDmg: 10, maxDmg: 15, range: 4,
+          minDmg: 10, maxDmg: 15, range: 4, cooldown: 3,
+          effectType: "poison_dot", effectValue: 6, effectTurns: 2,
         },
       },
     ],
@@ -150,7 +158,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Kwasowa Fiolka", icon: "🧪", colorClass: "spell-poison",
-          minDmg: 11, maxDmg: 16, range: 5,
+          minDmg: 11, maxDmg: 16, range: 5, cooldown: 4,
+          effectType: "aoe_poison", effectValue: 5, effectTurns: 2, effectRadius: 1,
         },
       },
       {
@@ -164,7 +173,8 @@ const CLASS_DATA = [
         ],
         skill: {
           name: "Wybuchowy Eliksir", icon: "💥", colorClass: "spell-elixir",
-          minDmg: 9, maxDmg: 14, range: 5,
+          minDmg: 9, maxDmg: 14, range: 5, cooldown: 4,
+          effectType: "heal_self", effectValue: 0.25,
         },
       },
     ],

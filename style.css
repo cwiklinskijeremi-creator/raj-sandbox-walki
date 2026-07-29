@@ -329,6 +329,10 @@ h1 { text-align: center; }
   font-size: 0.9rem;
 }
 
+.stats.fighter-effects {
+  color: #b48ce0;
+}
+
 .controls {
   display: flex;
   gap: 1rem;

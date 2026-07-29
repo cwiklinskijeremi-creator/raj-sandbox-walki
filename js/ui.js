@@ -31,10 +31,24 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
     `;
   }
 
+  const effectParts = [];
+  (fighter.activeEffects || []).forEach((eff) => {
+    const sign = eff.amount > 0 ? "+" : "";
+    const amountText = eff.stat === "pancerz" ? `${Math.round(eff.amount * 100)}%` : `${sign}${eff.amount}`;
+    effectParts.push(`${eff.label} ${amountText} (${eff.turnsLeft})`);
+  });
+  if (fighter.poison && fighter.poison.turnsLeft > 0) {
+    effectParts.push(`☠️ trucizna ${fighter.poison.dmgPerTurn}/turę (${fighter.poison.turnsLeft})`);
+  }
+  const effectsHtml = effectParts.length && !dead
+    ? `<div class="stats fighter-effects">Efekty: ${effectParts.join(", ")}</div>`
+    : "";
+
   el.innerHTML = `
     <strong>${fighter.name}</strong> ${dead ? "(martwy)" : ""}
     <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${hpPct}%"></div>${hpBarPreview}</div>
     ${bodyHtml}
+    ${effectsHtml}
   `;
 
   if (selectable && !dead && onClick) {
@@ -398,7 +412,7 @@ function renderCharacterCreation(state, handlers) {
     descEl.innerHTML = `
       <h4>${selectedSub.icon} ${selectedSub.name}</h4>
       <p>${LORE_DATA.classFlavor[selectedSub.name] || ""}</p>
-      <div class="codex-subclass-gear">Broń: ${selectedSub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${selectedSub.skill.name}</div>
+      <div class="codex-subclass-gear">Broń: ${selectedSub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${selectedSub.skill.name} (odnowienie: ${turnsLabel(selectedSub.skill.cooldown)})</div>
     `;
   }
 
@@ -794,7 +808,7 @@ function renderCodexTabBody(tabKey) {
           <div class="codex-subclass">
             <div class="codex-subclass-title">${sub.icon} ${sub.name}</div>
             <p>${LORE_DATA.classFlavor[sub.name] || ""}</p>
-            <div class="codex-subclass-gear">Broń: ${sub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${sub.skill.name}</div>
+            <div class="codex-subclass-gear">Broń: ${sub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${sub.skill.name} (odnowienie: ${turnsLabel(sub.skill.cooldown)})</div>
           </div>
         `).join("")}
       </div>
