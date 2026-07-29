@@ -7,8 +7,8 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    "three": "./js/vendor/three/three.module.js",
+    "three/addons/": "./js/vendor/three/addons/"
   }
 }
 </script>
@@ -33,7 +33,7 @@
 
   <section class="test3d-screen hidden" id="test3d-screen">
     <h2>🧪 Test 3D (eksperymentalne)</h2>
-    <p class="camp-flavor">Podgląd tej samej siatki heksagonalnej wyrenderowanej w Three.js czystą geometrią (bez plików modeli) — kostki dla heksów, kula dla gracza, stożki dla przeciwników. Przeciągnij myszą, żeby obrócić kamerę, przewiń, żeby przybliżyć.</p>
+    <p class="camp-flavor">Podgląd pola bitwy w trzech wymiarach. Skaliste szczyty to góry, kępy drzew to lasy, falująca woda to jeziora. Złota kula to Ty, czerwone stożki to przeciwnicy. Przeciągnij myszą, żeby obrócić kamerę, przewiń, żeby przybliżyć.</p>
     <div id="test3d-canvas-container"></div>
     <button type="button" id="test3d-back-btn">🏠 Powrót do menu</button>
   </section>
@@ -123,6 +123,7 @@
       <section class="map-panel">
         <div class="map-stage">
           <svg id="battle-map"></svg>
+          <div id="battle-map-3d" class="hidden"></div>
           <div id="fx-layer"></div>
         </div>
         <div class="map-legend">
@@ -148,6 +149,7 @@
       <button id="change-location-btn" type="button">🏕️ Wróć do obozu</button>
       <button id="main-menu-btn" type="button">🏠 Menu główne</button>
       <button id="mute-btn" type="button">🔊 Dźwięk</button>
+      <button id="view-toggle-btn" type="button">🧊 Widok 3D</button>
       <button id="codex-btn" type="button">📜 Kodeks świata</button>
     </div>
 
@@ -233,5 +235,6 @@
   <script src="js/ui.js?v=29"></script>
   <script src="js/main.js?v=29"></script>
   <script type="module" src="js/test3d.js?v=29"></script>
+  <script type="module" src="js/board3d.js?v=29"></script>
 </body>
 </html>

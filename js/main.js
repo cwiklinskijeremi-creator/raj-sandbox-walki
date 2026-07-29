@@ -806,7 +806,13 @@ function findSubclassData(className, subclassName) {
   return cls && cls.subclasses.find((s) => s.name === subclassName);
 }
 
+let boardViewMode = "2d";
+
 function render() {
+  if (phase !== "deployment" && phase !== "battle" && window.stopBoard3D) {
+    window.stopBoard3D();
+  }
+
   const mainMenuScreen = document.getElementById("main-menu-screen");
   const test3dScreen = document.getElementById("test3d-screen");
   const creationScreen = document.getElementById("character-creation-screen");
@@ -915,15 +921,27 @@ function render() {
       })()
     : [];
 
-  renderGrid({
-    svg: document.getElementById("battle-map"),
+  const boardArgs = {
     player,
     enemies: phase === "deployment" ? [] : enemies,
     obstacles: OBSTACLES,
     reachableHexes: phase === "battle" && !battleOver && playerActionsRemaining > 0 ? reachableFor(player) : [],
     deployHexes,
     onHexClick: handleHexClick,
-  });
+  };
+
+  const battleMapSvg = document.getElementById("battle-map");
+  const battleMap3d = document.getElementById("battle-map-3d");
+  const use3d = boardViewMode === "3d" && window.renderBoard3D;
+  battleMapSvg.classList.toggle("hidden", !!use3d);
+  battleMap3d.classList.toggle("hidden", !use3d);
+  if (use3d) {
+    window.renderBoard3D({ ...boardArgs, container: battleMap3d });
+  } else {
+    if (window.stopBoard3D) window.stopBoard3D();
+    renderGrid({ ...boardArgs, svg: battleMapSvg });
+  }
+  document.getElementById("view-toggle-btn").textContent = use3d ? "🗺️ Widok 2D" : "🧊 Widok 3D";
 
   const deployBtn = document.getElementById("start-battle-btn");
   deployBtn.style.display = phase === "deployment" ? "" : "none";
@@ -1154,6 +1172,12 @@ document.getElementById("mute-btn").addEventListener("click", (e) => {
   const muted = toggleAudioMuted();
   e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
   document.getElementById("settings-mute-btn").textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
+});
+document.getElementById("view-toggle-btn").addEventListener("click", () => {
+  boardViewMode = boardViewMode === "3d" ? "2d" : "3d";
+  closeRadialMenu();
+  radialMenuOpen = false;
+  render();
 });
 document.getElementById("change-location-btn").addEventListener("click", goToCamp);
 document.getElementById("main-menu-btn").addEventListener("click", goToMainMenu);

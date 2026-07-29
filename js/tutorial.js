@@ -42,6 +42,7 @@ const TUTORIAL_DATA = {
       "Każda tura to pula akcji (zależna od ZRE) — ruch o jedno pole i atak/umiejętność/zmiana broni kosztują po jednej akcji. Atak wymaga, żeby cel był w zasięgu broni; jeśli nie jest, podejdź bliżej albo kliknij swój token, żeby otworzyć menu zmiany broni lub rzucenia umiejętności specjalizacji.",
       "Obrażenia liczone są z dwóch kostek: K6 trafia w część ciała (nogi/ręce/brzuch/klatka/głowa — głowa to krytyk x2), a K20 daje mnożnik obrażeń. Sojusznik stojący dokładnie po przeciwnej stronie celu daje +15% obrażeń (flankowanie), a przeszkoda na linii strzału przy ataku dystansowym daje celowi -25% obrażeń (osłona).",
       "Walki są brutalne — nie ma auto-leczenia w trakcie starcia, więc każde trafienie się liczy.",
+      "Przycisk „🧊 Widok 3D” przełącza planszę w widok trójwymiarowy — to ta sama walka, tylko inaczej pokazana. Brązowe wzniesienia to skały, wysokie zielone bloki to drzewa, niebieskie pola to jeziora; złota kula to Ty, czerwone stożki to przeciwnicy. Klikasz pola tak samo jak w 2D, a myszą obracasz kamerę (przeciągnięcie) i przybliżasz (przewinięcie). „🗺️ Widok 2D” wraca do klasycznej planszy.",
     ],
   },
   progression: {

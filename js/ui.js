@@ -258,10 +258,16 @@ function triggerScreenShake(intensity = "normal") {
 }
 
 function hexToLayerXY(hex) {
+  if (window.board3dHexToLayerXY) {
+    const projected = window.board3dHexToLayerXY(hex);
+    if (projected) return projected;
+  }
   const svg = document.getElementById("battle-map");
   const fxLayer = document.getElementById("fx-layer");
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return { left: -9999, top: -9999 };
   const { x, y } = axialToPixel(hex);
-  const screenPt = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
+  const screenPt = new DOMPoint(x, y).matrixTransform(ctm);
   const layerRect = fxLayer.getBoundingClientRect();
   return { left: screenPt.x - layerRect.left, top: screenPt.y - layerRect.top };
 }
