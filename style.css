@@ -1164,6 +1164,11 @@ button:disabled {
   border-top: none;
 }
 
+.tavern-bet-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .sheet-item-info {
   flex: 1;
 }

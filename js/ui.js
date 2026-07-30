@@ -766,14 +766,94 @@ function renderCityPicker(places, onSelect) {
   });
 }
 
-function renderCityPlace(place, inventory, resources, equipmentUpgrades, bonusStats, handlers) {
+const TAVERN_BET_SIZES = [5, 10, 20];
+
+function renderCityPlace(place, state, handlers) {
   if (!place) return;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
 
   const activityEl = document.getElementById("city-place-activity");
 
-  if (place.key === "kuznia") {
+  if (place.key === "arena") {
+    activityEl.innerHTML = `
+      <h4>⚔️ Pojedynek treningowy</h4>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">Natychmiastowa walka z losowym przeciwnikiem, bez wyprawy i lochu. Nagroda mniejsza niż z prawdziwej wyprawy, ale zero ryzyka po drodze — i można wracać tu w kółko.</div>
+          <div class="sheet-item-cost">Nagroda: ${ARENA_LOCATION.resource.icon} ${ARENA_LOCATION.resource.name} (${ARENA_LOCATION.resource.min}-${ARENA_LOCATION.resource.max}) + doświadczenie</div>
+        </div>
+        <button type="button" class="sheet-action-btn arena-fight-btn">Rozpocznij pojedynek</button>
+      </div>
+    `;
+    activityEl.querySelector(".arena-fight-btn").addEventListener("click", handlers.onEnterArena);
+  } else if (place.key === "czarny_rynek") {
+    const sellableEquipment = inventory.filter((id) => !Object.values(equipped || {}).includes(id));
+    const sellablePotions = POTION_ITEMS.filter((p) => potionInventory[p.id] > 0);
+
+    const equipmentRows = sellableEquipment.map((id) => {
+      const item = EQUIPMENT_ITEMS.find((i) => i.id === id);
+      const refund = Math.ceil(item.cost.amount * 0.5);
+      return `
+        <div class="sheet-item-row">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name">${item.icon} ${item.name}</div>
+            <div class="sheet-item-cost">Zwrot: ${refund} × ${item.cost.currency}</div>
+          </div>
+          <button type="button" class="sheet-action-btn sell-equipment-btn" data-item="${item.id}">Sprzedaj</button>
+        </div>
+      `;
+    }).join("");
+
+    const potionRows = sellablePotions.map((potion) => {
+      const refund = Math.ceil(potion.cost.amount * 0.5);
+      return `
+        <div class="sheet-item-row">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name">${potion.icon} ${potion.name} <span class="potion-count">×${potionInventory[potion.id]}</span></div>
+            <div class="sheet-item-cost">Zwrot: ${refund} × ${potion.cost.currency}</div>
+          </div>
+          <button type="button" class="sheet-action-btn sell-potion-btn" data-potion="${potion.id}">Sprzedaj</button>
+        </div>
+      `;
+    }).join("");
+
+    activityEl.innerHTML = `<h4>🏴 Skup towaru</h4>` +
+      (equipmentRows === "" && potionRows === ""
+        ? `<p class="sheet-empty-note">Nie masz niczego na sprzedaż — sprzedawane mogą być tylko przedmioty spoza ekwipunku założonego.</p>`
+        : equipmentRows + potionRows);
+
+    activityEl.querySelectorAll(".sell-equipment-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onSellEquipment(btn.dataset.item));
+    });
+    activityEl.querySelectorAll(".sell-potion-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onSellPotion(btn.dataset.potion));
+    });
+  } else if (place.key === "tawerna") {
+    const ownedCurrencies = Object.entries(resources).filter(([, data]) => data.amount > 0);
+    const resultHtml = lastGambleResult
+      ? `<p class="sheet-item-bonus">${lastGambleResult.text}</p>`
+      : "";
+
+    activityEl.innerHTML = `<h4>🎲 Gra w kości (K20: 1-8 przegrana, 9-14 remis, 15-20 podwojenie)</h4>` +
+      (ownedCurrencies.length === 0
+        ? `<p class="sheet-empty-note">Nie masz żadnych surowców do postawienia.</p>`
+        : ownedCurrencies.map(([name, data]) => `
+            <div class="sheet-item-row">
+              <div class="sheet-item-info">
+                <div class="sheet-item-name">${data.icon} ${name} <span class="potion-count">masz: ${data.amount}</span></div>
+              </div>
+              <div class="tavern-bet-buttons">
+                ${TAVERN_BET_SIZES.map((bet) => `<button type="button" class="sheet-action-btn gamble-btn" data-currency="${name}" data-bet="${bet}" ${data.amount >= bet ? "" : "disabled"}>Zakład: ${bet}</button>`).join("")}
+              </div>
+            </div>
+          `).join("")) + resultHtml;
+
+    activityEl.querySelectorAll(".gamble-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onGamble(btn.dataset.currency, Number(btn.dataset.bet)));
+    });
+  } else if (place.key === "kuznia") {
     activityEl.innerHTML = `<h4>⚒️ Kuźnia ulepszeń</h4>` +
       (inventory.length === 0
         ? `<p class="sheet-empty-note">Nie masz jeszcze żadnego ekwipunku do ulepszenia.</p>`
@@ -825,6 +905,12 @@ function renderCityPlace(place, inventory, resources, equipmentUpgrades, bonusSt
 
   const shopEl = document.getElementById("city-place-shop");
   const items = EQUIPMENT_ITEMS.filter((item) => item.vendor === place.key);
+
+  if (items.length === 0) {
+    shopEl.innerHTML = "";
+    return;
+  }
+
   const notOwned = items.filter((item) => !inventory.includes(item.id));
 
   shopEl.innerHTML = `<h4>Towar na sprzedaż</h4>` +

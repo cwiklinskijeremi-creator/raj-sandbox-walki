@@ -476,6 +476,60 @@ function unequipSlot(slotKey) {
   refreshCharacterSheetIfOpen();
 }
 
+const SELL_REFUND_RATE = 0.5;
+
+function sellEquipment(itemId) {
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+  if (!item || !inventory.includes(itemId) || Object.values(equipped).includes(itemId)) return;
+  const refund = Math.ceil(item.cost.amount * SELL_REFUND_RATE);
+  resources[item.cost.currency].amount += refund;
+  saveResources();
+  inventory = inventory.filter((id) => id !== itemId);
+  delete equipmentUpgrades[itemId];
+  saveEquipmentState();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+function sellPotion(potionId) {
+  const potion = POTION_ITEMS.find((p) => p.id === potionId);
+  if (!potion || !potionInventory[potionId]) return;
+  const refund = Math.ceil(potion.cost.amount * SELL_REFUND_RATE);
+  resources[potion.cost.currency].amount += refund;
+  saveResources();
+  potionInventory[potionId]--;
+  if (potionInventory[potionId] <= 0) delete potionInventory[potionId];
+  savePotionInventory();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+let lastGambleResult = null;
+
+function gambleAtTavern(currency, betAmount) {
+  const owned = resources[currency] ? resources[currency].amount : 0;
+  if (owned < betAmount) return;
+  resources[currency].amount -= betAmount;
+
+  const roll = rollD20();
+  let payout, text;
+  if (roll <= 8) {
+    payout = 0;
+    text = `K20=${roll}: przegrywasz zakład (${betAmount} × ${currency}).`;
+  } else if (roll <= 14) {
+    payout = betAmount;
+    text = `K20=${roll}: remis, odzyskujesz zakład (${betAmount} × ${currency}).`;
+  } else {
+    payout = betAmount * 2;
+    text = `K20=${roll}: wygrywasz podwójną stawkę! (+${payout} × ${currency})`;
+  }
+  if (payout > 0) resources[currency].amount += payout;
+  saveResources();
+
+  lastGambleResult = { roll, payout, text };
+  render();
+}
+
 function openCharacterSheet() {
   document.getElementById("character-sheet-overlay").classList.remove("hidden");
   refreshCharacterSheetIfOpen();
@@ -544,7 +598,8 @@ function applyActiveRunData(data) {
   level = data.level || 1;
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
-  currentLocation = LOCATIONS.find((l) => l.key === data.locationKey) || null;
+  currentLocation = LOCATIONS.find((l) => l.key === data.locationKey)
+    || (data.locationKey === ARENA_LOCATION.key ? ARENA_LOCATION : null);
   currentCityPlace = CITY_PLACES.find((p) => p.key === data.cityPlaceKey) || null;
   phase = data.phase;
 
@@ -618,8 +673,14 @@ function goToCitySelect() {
 
 function selectCityPlace(place) {
   currentCityPlace = place;
+  lastGambleResult = null;
   phase = "city-place";
   render();
+}
+
+function enterArena() {
+  currentLocation = ARENA_LOCATION;
+  startNewBattle();
 }
 
 function openTest3D() {
@@ -1037,9 +1098,14 @@ function render() {
 
   if (phase === "city-place") {
     hideAllExcept(cityPlaceScreen);
-    renderCityPlace(currentCityPlace, inventory, resources, equipmentUpgrades, bonusStats, {
-      onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
-    });
+    renderCityPlace(
+      currentCityPlace,
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult },
+      {
+        onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
+        onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
+      },
+    );
     saveActiveRun();
     return;
   }

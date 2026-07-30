@@ -276,6 +276,28 @@ const EQUIPMENT_ITEMS = [
     bonus: { int: 2 },
     cost: { currency: "Fiolki Światła", amount: 12 },
   },
+
+  // Czarny Rynek
+  {
+    id: "przemycony_pancerz",
+    name: "Przemycony Pancerz Aberracji",
+    slot: "napiersnik",
+    icon: "🦴",
+    vendor: "czarny_rynek",
+    description: "Zszyty ze skóry aberracji, sprzedany przez kogoś, kto nie miał prawa go posiadać.",
+    bonus: { pancerz: 0.09, przebicie: 0.05 },
+    cost: { currency: "Nagroda Gildii", amount: 22 },
+  },
+  {
+    id: "sygnet_rady",
+    name: "Kradziony Sygnet Rady",
+    slot: "pierscien",
+    icon: "💍",
+    vendor: "czarny_rynek",
+    description: "Sygnet z herbem jednego z Radnych — ktoś zapłaci fortunę, żeby go odzyskać, ale na razie jest Twój.",
+    bonus: { str: 2, cha: 2 },
+    cost: { currency: "Kryształy Esencji", amount: 20 },
+  },
 ];
 
 const EQUIPMENT_SLOTS = [

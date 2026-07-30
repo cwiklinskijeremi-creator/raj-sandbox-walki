@@ -40,3 +40,13 @@ const LOCATIONS = [
     bossKey: "boss_placowka",
   },
 ];
+
+const ARENA_LOCATION = {
+  key: "arena",
+  name: "Arena Krwi",
+  icon: "⚔️",
+  description: "Prowizoryczna arena na tyłach miasta, gdzie najemnicy ćwiczą się na sobie nawzajem, zanim wyruszą po prawdziwą zdobycz.",
+  enemyKeys: null,
+  obstacleBias: null,
+  resource: { name: "Nagroda Gildii", icon: "🪙", min: 4, max: 8 },
+};
