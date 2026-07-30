@@ -53,6 +53,7 @@ const TUTORIAL_DATA = {
     paragraphs: [
       "Zwycięstwo przynosi surowiec danej lokacji oraz punkty doświadczenia (PD) — im mocniejsi pokonani przeciwnicy, tym więcej PD. Kolejne poziomy wymagają coraz więcej PD i dają +3 punkty statystyk do rozdania w obozie.",
       "W „🎒 Ekwipunek i postać” (dostępnym z obozu) widzisz pełne statystyki, zakładasz zbroje i amulety kupione u kupca obozowego za zebrane surowce, oraz rozdzielasz niewydane punkty statystyk. Tam samo znajdziesz też zielarza — sprzedaje mikstury lecznicze i eliksiry chwilowo wzmacniające SIŁ/WYT/pancerz, które trafiają do plecaka i czekają na użycie w trakcie walki.",
+      "„🏙️ Miasto Aetherion” (dostępne z obozu) kryje dwa dodatkowe budynki, każdy z własnym sklepem i usługą: ⚒️ Kuźnia Gildii Rzemieślników sprzeda unikalny ekwipunek, ale przede wszystkim ulepszy każdy przedmiot, który już posiadasz (do 3 poziomów, coraz droższych, każdy dodaje +25% do jego bonusu). ⛪ Świątynia Zakonu Światła oferuje własny towar oraz „Oczyszczenie Wspomnień” — za surowce zwraca wszystkie wydane punkty statystyk do ponownego rozdania, jeśli chcesz przebudować postać.",
       "Surowce, ekwipunek i mikstury zostają na koncie nawet po rozpoczęciu nowej gry — resetuje się tylko poziom, doświadczenie i punkty statystyk aktualnej postaci.",
       "Przeciwnicy skalują się razem z Tobą — im wyższy Twój poziom, tym więcej mają HP, STR, WYT, pancerza i przebicia, więc wyprawy pozostają wyzwaniem nawet gdy postać mocno się rozwinie.",
     ],

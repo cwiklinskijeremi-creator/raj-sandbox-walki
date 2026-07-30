@@ -291,17 +291,41 @@ function loadEquipmentState() {
     return {
       inventory: (data && data.inventory) || [],
       equipped: migrateEquippedState(data && data.equipped),
+      upgrades: (data && data.upgrades) || {},
     };
   } catch {
-    return { inventory: [], equipped: defaultEquippedState() };
+    return { inventory: [], equipped: defaultEquippedState(), upgrades: {} };
   }
 }
 
 function saveEquipmentState() {
-  localStorage.setItem(EQUIPMENT_STORAGE_KEY, JSON.stringify({ inventory, equipped }));
+  localStorage.setItem(EQUIPMENT_STORAGE_KEY, JSON.stringify({ inventory, equipped, upgrades: equipmentUpgrades }));
 }
 
-let { inventory, equipped } = loadEquipmentState();
+let { inventory, equipped, upgrades: equipmentUpgrades } = loadEquipmentState();
+
+const MAX_EQUIPMENT_UPGRADE = 3;
+
+function equipmentUpgradeCost(item) {
+  const level = equipmentUpgrades[item.id] || 0;
+  return { currency: item.cost.currency, amount: item.cost.amount * (level + 1) };
+}
+
+function upgradeEquipment(itemId) {
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+  if (!item || !inventory.includes(itemId)) return;
+  const level = equipmentUpgrades[itemId] || 0;
+  if (level >= MAX_EQUIPMENT_UPGRADE) return;
+  const cost = equipmentUpgradeCost(item);
+  if (!canAffordItem({ cost })) return;
+  resources[cost.currency].amount -= cost.amount;
+  saveResources();
+  equipmentUpgrades[itemId] = level + 1;
+  saveEquipmentState();
+  if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
+  render();
+  refreshCharacterSheetIfOpen();
+}
 
 const POTION_STORAGE_KEY = "raj-sandbox-potions";
 
@@ -378,8 +402,10 @@ function getEquipmentStatBonuses() {
     if (!itemId) return;
     const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
     if (!item) return;
+    const multiplier = 1 + (equipmentUpgrades[itemId] || 0) * 0.25;
     Object.entries(item.bonus).forEach(([key, value]) => {
-      totals[key] += value;
+      const scaled = value * multiplier;
+      totals[key] += (key === "pancerz" || key === "przebicie") ? scaled : Math.round(scaled);
     });
   });
   return totals;
@@ -415,7 +441,7 @@ function refreshCharacterSheetIfOpen() {
   const overlay = document.getElementById("character-sheet-overlay");
   if (overlay.classList.contains("hidden")) return;
   renderCharacterSheet(
-    player, inventory, equipped, resources, potionInventory,
+    player, inventory, equipped, resources, potionInventory, equipmentUpgrades,
     { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable },
     { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat, onBuyPotion: buyPotion },
   );
@@ -647,6 +673,19 @@ function adjustBonusStat(key, delta) {
   refreshCharacterSheetIfOpen();
 }
 
+const RESPEC_COST = { currency: "Fiolki Światła", amount: 15 };
+
+function respecStats() {
+  const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+  if (spent <= 0 || !canAffordItem({ cost: RESPEC_COST })) return;
+  resources[RESPEC_COST.currency].amount -= RESPEC_COST.amount;
+  saveResources();
+  bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
 function setPlayerName(value) {
   playerName = value;
   render();
@@ -685,6 +724,7 @@ function clearAllProgress() {
   saveResources();
   inventory = [];
   equipped = defaultEquippedState();
+  equipmentUpgrades = {};
   saveEquipmentState();
   potionInventory = {};
   savePotionInventory();
@@ -997,7 +1037,9 @@ function render() {
 
   if (phase === "city-place") {
     hideAllExcept(cityPlaceScreen);
-    renderCityPlace(currentCityPlace, inventory, resources, buyEquipment);
+    renderCityPlace(currentCityPlace, inventory, resources, equipmentUpgrades, bonusStats, {
+      onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
+    });
     saveActiveRun();
     return;
   }

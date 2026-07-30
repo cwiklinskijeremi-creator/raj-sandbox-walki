@@ -504,7 +504,17 @@ function formatItemBonus(item) {
   return parts.join(", ");
 }
 
-function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, progress, handlers) {
+function formatScaledItemBonus(item, multiplier) {
+  const parts = [];
+  if (item.bonus.pancerz) parts.push(`+${(item.bonus.pancerz * multiplier * 100).toFixed(0)}% pancerza`);
+  if (item.bonus.przebicie) parts.push(`+${(item.bonus.przebicie * multiplier * 100).toFixed(0)}% przebicia`);
+  ["str", "wyt", "zre", "int", "cha"].forEach((k) => {
+    if (item.bonus[k]) parts.push(`+${Math.round(item.bonus[k] * multiplier)} ${k.toUpperCase()}`);
+  });
+  return parts.join(", ");
+}
+
+function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers) {
   const body = document.getElementById("character-sheet-body");
   if (!player) {
     body.innerHTML = `<p class="creation-hint">Brak postaci.</p>`;
@@ -565,14 +575,15 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
         ${EQUIPMENT_SLOTS.map((slot) => {
           const itemId = equipped[slot.key];
           const item = itemId ? EQUIPMENT_ITEMS.find((i) => i.id === itemId) : null;
+          const level = itemId ? (equipmentUpgrades[itemId] || 0) : 0;
           return `
             <div class="sheet-slot">
               <div class="sheet-slot-label">${slot.label}</div>
               ${item
                 ? `<div class="sheet-slot-item">
                     <div>
-                      <div class="sheet-item-name">${item.icon} ${item.name}</div>
-                      <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+                      <div class="sheet-item-name">${item.icon} ${item.name}${level > 0 ? ` <span class="potion-count">+${level}</span>` : ""}</div>
+                      <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
                     </div>
                     <button type="button" class="sheet-action-btn unequip-btn" data-slot="${slot.key}">Zdejmij</button>
                   </div>`
@@ -592,12 +603,13 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
         ? `<p class="sheet-empty-note">Brak przedmiotów w plecaku.</p>`
         : ownedUnequipped.map((id) => {
             const item = EQUIPMENT_ITEMS.find((i) => i.id === id);
+            const level = equipmentUpgrades[id] || 0;
             return `
               <div class="sheet-item-row">
                 <div class="sheet-item-info">
-                  <div class="sheet-item-name">${item.icon} ${item.name}</div>
+                  <div class="sheet-item-name">${item.icon} ${item.name}${level > 0 ? ` <span class="potion-count">+${level}</span>` : ""}</div>
                   <div class="sheet-item-desc">${item.description}</div>
-                  <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+                  <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
                 </div>
                 <button type="button" class="sheet-action-btn equip-btn" data-item="${item.id}">Załóż</button>
               </div>
@@ -754,10 +766,62 @@ function renderCityPicker(places, onSelect) {
   });
 }
 
-function renderCityPlace(place, inventory, resources, onBuy) {
+function renderCityPlace(place, inventory, resources, equipmentUpgrades, bonusStats, handlers) {
   if (!place) return;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
+
+  const activityEl = document.getElementById("city-place-activity");
+
+  if (place.key === "kuznia") {
+    activityEl.innerHTML = `<h4>⚒️ Kuźnia ulepszeń</h4>` +
+      (inventory.length === 0
+        ? `<p class="sheet-empty-note">Nie masz jeszcze żadnego ekwipunku do ulepszenia.</p>`
+        : inventory.map((itemId) => {
+            const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+            const level = equipmentUpgrades[itemId] || 0;
+            const maxed = level >= MAX_EQUIPMENT_UPGRADE;
+            const cost = { currency: item.cost.currency, amount: item.cost.amount * (level + 1) };
+            const owned = resources[cost.currency] ? resources[cost.currency].amount : 0;
+            const affordable = owned >= cost.amount;
+            const bonusText = maxed
+              ? formatScaledItemBonus(item, 1 + level * 0.25)
+              : `${formatScaledItemBonus(item, 1 + level * 0.25)} → ${formatScaledItemBonus(item, 1 + (level + 1) * 0.25)}`;
+            return `
+              <div class="sheet-item-row">
+                <div class="sheet-item-info">
+                  <div class="sheet-item-name">${item.icon} ${item.name} <span class="potion-count">+${level}${maxed ? " (max)" : ""}</span></div>
+                  <div class="sheet-item-bonus">${bonusText}</div>
+                  ${maxed ? "" : `<div class="sheet-item-cost">Koszt ulepszenia: ${cost.amount} × ${cost.currency} (masz: ${owned})</div>`}
+                </div>
+                ${maxed
+                  ? `<span class="sheet-empty-note">Maksymalny poziom</span>`
+                  : `<button type="button" class="sheet-action-btn upgrade-btn" data-item="${item.id}" ${affordable ? "" : "disabled"}>Ulepsz</button>`}
+              </div>
+            `;
+          }).join(""));
+
+    activityEl.querySelectorAll(".upgrade-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onUpgrade(btn.dataset.item));
+    });
+  } else if (place.key === "swiatynia") {
+    const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+    const owned = resources[RESPEC_COST.currency] ? resources[RESPEC_COST.currency].amount : 0;
+    const affordable = owned >= RESPEC_COST.amount;
+    activityEl.innerHTML = `
+      <h4>🕯️ Oczyszczenie Wspomnień</h4>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">Zakon zetrze z Twojego ciała ślad dotychczasowego treningu, zwracając wszystkie wydane punkty statystyk do ponownego rozdania w obozie (${spent} pkt obecnie wydanych).</div>
+          <div class="sheet-item-cost">Koszt: ${RESPEC_COST.amount} × ${RESPEC_COST.currency} (masz: ${owned})</div>
+        </div>
+        <button type="button" class="sheet-action-btn respec-btn" ${spent > 0 && affordable ? "" : "disabled"}>Oczyść</button>
+      </div>
+    `;
+    activityEl.querySelector(".respec-btn").addEventListener("click", handlers.onRespec);
+  } else {
+    activityEl.innerHTML = "";
+  }
 
   const shopEl = document.getElementById("city-place-shop");
   const items = EQUIPMENT_ITEMS.filter((item) => item.vendor === place.key);
@@ -783,7 +847,7 @@ function renderCityPlace(place, inventory, resources, onBuy) {
         }).join(""));
 
   shopEl.querySelectorAll(".buy-btn").forEach((btn) => {
-    btn.addEventListener("click", () => onBuy(btn.dataset.item));
+    btn.addEventListener("click", () => handlers.onBuy(btn.dataset.item));
   });
 }
 
