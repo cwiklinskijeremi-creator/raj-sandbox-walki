@@ -284,10 +284,20 @@ let { totalKills, claimedQuests } = loadQuestState();
 function registerKill() {
   totalKills++;
   saveQuestState();
-  if (recruitPool.length > 0) {
-    recruitPool.forEach((r) => { r.killsProgress++; });
+  const killRecruits = recruitPool.filter((r) => r.quest.type === "kills");
+  if (killRecruits.length > 0) {
+    killRecruits.forEach((r) => { r.killsProgress++; });
     saveCompanionState();
   }
+}
+
+function getRecruitProgress(recruit) {
+  const q = recruit.quest;
+  if (q.type === "kills") return recruit.killsProgress;
+  if (q.type === "level") return level;
+  if (q.type === "resource") return resources[q.currency] ? resources[q.currency].amount : 0;
+  if (q.type === "bestiary") return discoveredEnemies.length;
+  return 0;
 }
 
 function getQuestProgressState() {
@@ -347,7 +357,11 @@ const COMPANION_STORAGE_KEY = "raj-sandbox-companions";
 function loadCompanionState() {
   try {
     const data = JSON.parse(localStorage.getItem(COMPANION_STORAGE_KEY));
-    return { companions: (data && data.companions) || [], recruitPool: (data && data.recruitPool) || [] };
+    const recruitPool = (data && data.recruitPool) || [];
+    recruitPool.forEach((r) => {
+      if (!r.quest) r.quest = COMPANION_QUESTS[r.companion.subclassName];
+    });
+    return { companions: (data && data.companions) || [], recruitPool };
   } catch {
     return { companions: [], recruitPool: [] };
   }
@@ -362,19 +376,22 @@ let { companions, recruitPool } = loadCompanionState();
 function rotateRecruitPool() {
   const shuffledPlaces = [...CITY_PLACES].sort(() => Math.random() - 0.5);
   const chosenPlaces = shuffledPlaces.slice(0, 2);
-  recruitPool = chosenPlaces.map((place) => ({
-    id: `recruit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    locationKey: place.key,
-    companion: generateCompanion(selectedClassName),
-    killsNeeded: 3 + Math.floor(Math.random() * 4),
-    killsProgress: 0,
-  }));
+  recruitPool = chosenPlaces.map((place) => {
+    const companion = generateCompanion(selectedClassName);
+    return {
+      id: `recruit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      locationKey: place.key,
+      companion,
+      quest: COMPANION_QUESTS[companion.subclassName],
+      killsProgress: 0,
+    };
+  });
   saveCompanionState();
 }
 
 function recruitCompanion(recruitId) {
   const entry = recruitPool.find((r) => r.id === recruitId);
-  if (!entry || entry.killsProgress < entry.killsNeeded) return;
+  if (!entry || getRecruitProgress(entry) < entry.quest.goal) return;
   if (companions.length >= MAX_COMPANIONS) return;
   companions.push(entry.companion);
   recruitPool = recruitPool.filter((r) => r.id !== recruitId);

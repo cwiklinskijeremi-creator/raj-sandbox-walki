@@ -780,26 +780,26 @@ function renderCityPicker(places, onSelect) {
 
 const TAVERN_BET_SIZES = [5, 10, 20];
 
-function renderRecruitCard(recruit, canRecruit, onRecruit) {
+function renderRecruitCard(recruit, progress, canRecruit, onRecruit) {
   const el = document.getElementById("city-place-recruit");
   if (!recruit) {
     el.innerHTML = "";
     return;
   }
 
-  const { companion, killsProgress, killsNeeded } = recruit;
-  const progress = Math.min(killsProgress, killsNeeded);
-  const pct = Math.round((progress / killsNeeded) * 100);
-  const ready = progress >= killsNeeded;
+  const { companion, quest } = recruit;
+  const clamped = Math.min(progress, quest.goal);
+  const pct = Math.round((clamped / quest.goal) * 100);
+  const ready = clamped >= quest.goal;
 
   el.innerHTML = `
     <h4>👥 Potencjalny towarzysz</h4>
     <div class="sheet-item-row">
       <div class="sheet-item-info">
         <div class="sheet-item-name">${companion.icon} ${companion.name}</div>
-        <div class="sheet-item-desc">${companion.className} — ${companion.subclassName}. Zanim dołączy do drużyny, chce zobaczyć, że potrafisz walczyć: pokonaj ${killsNeeded} przeciwników.</div>
+        <div class="sheet-item-desc">${companion.className} — ${companion.subclassName}. ${quest.flavor}</div>
         <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
-        <div class="sheet-item-bonus">${progress}/${killsNeeded} pokonanych przeciwników</div>
+        <div class="sheet-item-bonus">${clamped}/${quest.goal} ${quest.label}</div>
       </div>
       <button type="button" class="sheet-action-btn recruit-btn" ${ready && canRecruit ? "" : "disabled"}>Zwerbuj</button>
     </div>
@@ -838,7 +838,12 @@ function renderCityPlace(place, state, handlers) {
   document.getElementById("city-place-description").textContent = place.description;
 
   const recruit = (recruitPool || []).find((r) => r.locationKey === place.key);
-  renderRecruitCard(recruit, companions ? companions.length < MAX_COMPANIONS : false, () => handlers.onRecruit(recruit.id));
+  renderRecruitCard(
+    recruit,
+    recruit ? getRecruitProgress(recruit) : 0,
+    companions ? companions.length < MAX_COMPANIONS : false,
+    () => handlers.onRecruit(recruit.id)
+  );
 
   const activityEl = document.getElementById("city-place-activity");
 
