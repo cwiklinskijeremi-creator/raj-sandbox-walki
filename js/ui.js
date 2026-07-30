@@ -418,7 +418,8 @@ function renderCharacterCreation(state, handlers) {
     descEl.innerHTML = `
       <h4>${selectedSub.icon} ${selectedSub.name}</h4>
       <p>${LORE_DATA.classFlavor[selectedSub.name] || ""}</p>
-      <div class="codex-subclass-gear">Broń: ${selectedSub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${selectedSub.skill.name} (odnowienie: ${turnsLabel(selectedSub.skill.cooldown)})</div>
+      <div class="codex-subclass-gear">Broń: ${selectedSub.weapons.map((w) => w.name).join(", ")}</div>
+      <div class="codex-subclass-gear">Umiejętności: ${selectedSub.skills.map((s) => `${s.icon} ${s.name} (odnowienie: ${turnsLabel(s.cooldown)})`).join(" &nbsp;|&nbsp; ")}</div>
     `;
   }
 
@@ -1068,7 +1069,8 @@ function renderCodexTabBody(tabKey) {
           <div class="codex-subclass">
             <div class="codex-subclass-title">${sub.icon} ${sub.name}</div>
             <p>${LORE_DATA.classFlavor[sub.name] || ""}</p>
-            <div class="codex-subclass-gear">Broń: ${sub.weapons.map((w) => w.name).join(", ")} &nbsp;|&nbsp; Umiejętność: ${sub.skill.name} (odnowienie: ${turnsLabel(sub.skill.cooldown)})</div>
+            <div class="codex-subclass-gear">Broń: ${sub.weapons.map((w) => w.name).join(", ")}</div>
+            <div class="codex-subclass-gear">Umiejętności: ${sub.skills.map((s) => `${s.icon} ${s.name} (odnowienie: ${turnsLabel(s.cooldown)})`).join(" &nbsp;|&nbsp; ")}</div>
           </div>
         `).join("")}
       </div>

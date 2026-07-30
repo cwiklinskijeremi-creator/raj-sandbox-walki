@@ -1019,12 +1019,21 @@ function openPlayerActionMenu() {
       },
     },
     {
-      icon: playerSkill() ? playerSkill().icon : "✨",
-      label: skillButtonLabel(),
-      disabled: playerActionsRemaining <= 0 || (playerSkill() && player.skillCooldown > 0),
+      icon: playerSkills()[0] ? playerSkills()[0].icon : "✨",
+      label: skillButtonLabel(0),
+      disabled: playerActionsRemaining <= 0 || (playerSkills()[0] && skillCooldownFor(0) > 0),
       onClick: () => {
         radialMenuOpen = false;
-        castSkill();
+        castSkill(0);
+      },
+    },
+    {
+      icon: playerSkills()[1] ? playerSkills()[1].icon : "✨",
+      label: skillButtonLabel(1),
+      disabled: playerActionsRemaining <= 0 || (playerSkills()[1] && skillCooldownFor(1) > 0),
+      onClick: () => {
+        radialMenuOpen = false;
+        castSkill(1);
       },
     },
     {
@@ -1044,15 +1053,20 @@ function potionButtonLabel() {
   return totalCount > 0 ? `Mikstury (${totalCount})` : "Mikstury (brak)";
 }
 
-function playerSkill() {
+function playerSkills() {
   const subclassData = findSubclassData(player.class, player.subclass);
-  return subclassData && subclassData.skill;
+  return (subclassData && subclassData.skills) || [];
 }
 
-function skillButtonLabel() {
-  const skill = playerSkill();
+function skillCooldownFor(index) {
+  return (player.skillCooldowns && player.skillCooldowns[index]) || 0;
+}
+
+function skillButtonLabel(index) {
+  const skill = playerSkills()[index];
   if (!skill) return "Umiejętności (wybierz klasę)";
-  if (player.skillCooldown > 0) return `${skill.name} (odnowienie: ${player.skillCooldown})`;
+  const cd = skillCooldownFor(index);
+  if (cd > 0) return `${skill.name} (odnowienie: ${cd})`;
   return skill.name;
 }
 
@@ -1432,10 +1446,12 @@ function applySkillEffect(skill, target, result, context) {
       break;
     }
 
-    case "self_buff_str":
-      applyTimedEffect(player, "str", skill.effectValue, skill.effectTurns, "wściekłość");
-      appendLog(`😡 Wpadasz we wściekłość: +${skill.effectValue} SIŁ na ${turnsLabel(skill.effectTurns)}.`, "system");
+    case "self_buff": {
+      applyTimedEffect(player, skill.stat, skill.effectValue, skill.effectTurns, skill.label);
+      const amountText = skill.stat === "pancerz" ? `${Math.round(skill.effectValue * 100)}%` : `+${skill.effectValue}`;
+      appendLog(`${skill.icon} ${amountText} ${skill.stat.toUpperCase()} na ${turnsLabel(skill.effectTurns)}.`, "system");
       break;
+    }
 
     case "poison_dot":
       applyPoison(target, skill.effectValue, skill.effectTurns);
@@ -1478,20 +1494,20 @@ function applySkillEffect(skill, target, result, context) {
   }
 }
 
-function castSkill() {
+function castSkill(index) {
   if (battleOver || playerActionsRemaining <= 0) return;
   closeRadialMenu();
   radialMenuOpen = false;
 
-  const skill = playerSkill();
+  const skill = playerSkills()[index];
   if (!skill) {
     appendLog("Wybierz najpierw klasę i specjalizację, żeby odblokować czar.", "system");
     render();
     return;
   }
 
-  if (player.skillCooldown > 0) {
-    appendLog(`${skill.name} jeszcze się odnawia (pozostało ${turnsLabel(player.skillCooldown)}).`, "system");
+  if (skillCooldownFor(index) > 0) {
+    appendLog(`${skill.name} jeszcze się odnawia (pozostało ${turnsLabel(skillCooldownFor(index))}).`, "system");
     render();
     return;
   }
@@ -1515,7 +1531,8 @@ function castSkill() {
   if (skill.effectType === "ignore_armor") virtualAttacker.przebicie = 1;
 
   playerActionsRemaining--;
-  player.skillCooldown = skill.cooldown;
+  player.skillCooldowns = player.skillCooldowns || [];
+  player.skillCooldowns[index] = skill.cooldown;
   playSpellCastSound();
   render();
 
@@ -1650,7 +1667,9 @@ function enemyPhase() {
   }
 
   if (!battleOver) {
-    if (player.skillCooldown > 0) player.skillCooldown--;
+    (player.skillCooldowns || []).forEach((cd, i) => {
+      if (cd > 0) player.skillCooldowns[i]--;
+    });
     tickTimedEffectsFor(player);
     enemies.forEach((enemy) => {
       tickTimedEffectsFor(enemy);
