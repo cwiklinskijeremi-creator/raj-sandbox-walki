@@ -840,6 +840,20 @@ button:disabled {
   display: none !important;
 }
 
+.recruit-scene-text {
+  font-size: 1.02rem;
+  font-style: italic;
+  color: #e8e0d8;
+}
+
+.recruit-scene-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.8rem 1.4rem 1.2rem;
+  border-top: 1px solid #3a3542;
+}
+
 .resource-bar {
   display: flex;
   flex-wrap: wrap;

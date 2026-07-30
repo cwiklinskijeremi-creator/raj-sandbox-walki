@@ -801,13 +801,30 @@ function renderRecruitCard(recruit, progress, canRecruit, onRecruit) {
         <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
         <div class="sheet-item-bonus">${clamped}/${quest.goal} ${quest.label}</div>
       </div>
-      <button type="button" class="sheet-action-btn recruit-btn" ${ready && canRecruit ? "" : "disabled"}>Zwerbuj</button>
+      <button type="button" class="sheet-action-btn recruit-btn" ${ready && canRecruit ? "" : "disabled"}>${ready ? "Porozmawiaj" : "Zwerbuj"}</button>
     </div>
     ${ready && !canRecruit ? `<p class="sheet-empty-note">Drużyna jest pełna (max ${MAX_COMPANIONS}) — zwolnij kogoś w „👥 Drużyna”, żeby zrobić miejsce.</p>` : ""}
   `;
 
   const btn = el.querySelector(".recruit-btn");
   if (btn) btn.addEventListener("click", onRecruit);
+}
+
+function renderRecruitScene(recruit, step) {
+  const { companion } = recruit;
+  const scene = COMPANION_SCENES[companion.subclassName] || [];
+  const lastStep = scene.length - 1;
+  const clampedStep = Math.min(step, Math.max(lastStep, 0));
+  const isLast = clampedStep >= lastStep;
+
+  document.getElementById("recruit-scene-body").innerHTML = `
+    <div class="sheet-item-name">${companion.icon} ${companion.name}</div>
+    <div class="sheet-item-desc">${companion.className} — ${companion.subclassName}</div>
+    <p class="recruit-scene-text">${scene[clampedStep] || ""}</p>
+  `;
+
+  document.getElementById("recruit-scene-next-btn").classList.toggle("hidden", isLast);
+  document.getElementById("recruit-scene-confirm-btn").classList.toggle("hidden", !isLast);
 }
 
 function renderPartyOverlay(companions, onDismiss) {

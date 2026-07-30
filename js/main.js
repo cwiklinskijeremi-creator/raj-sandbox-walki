@@ -304,6 +304,36 @@ function getQuestProgressState() {
   return { totalKills, level, discoveredCount: discoveredEnemies.length };
 }
 
+let activeRecruitScene = null;
+
+function openRecruitScene(recruitId) {
+  const entry = recruitPool.find((r) => r.id === recruitId);
+  if (!entry || getRecruitProgress(entry) < entry.quest.goal) return;
+  activeRecruitScene = { recruitId, step: 0 };
+  document.getElementById("recruit-scene-overlay").classList.remove("hidden");
+  renderRecruitScene(entry, 0);
+}
+
+function advanceRecruitScene() {
+  if (!activeRecruitScene) return;
+  const entry = recruitPool.find((r) => r.id === activeRecruitScene.recruitId);
+  if (!entry) { closeRecruitScene(); return; }
+  activeRecruitScene.step++;
+  renderRecruitScene(entry, activeRecruitScene.step);
+}
+
+function confirmRecruitScene() {
+  if (!activeRecruitScene) return;
+  const recruitId = activeRecruitScene.recruitId;
+  closeRecruitScene();
+  recruitCompanion(recruitId);
+}
+
+function closeRecruitScene() {
+  activeRecruitScene = null;
+  document.getElementById("recruit-scene-overlay").classList.add("hidden");
+}
+
 function openQuestBoard() {
   document.getElementById("quest-board-overlay").classList.remove("hidden");
   renderQuestBoard(QUESTS, getQuestProgressState(), claimedQuests, claimQuestReward);
@@ -1301,7 +1331,7 @@ function render() {
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
-        onRecruit: recruitCompanion,
+        onRecruit: openRecruitScene,
       },
     );
     saveActiveRun();
@@ -1901,6 +1931,9 @@ document.getElementById("camp-quests-btn").addEventListener("click", openQuestBo
 document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
 document.getElementById("camp-party-btn").addEventListener("click", openPartyOverlay);
 document.getElementById("party-close").addEventListener("click", closePartyOverlay);
+document.getElementById("recruit-scene-next-btn").addEventListener("click", advanceRecruitScene);
+document.getElementById("recruit-scene-confirm-btn").addEventListener("click", confirmRecruitScene);
+document.getElementById("recruit-scene-close").addEventListener("click", closeRecruitScene);
 document.getElementById("character-sheet-close").addEventListener("click", closeCharacterSheet);
 document.getElementById("character-sheet-overlay").addEventListener("click", (e) => {
   if (e.target.id === "character-sheet-overlay") closeCharacterSheet();

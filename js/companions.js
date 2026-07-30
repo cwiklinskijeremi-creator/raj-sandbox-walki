@@ -50,6 +50,62 @@ const COMPANION_QUESTS = {
   },
 };
 
+// Three-beat recruitment scene per subclass, shown once the quest goal is
+// met: greeting (references the completed task), an unexpected complication,
+// then a resolution where helping through it earns the companion's trust.
+const COMPANION_SCENES = {
+  "Arcymag": [
+    "Widzę, że naprawdę przestudiowałeś bestie Aetherionu, tak jak prosiłem. Usiądź, chcę ci pokazać coś w mojej pracowni.",
+    "Zanim zdąży dokończyć zdanie, jeden z zapieczętowanych tomów na półce zaczyna drżeć — pieczęć powstrzymująca uwięzionego ducha pęka z trzaskiem.",
+    "Wspólnie odpychacie zjawę za krawędź kręgu, zanim zdąży się w pełni zmaterializować. Arcymag otrzepuje szaty. „Cóż. Skoro już oswoiłeś się z potworami z książek, czas byś poznał te prawdziwe. Ruszam z tobą.”",
+  ],
+  "Apostata": [
+    "Piętnaście kryształów, czyste jak łza. Rzadko kto dotrzymuje takiej obietnicy.",
+    "Gdy wysypuje je na ołtarz, esencja zaczyna pulsować własnym rytmem — przyzwane echo z Otchłani przeciska się przez powietrze w stronę płomienia.",
+    "Gasicie rytuał obiema parami rąk, zanim echo zdąży przybrać kształt. Apostata patrzy na ciebie inaczej niż wcześniej. „Mrok cię nie odrzucił. To rzadkość. Chodźmy.”",
+  ],
+  "Świetlisty obrońca": [
+    "Trzeci poziom. Widziałam gorszych rycerzy dowodzących całymi oddziałami. Dobrze.",
+    "Zanim zdąży dokończyć zdanie, dzwon na wieży bije na alarm — coś skalanego przekroczyło mur świątyni.",
+    "Stajecie ramię w ramię przy bramie, odpierając napór, aż światło znów zapanuje nad murami. „Krucjata potrzebuje takich rąk jak twoje” mówi, chowając miecz. „Dołączam.”",
+  ],
+  "Mroczny rycerz": [
+    "Sześciu przeciwników. Ostrze nie kłamie, nawet jeśli usta potrafią.",
+    "W tej samej chwili z cienia wyłania się ktoś, kogo rycerz najwyraźniej rozpoznaje — dawny brat broni, ten sam, który go zdradził.",
+    "Walczycie plecy w plecy, aż zdrajca ucieka w mrok. Rycerz chowa miecz z twardym spojrzeniem. „Dziś stanąłeś tam, gdzie on kiedyś stał. Może to coś znaczy. Jadę z tobą.”",
+  ],
+  "Najemnik bractwa": [
+    "Dwadzieścia sztuk Nagrody Gildii. Kontrakt się zgadza.",
+    "Zanim zdąży go podpisać, do gospody wpada dłużnik Bractwa błagający o pomoc — ścigają go ludzie, którym jest winien znacznie więcej niż tobie.",
+    "Odpędzacie ścigających razem, choć to nie wasza sprawa. Najemnik chowa pióro. „Podoba mi się, jak pracujesz nawet bez kontraktu. Bractwo cię zatwierdza.”",
+  ],
+  "Berserk": [
+    "Siedmiu. Czuję krew na twoich rękach nawet stąd.",
+    "W tej samej chwili z lasu dobiega ryk — coś większego niż zwykły przeciwnik zwietrzyło krew i rusza w waszą stronę.",
+    "Rzucacie się na bestię razem, topór przy topór, aż pada. Berserk śmieje się, otrzepując krew z pancerza. „To były najlepsze łowy, jakie miałem od miesięcy. Idę z tobą.”",
+  ],
+  "Łowca": [
+    "Pięć różnych bestii w twoim rejestrze. Niezłe jak na kogoś, kto jeszcze nie zna tych lasów.",
+    "Ślady na ziemi mówią co innego niż spokój wokół — coś tropi was od dłuższego czasu, krążąc, nie atakując.",
+    "Zastawiacie razem prostą pułapkę i wywabiacie prześladowcę na otwarte pole, gdzie traci przewagę. Łowca chowa łuk z uśmiechem. „Dobre oko. Umiem rozpoznać kogoś, kto się nadaje. Ruszamy.”",
+  ],
+  "Skrytobójca": [
+    "Czwarty poziom. W cieniu i tak było już o tobie głośno.",
+    "Zanim zdąży wyjść z zaułka, ktoś rzuca w jej stronę nożem — kontrakt na jej głowę wciąż jest aktualny.",
+    "Odbijacie zamach i wypłaszacie napastnika w kilka uderzeń serca. Skrytobójczyni chowa ostrze. „Ktoś, kto reaguje szybciej niż mój wróg. To rzadkie. Biorę cię.”",
+  ],
+  "Truciciel": [
+    "Piętnaście Spaczonych Ziół, świeże, nie zwiędłe. Ktoś w końcu wie, gdzie szukać.",
+    "Gdy zaczyna je przesypywać do moździerza, jedno z ziół uwalnia zarodniki silniejsze, niż się spodziewał — powietrze gęstnieje trującą mgłą.",
+    "Wynosicie się z pracowni, zanim opary zrobią więcej szkody, i wietrzycie pomieszczenie razem. Truciciel kaszle, ale się śmieje. „Przeżyłeś moją pomyłkę. Dobry znak. Chodź ze mną.”",
+  ],
+  "Medyk": [
+    "Dwanaście Fiolek Światła. Starczy na tydzień ciężkich obrażeń, jeśli dobrze rozdzielić.",
+    "Zanim zdąży je schować, do namiotu wnoszą rannego z pobliskiej potyczki — krwawi szybciej, niż medyk zdąży przygotować opatrunek.",
+    "Trzymasz rannego w bezruchu, podczas gdy medyk pracuje, i razem udaje się go ustabilizować. Ociera pot z czoła. „Dobre ręce w kryzysie liczą się bardziej niż CV. Dołączam do drużyny.”",
+  ],
+};
+
 function generateCompanion(excludeClassName) {
   const availableClasses = CLASS_DATA.filter((c) => c.name !== excludeClassName);
   const cls = availableClasses[Math.floor(Math.random() * availableClasses.length)];
