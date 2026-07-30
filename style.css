@@ -1146,6 +1146,11 @@ button:disabled {
   color: #c9a24b;
 }
 
+.sheet-item-weapon {
+  font-size: 0.82rem;
+  color: #7fb0d8;
+}
+
 .potion-count {
   color: #b48ce0;
   font-weight: 400;

@@ -514,6 +514,11 @@ function formatScaledItemBonus(item, multiplier) {
   return parts.join(", ");
 }
 
+function formatItemWeapon(item) {
+  if (!item.weapon) return "";
+  return `<div class="sheet-item-weapon">🗡️ Broń: ${item.weapon.name} (${item.weapon.minDmg}-${item.weapon.maxDmg}, zas.${item.weapon.range})</div>`;
+}
+
 function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers) {
   const body = document.getElementById("character-sheet-body");
   if (!player) {
@@ -583,6 +588,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
                 ? `<div class="sheet-slot-item">
                     <div>
                       <div class="sheet-item-name">${item.icon} ${item.name}${level > 0 ? ` <span class="potion-count">+${level}</span>` : ""}</div>
+                      ${formatItemWeapon(item)}
                       <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
                     </div>
                     <button type="button" class="sheet-action-btn unequip-btn" data-slot="${slot.key}">Zdejmij</button>
@@ -609,6 +615,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
                 <div class="sheet-item-info">
                   <div class="sheet-item-name">${item.icon} ${item.name}${level > 0 ? ` <span class="potion-count">+${level}</span>` : ""}</div>
                   <div class="sheet-item-desc">${item.description}</div>
+                  ${formatItemWeapon(item)}
                   <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
                 </div>
                 <button type="button" class="sheet-action-btn equip-btn" data-item="${item.id}">Załóż</button>
@@ -631,6 +638,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
             <div class="sheet-item-info">
               <div class="sheet-item-name">${item.icon} ${item.name}</div>
               <div class="sheet-item-desc">${item.description}</div>
+              ${formatItemWeapon(item)}
               <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
               <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
             </div>
@@ -871,6 +879,7 @@ function renderCityPlace(place, state, handlers) {
               <div class="sheet-item-row">
                 <div class="sheet-item-info">
                   <div class="sheet-item-name">${item.icon} ${item.name} <span class="potion-count">+${level}${maxed ? " (max)" : ""}</span></div>
+                  ${formatItemWeapon(item)}
                   <div class="sheet-item-bonus">${bonusText}</div>
                   ${maxed ? "" : `<div class="sheet-item-cost">Koszt ulepszenia: ${cost.amount} × ${cost.currency} (masz: ${owned})</div>`}
                 </div>
@@ -924,6 +933,7 @@ function renderCityPlace(place, state, handlers) {
               <div class="sheet-item-info">
                 <div class="sheet-item-name">${item.icon} ${item.name}</div>
                 <div class="sheet-item-desc">${item.description}</div>
+                ${formatItemWeapon(item)}
                 <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
                 <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
               </div>

@@ -411,6 +411,16 @@ function getEquipmentStatBonuses() {
   return totals;
 }
 
+function getEquippedWeaponItems() {
+  const weapons = [];
+  Object.values(equipped).forEach((itemId) => {
+    if (!itemId) return;
+    const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+    if (item && item.weapon) weapons.push(item.weapon);
+  });
+  return weapons;
+}
+
 function buildPlayerCharacter() {
   const p = createPlayer(playerName, playerGender);
   const sub = findSubclassData(selectedClassName, selectedSubclassName);
@@ -426,6 +436,7 @@ function buildPlayerCharacter() {
     applyClassProfile(p, sub, totalBonus);
     p.pancerz += equipBonus.pancerz;
     p.przebicie += equipBonus.przebicie;
+    p.weapons = [...p.weapons, ...getEquippedWeaponItems()];
   }
   p.class = selectedClassName;
   p.subclass = selectedSubclassName;

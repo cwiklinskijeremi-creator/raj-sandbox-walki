@@ -132,6 +132,28 @@ const EQUIPMENT_ITEMS = [
     bonus: { zre: 2 },
     cost: { currency: "Spaczone Zioła", amount: 10 },
   },
+  {
+    id: "podreczny_sztylet",
+    name: "Podręczny Sztylet",
+    slot: "prawa_reka",
+    icon: "🗡️",
+    vendor: "camp",
+    description: "Prosty, dobrze wyważony sztylet — podstawowa broń każdego najemnika.",
+    weapon: { name: "Podręczny Sztylet", minDmg: 6, maxDmg: 10, range: 1 },
+    bonus: { przebicie: 0.03 },
+    cost: { currency: "Nagroda Gildii", amount: 10 },
+  },
+  {
+    id: "noz_do_rzucania",
+    name: "Nóż do Rzucania",
+    slot: "lewa_reka",
+    icon: "🔪",
+    vendor: "camp",
+    description: "Lekki, wyważony do rzutu — trzymany w wolnej dłoni na wszelki wypadek.",
+    weapon: { name: "Nóż do Rzucania", minDmg: 5, maxDmg: 8, range: 3 },
+    bonus: { zre: 2 },
+    cost: { currency: "Spaczone Zioła", amount: 10 },
+  },
 
   // Kuźnia Gildii Rzemieślników
   {
@@ -214,6 +236,28 @@ const EQUIPMENT_ITEMS = [
     bonus: { wyt: 2 },
     cost: { currency: "Nagroda Gildii", amount: 12 },
   },
+  {
+    id: "kuty_topor_boczny",
+    name: "Kuty Topór Boczny",
+    slot: "prawa_reka",
+    icon: "🪓",
+    vendor: "kuznia",
+    description: "Solidna robota kowali Gildii — cięższy niż sztylet, ale mocniej rani.",
+    weapon: { name: "Kuty Topór Boczny", minDmg: 9, maxDmg: 14, range: 1 },
+    bonus: { str: 2 },
+    cost: { currency: "Kryształy Esencji", amount: 18 },
+  },
+  {
+    id: "parujacy_sztylet_gildii",
+    name: "Parujący Sztylet Gildii",
+    slot: "lewa_reka",
+    icon: "⚔️",
+    vendor: "kuznia",
+    description: "Krótkie ostrze trzymane w wolnej dłoni, wyważone tak, by odbijać ciosy.",
+    weapon: { name: "Parujący Sztylet", minDmg: 7, maxDmg: 11, range: 1 },
+    bonus: { pancerz: 0.03 },
+    cost: { currency: "Nagroda Gildii", amount: 16 },
+  },
 
   // Świątynia Zakonu Światła
   {
@@ -276,6 +320,28 @@ const EQUIPMENT_ITEMS = [
     bonus: { int: 2 },
     cost: { currency: "Fiolki Światła", amount: 12 },
   },
+  {
+    id: "swiety_sztylet_osadu",
+    name: "Święty Sztylet Osądu",
+    slot: "prawa_reka",
+    icon: "🕯️",
+    vendor: "swiatynia",
+    description: "Poświęcone ostrze noszone przez egzekutorów wiary — osądza, zanim wysłucha.",
+    weapon: { name: "Święty Sztylet Osądu", minDmg: 8, maxDmg: 12, range: 1 },
+    bonus: { cha: 2 },
+    cost: { currency: "Fiolki Światła", amount: 14 },
+  },
+  {
+    id: "kadzielnica_bojowa",
+    name: "Kadzielnica Bojowa",
+    slot: "lewa_reka",
+    icon: "🪔",
+    vendor: "swiatynia",
+    description: "Rozżarzone kadzidło rzucane w twarz przeciwnika — bardziej broń niż ozdoba.",
+    weapon: { name: "Kadzielnica Bojowa", minDmg: 6, maxDmg: 10, range: 3 },
+    bonus: { int: 2 },
+    cost: { currency: "Fiolki Światła", amount: 14 },
+  },
 
   // Czarny Rynek
   {
@@ -297,6 +363,28 @@ const EQUIPMENT_ITEMS = [
     description: "Sygnet z herbem jednego z Radnych — ktoś zapłaci fortunę, żeby go odzyskać, ale na razie jest Twój.",
     bonus: { str: 2, cha: 2 },
     cost: { currency: "Kryształy Esencji", amount: 20 },
+  },
+  {
+    id: "zatruty_sztylet_przemytnika",
+    name: "Zatruty Sztylet Przemytnika",
+    slot: "prawa_reka",
+    icon: "☠️",
+    vendor: "czarny_rynek",
+    description: "Ostrze nasączone trucizną nieznanego pochodzenia — przemytnicy nie zadają zbędnych pytań.",
+    weapon: { name: "Zatruty Sztylet", minDmg: 9, maxDmg: 13, range: 1 },
+    bonus: { przebicie: 0.05 },
+    cost: { currency: "Kryształy Esencji", amount: 24 },
+  },
+  {
+    id: "ukryty_noz_do_rzucania",
+    name: "Ukryty Nóż do Rzucania",
+    slot: "lewa_reka",
+    icon: "🥷",
+    vendor: "czarny_rynek",
+    description: "Chowany w rękawie, niewidoczny dla oka strażnika — dopóki nie jest za późno.",
+    weapon: { name: "Ukryty Nóż", minDmg: 6, maxDmg: 9, range: 4 },
+    bonus: { zre: 2 },
+    cost: { currency: "Nagroda Gildii", amount: 20 },
   },
 ];
 
