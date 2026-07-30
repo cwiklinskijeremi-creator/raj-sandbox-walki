@@ -284,6 +284,10 @@ let { totalKills, claimedQuests } = loadQuestState();
 function registerKill() {
   totalKills++;
   saveQuestState();
+  if (recruitPool.length > 0) {
+    recruitPool.forEach((r) => { r.killsProgress++; });
+    saveCompanionState();
+  }
 }
 
 function getQuestProgressState() {
@@ -297,6 +301,21 @@ function openQuestBoard() {
 
 function closeQuestBoard() {
   document.getElementById("quest-board-overlay").classList.add("hidden");
+}
+
+function openPartyOverlay() {
+  document.getElementById("party-overlay").classList.remove("hidden");
+  refreshPartyOverlayIfOpen();
+}
+
+function closePartyOverlay() {
+  document.getElementById("party-overlay").classList.add("hidden");
+}
+
+function refreshPartyOverlayIfOpen() {
+  const overlay = document.getElementById("party-overlay");
+  if (overlay.classList.contains("hidden")) return;
+  renderPartyOverlay(companions, dismissCompanion);
 }
 
 function claimQuestReward(questId) {
@@ -321,6 +340,56 @@ function claimQuestReward(questId) {
 function questRewardIcon(currencyName) {
   const loc = LOCATIONS.find((l) => l.resource.name === currencyName);
   return loc ? loc.resource.icon : "🪙";
+}
+
+const COMPANION_STORAGE_KEY = "raj-sandbox-companions";
+
+function loadCompanionState() {
+  try {
+    const data = JSON.parse(localStorage.getItem(COMPANION_STORAGE_KEY));
+    return { companions: (data && data.companions) || [], recruitPool: (data && data.recruitPool) || [] };
+  } catch {
+    return { companions: [], recruitPool: [] };
+  }
+}
+
+function saveCompanionState() {
+  localStorage.setItem(COMPANION_STORAGE_KEY, JSON.stringify({ companions, recruitPool }));
+}
+
+let { companions, recruitPool } = loadCompanionState();
+
+function rotateRecruitPool() {
+  const shuffledPlaces = [...CITY_PLACES].sort(() => Math.random() - 0.5);
+  const chosenPlaces = shuffledPlaces.slice(0, 2);
+  recruitPool = chosenPlaces.map((place) => ({
+    id: `recruit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    locationKey: place.key,
+    companion: generateCompanion(selectedClassName),
+    killsNeeded: 3 + Math.floor(Math.random() * 4),
+    killsProgress: 0,
+  }));
+  saveCompanionState();
+}
+
+function recruitCompanion(recruitId) {
+  const entry = recruitPool.find((r) => r.id === recruitId);
+  if (!entry || entry.killsProgress < entry.killsNeeded) return;
+  if (companions.length >= MAX_COMPANIONS) return;
+  companions.push(entry.companion);
+  recruitPool = recruitPool.filter((r) => r.id !== recruitId);
+  saveCompanionState();
+  appendLog(`👥 ${entry.companion.name} dołącza do drużyny!`, "system");
+  render();
+}
+
+function dismissCompanion(index) {
+  if (!companions[index]) return;
+  const [removed] = companions.splice(index, 1);
+  saveCompanionState();
+  appendLog(`👥 ${removed.name} opuszcza drużynę.`, "system");
+  refreshPartyOverlayIfOpen();
+  render();
 }
 
 const EQUIPMENT_STORAGE_KEY = "raj-sandbox-equipment";
@@ -636,6 +705,7 @@ function saveActiveRun() {
   }
   if (phase === "deployment" || phase === "battle") {
     data.enemies = enemies;
+    data.companions = companions;
     data.selectedTargetIndex = selectedTargetIndex;
     data.battleOver = battleOver;
     data.playerActionsRemaining = playerActionsRemaining;
@@ -689,6 +759,7 @@ function applyActiveRunData(data) {
 
   if (phase === "deployment" || phase === "battle") {
     enemies = data.enemies;
+    companions = data.companions || companions;
     isBossBattle = data.isBossBattle || false;
     selectedTargetIndex = data.selectedTargetIndex;
     battleOver = data.battleOver;
@@ -776,6 +847,9 @@ function startNewGame() {
   level = 1;
   xp = 0;
   statPointsAvailable = 10;
+  companions = [];
+  recruitPool = [];
+  saveCompanionState();
   phase = "character-creation";
   render();
 }
@@ -864,6 +938,9 @@ function clearAllProgress() {
   totalKills = 0;
   claimedQuests = [];
   saveQuestState();
+  companions = [];
+  recruitPool = [];
+  saveCompanionState();
   selectedClassName = null;
   selectedSubclassName = null;
   currentLocation = null;
@@ -908,7 +985,7 @@ function confirmLoadGame() {
 }
 
 function isOccupied(hex, excluding) {
-  const all = [player, ...enemies];
+  const all = [player, ...companions, ...enemies];
   return all.some((c) => c !== excluding && c.currentHP > 0 && c.pos && hexEquals(c.pos, hex));
 }
 
@@ -925,6 +1002,16 @@ function deployEnemiesRandomly() {
     const free = pool.filter((h) => !isOccupied(h, enemy));
     const options = free.length > 0 ? free : zoneHexes.filter((h) => !isOccupied(h, enemy));
     enemy.pos = options[Math.floor(Math.random() * options.length)];
+  }
+}
+
+function deployCompanionsRandomly() {
+  const zoneHexes = ALL_HEXES.filter((h) => isPlayerDeployHex(h) && !isObstacle(h));
+
+  for (const companion of companions) {
+    const free = zoneHexes.filter((h) => !isOccupied(h, companion));
+    const options = free.length > 0 ? free : zoneHexes;
+    companion.pos = options[Math.floor(Math.random() * options.length)];
   }
 }
 
@@ -946,6 +1033,11 @@ function startNewBattle() {
   }
   pendingBossFight = false;
   enemies.forEach((enemy) => scaleEnemyForLevel(enemy, level));
+  companions.forEach((companion) => scaleCompanionToLevel(companion, level));
+
+  if (currentLocation && currentLocation.key !== ARENA_LOCATION.key) {
+    rotateRecruitPool();
+  }
 
   const defaultPos = getStartPositions().player;
   player.pos = isObstacle(defaultPos)
@@ -953,6 +1045,7 @@ function startNewBattle() {
       || ALL_HEXES.find((h) => isPlayerDeployHex(h) && !isObstacle(h)))
     : defaultPos;
   deployEnemiesRandomly();
+  deployCompanionsRandomly();
 
   selectedTargetIndex = 0;
   battleOver = false;
@@ -1187,10 +1280,11 @@ function render() {
     hideAllExcept(cityPlaceScreen);
     renderCityPlace(
       currentCityPlace,
-      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult },
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions },
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
+        onRecruit: recruitCompanion,
       },
     );
     saveActiveRun();
@@ -1218,13 +1312,17 @@ function render() {
   playerContainer.innerHTML = "";
   renderFighter(playerContainer, player);
 
+  const companionsContainer = document.getElementById("companions-list");
+  companionsContainer.innerHTML = "";
+  companions.forEach((companion) => renderFighter(companionsContainer, companion));
+
   const enemiesContainer = document.getElementById("enemies-list");
   enemiesContainer.innerHTML = "";
   enemies.forEach((enemy, index) => {
     const isSelected = index === selectedTargetIndex;
     const showPreview = phase === "battle" && isSelected && enemy.currentHP > 0 && inRange(player, enemy);
     const damagePreview = showPreview
-      ? estimateAverageDamage(player, enemy, { allCombatants: [player, ...enemies] })
+      ? estimateAverageDamage(player, enemy, { allCombatants: [player, ...companions, ...enemies] })
       : null;
 
     renderFighter(enemiesContainer, enemy, {
@@ -1248,6 +1346,7 @@ function render() {
 
   const boardArgs = {
     player,
+    companions,
     enemies: phase === "deployment" ? [] : enemies,
     obstacles: OBSTACLES,
     reachableHexes: phase === "battle" && !battleOver && playerActionsRemaining > 0 ? reachableFor(player) : [],
@@ -1301,7 +1400,7 @@ function playerAttack() {
     return;
   }
 
-  const context = { allCombatants: [player, ...enemies], obstacles: OBSTACLES };
+  const context = { allCombatants: [player, ...companions, ...enemies], obstacles: OBSTACLES };
   const result = resolveAttack(player, target, context);
   const { text, cssClass } = formatAttackResult(result);
   appendLog(text, cssClass);
@@ -1525,7 +1624,7 @@ function castSkill(index) {
     return;
   }
 
-  const context = { allCombatants: [player, ...enemies], obstacles: OBSTACLES };
+  const context = { allCombatants: [player, ...companions, ...enemies], obstacles: OBSTACLES };
   const virtualAttacker = Object.assign({}, player, { weapon: skill });
   if (skill.effectType === "guaranteed_crit") virtualAttacker.d6Bonus = 6;
   if (skill.effectType === "ignore_armor") virtualAttacker.przebicie = 1;
@@ -1547,7 +1646,17 @@ function castSkill(index) {
   });
 }
 
-function moveEnemyTowardPlayer(enemy) {
+function livingAllies() {
+  return [player, ...companions].filter((u) => u.currentHP > 0 && u.pos);
+}
+
+function nearestLiving(fromPos, units) {
+  const alive = units.filter((u) => u.currentHP > 0 && u.pos);
+  if (alive.length === 0) return null;
+  return alive.reduce((best, u) => (hexDistance(fromPos, u.pos) < hexDistance(fromPos, best.pos) ? u : best));
+}
+
+function moveUnitTowardTarget(unit, target) {
   // Path over TERRAIN only (obstacles), never over other units — the map is guaranteed
   // fully connected by terrain alone, so a route always exists. Other combatants are only
   // checked when actually stepping onto a hex, so a temporarily-blocked bottleneck just
@@ -1555,14 +1664,14 @@ function moveEnemyTowardPlayer(enemy) {
   const terrainFreeHexes = ALL_HEXES.filter((h) => !isObstacle(h));
   const terrainFreeKeySet = new Set(terrainFreeHexes.map(hexKey));
 
-  // Prefer a hex within actual weapon range, but if the player is boxed in by terrain,
-  // widen the search ring so the enemy still closes the distance as far as the map
+  // Prefer a hex within actual weapon range, but if the target is boxed in by terrain,
+  // widen the search ring so the unit still closes the distance as far as the map
   // allows instead of freezing in place.
-  const currentDist = hexDistance(enemy.pos, player.pos);
-  const maxRing = Math.max(enemy.weapon.range, currentDist);
+  const currentDist = hexDistance(unit.pos, target.pos);
+  const maxRing = Math.max(unit.weapon.range, currentDist);
   let targetKeySet = null;
-  for (let ring = enemy.weapon.range; ring <= maxRing; ring++) {
-    const candidates = terrainFreeHexes.filter((h) => hexDistance(h, player.pos) <= ring && !isOccupied(h, enemy));
+  for (let ring = unit.weapon.range; ring <= maxRing; ring++) {
+    const candidates = terrainFreeHexes.filter((h) => hexDistance(h, target.pos) <= ring && !isOccupied(h, unit));
     if (candidates.length > 0) {
       targetKeySet = new Set(candidates.map(hexKey));
       break;
@@ -1570,22 +1679,22 @@ function moveEnemyTowardPlayer(enemy) {
   }
   if (!targetKeySet) return;
 
-  const pathKeys = bfsPathAvoiding([enemy.pos], targetKeySet, terrainFreeKeySet, new Set());
+  const pathKeys = bfsPathAvoiding([unit.pos], targetKeySet, terrainFreeKeySet, new Set());
   if (!pathKeys) return;
 
   const pathHexes = pathKeys.map(hexFromKey).reverse();
-  const maxSteps = Math.min(enemy.moveRange, pathHexes.length - 1);
+  const maxSteps = Math.min(unit.moveRange, pathHexes.length - 1);
 
-  let destination = enemy.pos;
+  let destination = unit.pos;
   for (let i = 1; i <= maxSteps; i++) {
     const step = pathHexes[i];
-    if (isOccupied(step, enemy)) break;
+    if (isOccupied(step, unit)) break;
     destination = step;
   }
 
-  if (!hexEquals(destination, enemy.pos)) {
-    enemy.pos = destination;
-    appendLog(`${enemy.name} zbliża się (koszt: 1 akcja).`, "system");
+  if (!hexEquals(destination, unit.pos)) {
+    unit.pos = destination;
+    appendLog(`${unit.name} zbliża się (koszt: 1 akcja).`, "system");
   }
 }
 
@@ -1598,18 +1707,79 @@ function bestWeaponFor(character, target) {
   return character.weapons.slice().sort((a, b) => b.range - a.range)[0];
 }
 
+function resolveUnitDeath(target) {
+  if (target === player) {
+    appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");
+    playDeathSound();
+    battleOver = true;
+  } else {
+    appendLog(`${target.name} pada bez sił.`, "system");
+    playDeathSound();
+  }
+}
+
+function companionActions(context) {
+  for (const companion of companions) {
+    if (companion.currentHP <= 0 || battleOver) continue;
+
+    const target = nearestLiving(companion.pos, enemies);
+    if (!target) continue;
+
+    let actionsRemaining = 1 + companion.extraActions;
+
+    if (companion.weapons.length > 1) {
+      const desired = bestWeaponFor(companion, target);
+      if (desired !== companion.weapon && actionsRemaining > 0) {
+        switchWeapon(companion);
+        actionsRemaining--;
+      }
+    }
+
+    while (!inRange(companion, target) && actionsRemaining > 0) {
+      moveUnitTowardTarget(companion, target);
+      actionsRemaining--;
+    }
+
+    if (!inRange(companion, target)) continue;
+
+    for (let i = 0; i < actionsRemaining; i++) {
+      if (target.currentHP <= 0 || battleOver) break;
+      const result = resolveAttack(companion, target, context);
+      const { text, cssClass } = formatAttackResult(result);
+      appendLog(`${companion.icon} ${text}`, cssClass);
+      triggerAttackFx(result, target.pos);
+      if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
+
+      if (target.currentHP <= 0) {
+        appendLog(`${target.name} pada martwy.`, "system");
+        discoverEnemy(target.templateKey);
+        registerKill();
+      }
+    }
+  }
+
+  if (!battleOver && enemies.every((e) => e.currentHP <= 0)) {
+    awardVictory("Zwycięstwo! Drużyna dokonała reszty.");
+  }
+}
+
 function enemyPhase() {
   closeRadialMenu();
   radialMenuOpen = false;
-  const context = { allCombatants: [player, ...enemies], obstacles: OBSTACLES };
+  const context = { allCombatants: [player, ...companions, ...enemies], obstacles: OBSTACLES };
+
+  companionActions(context);
 
   for (const enemy of enemies) {
     if (enemy.currentHP <= 0 || battleOver) continue;
 
+    const target = nearestLiving(enemy.pos, livingAllies());
+    if (!target) continue;
+
     let actionsRemaining = 1 + enemy.extraActions;
 
     if (enemy.weapons.length > 1) {
-      const desired = bestWeaponFor(enemy, player);
+      const desired = bestWeaponFor(enemy, target);
       if (desired !== enemy.weapon && actionsRemaining > 0) {
         switchWeapon(enemy);
         actionsRemaining--;
@@ -1617,17 +1787,17 @@ function enemyPhase() {
       }
     }
 
-    while (!inRange(enemy, player) && actionsRemaining > 0) {
-      moveEnemyTowardPlayer(enemy);
+    while (!inRange(enemy, target) && actionsRemaining > 0) {
+      moveUnitTowardTarget(enemy, target);
       actionsRemaining--;
     }
 
-    if (!inRange(enemy, player)) {
+    if (!inRange(enemy, target)) {
       appendLog(`${enemy.name} jest poza zasięgiem i nie może zaatakować.`, "system");
       continue;
     }
 
-    if (enemy.isBoss && enemy.special && enemy.specialCooldown <= 0 && actionsRemaining > 0) {
+    if (enemy.isBoss && enemy.special && enemy.specialCooldown <= 0 && actionsRemaining > 0 && player.currentHP > 0) {
       actionsRemaining--;
       enemy.specialCooldown = enemy.special.cooldown;
 
@@ -1642,27 +1812,19 @@ function enemyPhase() {
         if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
         applyBossSpecialEffect(enemy, result);
 
-        if (player.currentHP <= 0) {
-          appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");
-          playDeathSound();
-          battleOver = true;
-        }
+        if (player.currentHP <= 0) resolveUnitDeath(player);
       }
     }
 
     for (let i = 0; i < actionsRemaining; i++) {
-      if (player.currentHP <= 0 || battleOver) break;
-      const result = resolveAttack(enemy, player, context);
+      if (target.currentHP <= 0 || battleOver) break;
+      const result = resolveAttack(enemy, target, context);
       const { text, cssClass } = formatAttackResult(result);
       appendLog(text, cssClass);
-      triggerAttackFx(result, player.pos);
+      triggerAttackFx(result, target.pos);
       if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
 
-      if (player.currentHP <= 0) {
-        appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");
-        playDeathSound();
-        battleOver = true;
-      }
+      if (target.currentHP <= 0) resolveUnitDeath(target);
     }
   }
 
@@ -1671,6 +1833,7 @@ function enemyPhase() {
       if (cd > 0) player.skillCooldowns[i]--;
     });
     tickTimedEffectsFor(player);
+    companions.forEach((companion) => tickTimedEffectsFor(companion));
     enemies.forEach((enemy) => {
       tickTimedEffectsFor(enemy);
       if (enemy.specialCooldown > 0) enemy.specialCooldown--;
@@ -1719,6 +1882,8 @@ document.getElementById("camp-main-menu-btn").addEventListener("click", goToMain
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
 document.getElementById("camp-quests-btn").addEventListener("click", openQuestBoard);
 document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
+document.getElementById("camp-party-btn").addEventListener("click", openPartyOverlay);
+document.getElementById("party-close").addEventListener("click", closePartyOverlay);
 document.getElementById("character-sheet-close").addEventListener("click", closeCharacterSheet);
 document.getElementById("character-sheet-overlay").addEventListener("click", (e) => {
   if (e.target.id === "character-sheet-overlay") closeCharacterSheet();

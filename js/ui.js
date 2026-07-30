@@ -6,6 +6,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
   if (selected) el.classList.add("selected");
   if (dead) el.classList.add("dead");
   if (fighter.isBoss) el.classList.add("boss-fighter");
+  if (fighter.isCompanion) el.classList.add("companion-fighter");
 
   const hpPct = Math.max(0, (fighter.currentHP / fighter.maxHP) * 100);
 
@@ -51,7 +52,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
     : "";
 
   el.innerHTML = `
-    <strong>${fighter.isBoss ? "👑 " : ""}${fighter.name}</strong> ${dead ? "(martwy)" : ""}
+    <strong>${fighter.isBoss ? "👑 " : fighter.isCompanion ? "👥 " : ""}${fighter.name}</strong> ${dead ? "(martwy)" : ""}
     <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${hpPct}%"></div>${hpBarPreview}</div>
     ${bodyHtml}
     ${effectsHtml}
@@ -133,7 +134,7 @@ function resetTokenLayer() {
   if (layer) layer.innerHTML = "";
 }
 
-function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], deployHexes = [], onHexClick }) {
+function renderGrid({ svg, player, companions = [], enemies, obstacles, reachableHexes = [], deployHexes = [], onHexClick }) {
   const positions = ALL_HEXES.map((h) => axialToPixel(h));
   const minX = Math.min(...positions.map((p) => p.x)) - HEX_SIZE;
   const minY = Math.min(...positions.map((p) => p.y)) - HEX_SIZE;
@@ -154,7 +155,7 @@ function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], depl
     svg.appendChild(tokenLayer);
   }
 
-  const allCombatants = [player, ...enemies];
+  const allCombatants = [player, ...companions, ...enemies];
 
   for (const hex of ALL_HEXES) {
     const { x, y } = axialToPixel(hex);
@@ -196,12 +197,14 @@ function renderGrid({ svg, player, enemies, obstacles, reachableHexes = [], depl
 
     const { x, y } = axialToPixel(combatant.pos);
     const isPlayerToken = combatant === player;
+    const isCompanionToken = companions.includes(combatant);
+    const tokenClass = isPlayerToken ? "token-player" : isCompanionToken ? "token-companion" : "token-enemy";
 
     let entry = tokenElements.get(combatant);
     if (!entry) {
       const circle = svgEl("circle", {
         cx: x, cy: y, r: HEX_SIZE * 0.5,
-        class: `token ${isPlayerToken ? "token-player" : "token-enemy"}`,
+        class: `token ${tokenClass}`,
       });
       const label = svgEl("text", { x, y: y + 9, class: "token-label", "text-anchor": "middle" });
       label.textContent = combatant.icon;
@@ -777,11 +780,65 @@ function renderCityPicker(places, onSelect) {
 
 const TAVERN_BET_SIZES = [5, 10, 20];
 
+function renderRecruitCard(recruit, canRecruit, onRecruit) {
+  const el = document.getElementById("city-place-recruit");
+  if (!recruit) {
+    el.innerHTML = "";
+    return;
+  }
+
+  const { companion, killsProgress, killsNeeded } = recruit;
+  const progress = Math.min(killsProgress, killsNeeded);
+  const pct = Math.round((progress / killsNeeded) * 100);
+  const ready = progress >= killsNeeded;
+
+  el.innerHTML = `
+    <h4>👥 Potencjalny towarzysz</h4>
+    <div class="sheet-item-row">
+      <div class="sheet-item-info">
+        <div class="sheet-item-name">${companion.icon} ${companion.name}</div>
+        <div class="sheet-item-desc">${companion.className} — ${companion.subclassName}. Zanim dołączy do drużyny, chce zobaczyć, że potrafisz walczyć: pokonaj ${killsNeeded} przeciwników.</div>
+        <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+        <div class="sheet-item-bonus">${progress}/${killsNeeded} pokonanych przeciwników</div>
+      </div>
+      <button type="button" class="sheet-action-btn recruit-btn" ${ready && canRecruit ? "" : "disabled"}>Zwerbuj</button>
+    </div>
+    ${ready && !canRecruit ? `<p class="sheet-empty-note">Drużyna jest pełna (max ${MAX_COMPANIONS}) — zwolnij kogoś w „👥 Drużyna”, żeby zrobić miejsce.</p>` : ""}
+  `;
+
+  const btn = el.querySelector(".recruit-btn");
+  if (btn) btn.addEventListener("click", onRecruit);
+}
+
+function renderPartyOverlay(companions, onDismiss) {
+  const body = document.getElementById("party-body");
+  body.innerHTML = `<p class="creation-hint">Drużyna: ${companions.length}/${MAX_COMPANIONS} towarzyszy (+ Ty).</p>` +
+    (companions.length === 0
+      ? `<p class="sheet-empty-note">Nie masz jeszcze żadnych towarzyszy — poszukaj ich w mieście Aetherion.</p>`
+      : companions.map((c, i) => `
+          <div class="sheet-item-row">
+            <div class="sheet-item-info">
+              <div class="sheet-item-name">${c.icon} ${c.name}</div>
+              <div class="sheet-item-desc">${c.className} — ${c.subclassName}</div>
+              <div class="sheet-item-bonus">HP: ${c.maxHP} &nbsp;|&nbsp; STR ${c.str} &nbsp; WYT ${c.wyt} &nbsp; ZRE ${c.zre} &nbsp; INT ${c.int} &nbsp; CHA ${c.cha}</div>
+            </div>
+            <button type="button" class="sheet-action-btn dismiss-companion-btn" data-index="${i}">Zwolnij</button>
+          </div>
+        `).join(""));
+
+  body.querySelectorAll(".dismiss-companion-btn").forEach((btn) => {
+    btn.addEventListener("click", () => onDismiss(Number(btn.dataset.index)));
+  });
+}
+
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
-  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped } = state;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
+
+  const recruit = (recruitPool || []).find((r) => r.locationKey === place.key);
+  renderRecruitCard(recruit, companions ? companions.length < MAX_COMPANIONS : false, () => handlers.onRecruit(recruit.id));
 
   const activityEl = document.getElementById("city-place-activity");
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=38">
+<link rel="stylesheet" href="style.css?v=39">
 <script type="importmap">
 {
   "imports": {
@@ -76,6 +76,7 @@
       <button type="button" id="camp-city-btn">🏙️ Miasto Aetherion</button>
       <button type="button" id="camp-character-btn">🎒 Ekwipunek i postać</button>
       <button type="button" id="camp-quests-btn">📋 Tablica zadań</button>
+      <button type="button" id="camp-party-btn">👥 Drużyna</button>
       <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
       <button type="button" id="tutorial-btn-camp">📖 Jak grać</button>
       <button type="button" id="camp-main-menu-btn">🏠 Menu główne</button>
@@ -91,6 +92,7 @@
   <section class="city-place-screen hidden" id="city-place-screen">
     <h2 id="city-place-title"></h2>
     <p class="camp-flavor" id="city-place-description"></p>
+    <div class="sheet-section" id="city-place-recruit"></div>
     <div class="sheet-section" id="city-place-activity"></div>
     <div class="sheet-section" id="city-place-shop"></div>
     <button type="button" id="city-place-back-btn" class="location-back-btn">🏙️ Powrót do miasta</button>
@@ -120,6 +122,7 @@
       <section class="panel player-panel collapsible" id="player-panel">
         <h2>Gracz <button class="collapse-toggle" type="button">▾</button></h2>
         <div class="fighter collapsible-content" id="player-fighter"></div>
+        <div class="collapsible-content" id="companions-list"></div>
       </section>
 
       <section class="map-panel">
@@ -133,6 +136,7 @@
           <span class="legend-item"><span class="legend-swatch swatch-reachable"></span>Osiągalne ruchem</span>
           <span class="legend-item"><span class="legend-swatch swatch-deploy"></span>Strefa rozstawienia</span>
           <span class="legend-item"><span class="legend-swatch swatch-player"></span>Ty</span>
+          <span class="legend-item"><span class="legend-swatch swatch-companion"></span>Towarzysz</span>
           <span class="legend-item"><span class="legend-swatch swatch-enemy"></span>Przeciwnik</span>
         </div>
       </section>
@@ -190,6 +194,16 @@
     </div>
   </div>
 
+  <div class="codex-overlay hidden" id="party-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs"><span class="modal-title">👥 Drużyna</span></div>
+        <button class="codex-close" id="party-close" type="button">✕</button>
+      </div>
+      <div class="codex-body" id="party-body"></div>
+    </div>
+  </div>
+
   <div class="codex-overlay hidden" id="quest-board-overlay">
     <div class="codex-modal">
       <div class="codex-header">
@@ -242,22 +256,23 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=38"></script>
-  <script src="js/dice.js?v=38"></script>
-  <script src="js/grid.js?v=38"></script>
-  <script src="js/classes.js?v=38"></script>
-  <script src="js/lore.js?v=38"></script>
-  <script src="js/locations.js?v=38"></script>
-  <script src="js/city.js?v=38"></script>
-  <script src="js/quests.js?v=38"></script>
-  <script src="js/equipment.js?v=38"></script>
-  <script src="js/potions.js?v=38"></script>
-  <script src="js/tutorial.js?v=38"></script>
-  <script src="js/characters.js?v=38"></script>
-  <script src="js/combat.js?v=38"></script>
-  <script src="js/ui.js?v=38"></script>
-  <script src="js/main.js?v=38"></script>
-  <script type="module" src="js/test3d.js?v=38"></script>
-  <script type="module" src="js/board3d.js?v=38"></script>
+  <script src="js/audio.js?v=39"></script>
+  <script src="js/dice.js?v=39"></script>
+  <script src="js/grid.js?v=39"></script>
+  <script src="js/classes.js?v=39"></script>
+  <script src="js/lore.js?v=39"></script>
+  <script src="js/locations.js?v=39"></script>
+  <script src="js/city.js?v=39"></script>
+  <script src="js/quests.js?v=39"></script>
+  <script src="js/equipment.js?v=39"></script>
+  <script src="js/potions.js?v=39"></script>
+  <script src="js/tutorial.js?v=39"></script>
+  <script src="js/characters.js?v=39"></script>
+  <script src="js/companions.js?v=39"></script>
+  <script src="js/combat.js?v=39"></script>
+  <script src="js/ui.js?v=39"></script>
+  <script src="js/main.js?v=39"></script>
+  <script type="module" src="js/test3d.js?v=39"></script>
+  <script type="module" src="js/board3d.js?v=39"></script>
 </body>
 </html>

@@ -37,6 +37,7 @@ const REACHABLE_COLOR = 0x6d8f3c;
 const DEPLOY_COLOR = 0x3c6d8f;
 const PLAYER_COLOR = 0xc9a24b;
 const ENEMY_COLOR = 0xa13f3f;
+const COMPANION_COLOR = 0x4f8fd8;
 
 function tileHeight(hex) {
   if (!isObstacle(hex)) return 8;
@@ -85,8 +86,8 @@ function hexWorldPosition(hex) {
 
 function syncState() {
   if (!latestArgs || !scene) return;
-  const { player, enemies, reachableHexes, deployHexes } = latestArgs;
-  const combatants = [player, ...enemies].filter((c) => c && c.pos && c.currentHP > 0);
+  const { player, companions = [], enemies, reachableHexes, deployHexes } = latestArgs;
+  const combatants = [player, ...companions, ...enemies].filter((c) => c && c.pos && c.currentHP > 0);
 
   for (const hex of ALL_HEXES) {
     const mesh = hexMeshes.get(hexKey(hex));
@@ -112,15 +113,23 @@ function syncState() {
     let mesh = tokenMeshes.get(combatant);
     if (!mesh) {
       const isPlayer = combatant === player;
-      mesh = isPlayer
-        ? new THREE.Mesh(
-            new THREE.SphereGeometry(HEX_SIZE * 0.4, 16, 16),
-            new THREE.MeshStandardMaterial({ color: PLAYER_COLOR }),
-          )
-        : new THREE.Mesh(
-            new THREE.ConeGeometry(HEX_SIZE * 0.35, HEX_SIZE * 0.7, 8),
-            new THREE.MeshStandardMaterial({ color: ENEMY_COLOR }),
-          );
+      const isCompanion = companions.includes(combatant);
+      if (isPlayer) {
+        mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(HEX_SIZE * 0.4, 16, 16),
+          new THREE.MeshStandardMaterial({ color: PLAYER_COLOR }),
+        );
+      } else if (isCompanion) {
+        mesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(HEX_SIZE * 0.3, HEX_SIZE * 0.3, HEX_SIZE * 0.7, 12),
+          new THREE.MeshStandardMaterial({ color: COMPANION_COLOR }),
+        );
+      } else {
+        mesh = new THREE.Mesh(
+          new THREE.ConeGeometry(HEX_SIZE * 0.35, HEX_SIZE * 0.7, 8),
+          new THREE.MeshStandardMaterial({ color: ENEMY_COLOR }),
+        );
+      }
       scene.add(mesh);
       tokenMeshes.set(combatant, mesh);
     }

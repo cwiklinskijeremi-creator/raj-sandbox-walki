@@ -12,6 +12,7 @@ function computeDerivedStats({ zre, int, cha, przebicie }) {
 function createCharacter({
   name, str, wyt, zre = 0, int = 0, cha = 0,
   weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓", gender = null,
+  team = "enemy",
 }) {
   const maxHP = hp !== null ? hp : 50 + str * 5 + wyt * 5;
   const derived = computeDerivedStats({ zre, int, cha, przebicie });
@@ -36,6 +37,7 @@ function createCharacter({
     d20Bonus: derived.d20Bonus,
     charismaExponent: derived.charismaExponent,
     isPlayer,
+    team,
     maxHP,
     currentHP: maxHP,
     moveRange: derived.moveRange,
@@ -100,6 +102,7 @@ function createPlayer(name, gender) {
     przebicie: 0.15,
     hp: 145,
     isPlayer: true,
+    team: "player",
     icon: "🤺",
   });
 }

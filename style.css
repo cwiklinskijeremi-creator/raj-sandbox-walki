@@ -199,6 +199,10 @@ h1 { text-align: center; }
   fill: #a13f3f;
 }
 
+.token-companion {
+  fill: #4f8fd8;
+}
+
 .token-label {
   font-size: 30px;
   pointer-events: none;
@@ -238,6 +242,7 @@ h1 { text-align: center; }
 .swatch-reachable { background: #2f4a3a; }
 .swatch-deploy { background: #3a6b8a; }
 .swatch-player { background: #c9a24b; }
+.swatch-companion { background: #4f8fd8; }
 .swatch-enemy { background: #a13f3f; }
 
 .arena {
@@ -289,6 +294,11 @@ h1 { text-align: center; }
 .fighter.boss-fighter {
   border-color: #a83232;
   box-shadow: 0 0 0 1px #a83232;
+}
+
+.fighter.companion-fighter {
+  border-color: #4f8fd8;
+  box-shadow: 0 0 0 1px #4f8fd8;
 }
 
 .fighter.boss-fighter.selected {

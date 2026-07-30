@@ -16,7 +16,7 @@ function isFlanked(attacker, defender, allCombatants) {
   return allCombatants.some((ally) => {
     if (ally === attacker || ally === defender) return false;
     if (ally.currentHP <= 0 || !ally.pos) return false;
-    if (ally.isPlayer !== attacker.isPlayer) return false;
+    if (ally.team !== attacker.team) return false;
     if (hexDistance(ally.pos, defender.pos) !== 1) return false;
 
     const dirToAlly = hexDirectionIndex(defender.pos, ally.pos);
