@@ -106,11 +106,23 @@ const COMPANION_SCENES = {
   ],
 };
 
-function generateCompanion(excludeClassName) {
+function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeNames = []) {
   const availableClasses = CLASS_DATA.filter((c) => c.name !== excludeClassName);
-  const cls = availableClasses[Math.floor(Math.random() * availableClasses.length)];
-  const sub = cls.subclasses[Math.floor(Math.random() * cls.subclasses.length)];
-  const name = COMPANION_NAMES[Math.floor(Math.random() * COMPANION_NAMES.length)];
+  const availablePairs = [];
+  availableClasses.forEach((cls) => {
+    cls.subclasses.forEach((sub) => {
+      if (!excludeSubclassNames.includes(sub.name)) availablePairs.push({ cls, sub });
+    });
+  });
+  // Fall back to allowing a repeat subclass only if every option is already taken.
+  const pairPool = availablePairs.length > 0
+    ? availablePairs
+    : availableClasses.flatMap((cls) => cls.subclasses.map((sub) => ({ cls, sub })));
+  const { cls, sub } = pairPool[Math.floor(Math.random() * pairPool.length)];
+
+  const availableNames = COMPANION_NAMES.filter((n) => !excludeNames.includes(n));
+  const namePool = availableNames.length > 0 ? availableNames : COMPANION_NAMES;
+  const name = namePool[Math.floor(Math.random() * namePool.length)];
 
   const companion = createCharacter({
     name: `${name} (${sub.name})`,
@@ -122,6 +134,7 @@ function generateCompanion(excludeClassName) {
   companion.isCompanion = true;
   companion.className = cls.name;
   companion.subclassName = sub.name;
+  companion.baseName = name;
   return companion;
 }
 

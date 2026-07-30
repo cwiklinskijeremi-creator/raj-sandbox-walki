@@ -406,8 +406,12 @@ let { companions, recruitPool } = loadCompanionState();
 function rotateRecruitPool() {
   const shuffledPlaces = [...CITY_PLACES].sort(() => Math.random() - 0.5);
   const chosenPlaces = shuffledPlaces.slice(0, 2);
+  const usedSubclasses = companions.map((c) => c.subclassName);
+  const usedNames = companions.map((c) => c.baseName).filter(Boolean);
   recruitPool = chosenPlaces.map((place) => {
-    const companion = generateCompanion(selectedClassName);
+    const companion = generateCompanion(selectedClassName, usedSubclasses, usedNames);
+    usedSubclasses.push(companion.subclassName);
+    usedNames.push(companion.baseName);
     return {
       id: `recruit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       locationKey: place.key,
