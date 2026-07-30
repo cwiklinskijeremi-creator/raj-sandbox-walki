@@ -315,6 +315,20 @@ h1 { text-align: center; }
   transition: width 0.2s ease;
 }
 
+.quest-progress-track {
+  background: #3a3542;
+  border-radius: 4px;
+  height: 10px;
+  margin-top: 0.35rem;
+  overflow: hidden;
+}
+
+.quest-progress-fill {
+  background: #c9a24b;
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
 .hp-bar-preview {
   position: absolute;
   top: 0;

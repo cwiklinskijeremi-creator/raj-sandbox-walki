@@ -947,6 +947,34 @@ function renderCityPlace(place, state, handlers) {
   });
 }
 
+function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
+  const body = document.getElementById("quest-board-body");
+  body.innerHTML = quests.map((quest) => {
+    const claimed = claimedQuests.includes(quest.id);
+    const progress = Math.min(progressState[quest.progressKey], quest.goal);
+    const complete = progress >= quest.goal;
+    const pct = Math.round((progress / quest.goal) * 100);
+    return `
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-name">${quest.icon} ${quest.name}${claimed ? ` <span class="potion-count">Odebrano ✅</span>` : ""}</div>
+          <div class="sheet-item-desc">${quest.description}</div>
+          <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+          <div class="sheet-item-bonus">${progress}/${quest.goal}</div>
+          ${claimed ? "" : `<div class="sheet-item-cost">Nagroda: ${quest.reward.amount} × ${quest.reward.currency}</div>`}
+        </div>
+        ${claimed
+          ? ""
+          : `<button type="button" class="sheet-action-btn claim-quest-btn" data-quest="${quest.id}" ${complete ? "" : "disabled"}>Odbierz nagrodę</button>`}
+      </div>
+    `;
+  }).join("");
+
+  body.querySelectorAll(".claim-quest-btn").forEach((btn) => {
+    btn.addEventListener("click", () => onClaim(btn.dataset.quest));
+  });
+}
+
 function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance, onChoose) {
   const title = document.getElementById("dungeon-title");
   title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";

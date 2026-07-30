@@ -264,6 +264,65 @@ function discoverEnemy(templateKey) {
   appendLog("Bestiariusz zaktualizowany — odkryto nowego przeciwnika.", "system");
 }
 
+const QUEST_STORAGE_KEY = "raj-sandbox-quests";
+
+function loadQuestState() {
+  try {
+    const data = JSON.parse(localStorage.getItem(QUEST_STORAGE_KEY));
+    return { totalKills: (data && data.totalKills) || 0, claimedQuests: (data && data.claimedQuests) || [] };
+  } catch {
+    return { totalKills: 0, claimedQuests: [] };
+  }
+}
+
+function saveQuestState() {
+  localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify({ totalKills, claimedQuests }));
+}
+
+let { totalKills, claimedQuests } = loadQuestState();
+
+function registerKill() {
+  totalKills++;
+  saveQuestState();
+}
+
+function getQuestProgressState() {
+  return { totalKills, level, discoveredCount: discoveredEnemies.length };
+}
+
+function openQuestBoard() {
+  document.getElementById("quest-board-overlay").classList.remove("hidden");
+  renderQuestBoard(QUESTS, getQuestProgressState(), claimedQuests, claimQuestReward);
+}
+
+function closeQuestBoard() {
+  document.getElementById("quest-board-overlay").classList.add("hidden");
+}
+
+function claimQuestReward(questId) {
+  const quest = QUESTS.find((q) => q.id === questId);
+  if (!quest || claimedQuests.includes(questId)) return;
+  const progress = getQuestProgressState()[quest.progressKey];
+  if (progress < quest.goal) return;
+
+  const existing = resources[quest.reward.currency] ? resources[quest.reward.currency].amount : 0;
+  const icon = resources[quest.reward.currency] ? resources[quest.reward.currency].icon : questRewardIcon(quest.reward.currency);
+  resources[quest.reward.currency] = { icon, amount: existing + quest.reward.amount };
+  saveResources();
+
+  claimedQuests.push(questId);
+  saveQuestState();
+
+  appendLog(`📋 Zadanie „${quest.name}” ukończone: +${quest.reward.amount} × ${quest.reward.currency}.`, "system");
+  renderQuestBoard(QUESTS, getQuestProgressState(), claimedQuests, claimQuestReward);
+  render();
+}
+
+function questRewardIcon(currencyName) {
+  const loc = LOCATIONS.find((l) => l.resource.name === currencyName);
+  return loc ? loc.resource.icon : "🪙";
+}
+
 const EQUIPMENT_STORAGE_KEY = "raj-sandbox-equipment";
 
 function defaultEquippedState() {
@@ -790,7 +849,7 @@ function closeSettingsModal() {
 }
 
 function clearAllProgress() {
-  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek, mikstury, bestiariusz i zapisana gra zostaną utracone bezpowrotnie.")) return;
+  if (!confirm("Na pewno chcesz wyczyścić cały postęp? Zasoby, ekwipunek, mikstury, bestiariusz, zadania i zapisana gra zostaną utracone bezpowrotnie.")) return;
   clearActiveRun();
   resources = {};
   saveResources();
@@ -802,6 +861,9 @@ function clearAllProgress() {
   savePotionInventory();
   discoveredEnemies = [];
   saveDiscoveredEnemies();
+  totalKills = 0;
+  claimedQuests = [];
+  saveQuestState();
   selectedClassName = null;
   selectedSubclassName = null;
   currentLocation = null;
@@ -1255,6 +1317,7 @@ function finishPlayerAction(target) {
     appendLog(`${target.name} pada martwy.`, "system");
     playDeathSound();
     discoverEnemy(target.templateKey);
+    registerKill();
     const nextAlive = enemies.findIndex((e) => e.currentHP > 0);
     selectedTargetIndex = nextAlive === -1 ? null : nextAlive;
   }
@@ -1395,6 +1458,7 @@ function applySkillEffect(skill, target, result, context) {
         if (splashResult.defenderDied) {
           appendLog(`${e.name} pada martwy od odprysku.`, "system");
           discoverEnemy(e.templateKey);
+          registerKill();
         }
       });
       break;
@@ -1634,6 +1698,8 @@ document.getElementById("city-place-back-btn").addEventListener("click", goToCit
 document.getElementById("camp-codex-btn").addEventListener("click", openCodex);
 document.getElementById("camp-main-menu-btn").addEventListener("click", goToMainMenu);
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
+document.getElementById("camp-quests-btn").addEventListener("click", openQuestBoard);
+document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
 document.getElementById("character-sheet-close").addEventListener("click", closeCharacterSheet);
 document.getElementById("character-sheet-overlay").addEventListener("click", (e) => {
   if (e.target.id === "character-sheet-overlay") closeCharacterSheet();
