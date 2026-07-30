@@ -836,7 +836,7 @@ function renderPartyOverlay(companions, onDismiss) {
           <div class="sheet-item-row">
             <div class="sheet-item-info">
               <div class="sheet-item-name">${c.icon} ${c.name}</div>
-              <div class="sheet-item-desc">${c.className} — ${c.subclassName}</div>
+              <div class="sheet-item-desc">${c.className} — ${c.subclassName} &nbsp;|&nbsp; Poziom ${level}</div>
               <div class="sheet-item-bonus">HP: ${c.maxHP} &nbsp;|&nbsp; STR ${c.str} &nbsp; WYT ${c.wyt} &nbsp; ZRE ${c.zre} &nbsp; INT ${c.int} &nbsp; CHA ${c.cha}</div>
             </div>
             <button type="button" class="sheet-action-btn dismiss-companion-btn" data-index="${i}">Zwolnij</button>
