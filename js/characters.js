@@ -12,7 +12,7 @@ function computeDerivedStats({ zre, int, cha, przebicie }) {
 function createCharacter({
   name, str, wyt, zre = 0, int = 0, cha = 0,
   weapons, pancerz = 0, przebicie = 0, hp = null, isPlayer = false, icon = "❓", gender = null,
-  team = "enemy",
+  team = "enemy", mutated = false,
 }) {
   const maxHP = hp !== null ? hp : 50 + str * 5 + wyt * 5;
   const derived = computeDerivedStats({ zre, int, cha, przebicie });
@@ -29,6 +29,8 @@ function createCharacter({
     weaponIndex: 0,
     weapon: weapons[0],
     icon,
+    mutated,
+    devoured: false,
     pancerz,
     przebicie: derived.totalPrzebicie,
     extraD20Rolls: derived.extraD20Rolls,
@@ -123,6 +125,7 @@ const ENEMY_TEMPLATES = {
     przebicie: 0,
     hp: 118,
     icon: "🧟",
+    mutated: true,
   }),
   lowca: () => createCharacter({
     name: "Łowca Gildii",
@@ -155,6 +158,7 @@ const ENEMY_TEMPLATES = {
     przebicie: 0.05,
     hp: 100,
     icon: "👹",
+    mutated: true,
   }),
   adept: () => createCharacter({
     name: "Adept Zakonu Światła",
@@ -181,7 +185,7 @@ const ENEMY_TEMPLATES = {
       { name: "Zardzewiały Oskard", minDmg: 7, maxDmg: 12, range: 1 },
       { name: "Toczący Głaz", minDmg: 5, maxDmg: 9, range: 2 },
     ],
-    pancerz: 0.09, przebicie: 0, hp: 130, icon: "🧟‍♂️",
+    pancerz: 0.09, przebicie: 0, hp: 130, icon: "🧟‍♂️", mutated: true,
   }),
   pelzacz: () => createCharacter({
     name: "Kryształowy Pełzacz",
@@ -190,7 +194,7 @@ const ENEMY_TEMPLATES = {
       { name: "Kolce Kryształu", minDmg: 7, maxDmg: 13, range: 1 },
       { name: "Odłamek Esencji", minDmg: 5, maxDmg: 9, range: 3 },
     ],
-    pancerz: 0.02, przebicie: 0.08, hp: 85, icon: "🦂",
+    pancerz: 0.02, przebicie: 0.08, hp: 85, icon: "🦂", mutated: true,
   }),
   nadzorca: () => createCharacter({
     name: "Nadzorca Niewolników",
@@ -208,7 +212,7 @@ const ENEMY_TEMPLATES = {
       { name: "Wysysające Szczęki", minDmg: 6, maxDmg: 11, range: 1 },
       { name: "Pluskanie Kwasem", minDmg: 5, maxDmg: 9, range: 2 },
     ],
-    pancerz: 0.04, przebicie: 0.02, hp: 105, icon: "🐛",
+    pancerz: 0.04, przebicie: 0.02, hp: 105, icon: "🐛", mutated: true,
   }),
   kolos: () => createCharacter({
     name: "Głębinowy Kolos",
@@ -217,7 +221,7 @@ const ENEMY_TEMPLATES = {
       { name: "Kamienna Pięść", minDmg: 12, maxDmg: 18, range: 1 },
       { name: "Uderzenie Ogonem", minDmg: 9, maxDmg: 14, range: 1 },
     ],
-    pancerz: 0.14, przebicie: 0, hp: 170, icon: "🗿",
+    pancerz: 0.14, przebicie: 0, hp: 170, icon: "🗿", mutated: true,
   }),
 
   // Skażony Las
@@ -228,7 +232,7 @@ const ENEMY_TEMPLATES = {
       { name: "Zębiska", minDmg: 8, maxDmg: 13, range: 1 },
       { name: "Skok Drapieżnika", minDmg: 6, maxDmg: 10, range: 2 },
     ],
-    pancerz: 0.03, przebicie: 0.06, hp: 95, icon: "🐺",
+    pancerz: 0.03, przebicie: 0.06, hp: 95, icon: "🐺", mutated: true,
   }),
   konstrukt: () => createCharacter({
     name: "Pnączowy Konstrukt",
@@ -237,7 +241,7 @@ const ENEMY_TEMPLATES = {
       { name: "Zaciskające Pnącze", minDmg: 7, maxDmg: 12, range: 2 },
       { name: "Kolce", minDmg: 6, maxDmg: 10, range: 1 },
     ],
-    pancerz: 0.10, przebicie: 0, hp: 140, icon: "🥀",
+    pancerz: 0.10, przebicie: 0, hp: 140, icon: "🥀", mutated: true,
   }),
   szarancza: () => createCharacter({
     name: "Szarańcza Many",
@@ -246,7 +250,7 @@ const ENEMY_TEMPLATES = {
       { name: "Żądło", minDmg: 6, maxDmg: 10, range: 1 },
       { name: "Rój", minDmg: 5, maxDmg: 8, range: 2 },
     ],
-    pancerz: 0.02, przebicie: 0.10, hp: 80, icon: "🦗",
+    pancerz: 0.02, przebicie: 0.10, hp: 80, icon: "🦗", mutated: true,
   }),
   pomiot: () => createCharacter({
     name: "Leśny Pomiot",
@@ -255,7 +259,7 @@ const ENEMY_TEMPLATES = {
       { name: "Jadowite Ukąszenie", minDmg: 7, maxDmg: 12, range: 1 },
       { name: "Owinięcie", minDmg: 5, maxDmg: 9, range: 1 },
     ],
-    pancerz: 0.05, przebicie: 0.05, hp: 100, icon: "🐍",
+    pancerz: 0.05, przebicie: 0.05, hp: 100, icon: "🐍", mutated: true,
   }),
   traper: () => createCharacter({
     name: "Zdziczały Traper",
@@ -374,6 +378,7 @@ const BOSS_TEMPLATES = {
       pancerz: 0.20, przebicie: 0.10, hp: 320, icon: "🗿",
     });
     c.isBoss = true;
+    c.mutated = true;
     c.specialCooldown = 0;
     c.special = {
       name: "Krystalizacja", icon: "💠", cooldown: 4,
@@ -393,6 +398,7 @@ const BOSS_TEMPLATES = {
       pancerz: 0.10, przebicie: 0.12, hp: 260, icon: "🕷️",
     });
     c.isBoss = true;
+    c.mutated = true;
     c.specialCooldown = 0;
     c.special = {
       name: "Zaraza Rojowiska", icon: "☠️", cooldown: 4,

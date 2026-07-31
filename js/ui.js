@@ -30,7 +30,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
         Broń: <strong>${fighter.weapon.name} (${fighter.weapon.minDmg}-${fighter.weapon.maxDmg}, zas.${fighter.weapon.range})</strong>
         ${fighter.isPlayer ? "<em>(kliknij swój token, żeby otworzyć menu)</em>" : ""}
       </div>
-      ${fighter.isPlayer ? `<div class="stats corruption-line">🧬 Spaczenie: ${corruption || 0}%${corruption > 20 ? " — ryzyko obłędu!" : ""}</div>` : ""}
+      ${fighter.isPlayer ? `<div class="stats corruption-line">🧬 Spaczenie: ${corruption || 0}%${corruption > 20 ? " — ryzyko obłędu!" : ""} &nbsp;|&nbsp; 🍖 Pożarte szczątki: ${devouredCount || 0} (tier ${mutationTier()})</div>` : ""}
     `;
   }
 
@@ -559,7 +559,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
     return;
   }
 
-  const { level, xp, xpToNext, bonusStats, statPointsAvailable, corruption } = progress;
+  const { level, xp, xpToNext, bonusStats, statPointsAvailable, corruption, devouredCount, mutationTier } = progress;
   const spentPoints = Object.values(bonusStats).reduce((a, b) => a + b, 0);
   const unspentPoints = statPointsAvailable - spentPoints;
 
@@ -581,6 +581,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
         <div>CHA: ${player.cha}</div>
       </div>
       <div class="corruption-line">🧬 Spaczenie: ${corruption || 0}%${corruption > 20 ? " — ryzyko obłędu w walce!" : ""}</div>
+      <div class="corruption-line">🍖 Pożarte szczątki: ${devouredCount || 0} (mutacja tier ${mutationTier || 0}, +${MUTATE_STAT_BONUS + (mutationTier || 0)} STR/WYT przy "Mutuj się")</div>
     </div>
   `;
 

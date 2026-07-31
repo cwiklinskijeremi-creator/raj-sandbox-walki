@@ -16,6 +16,7 @@ let level = 1;
 let xp = 0;
 let statPointsAvailable = 10;
 let corruption = 0;
+let devouredCount = 0;
 let dungeonRooms = [];
 let dungeonIndex = 0;
 let dungeonHpLoss = 0;
@@ -723,17 +724,32 @@ const MUTATE_CORRUPTION_GAIN = 15;
 const MUTATE_STAT_BONUS = 6;
 const MUTATE_BUFF_TURNS = 20;
 
+// "Pożryj szczątki": lets Mutuj się's power grow over the whole run by
+// devouring the corpses of already-mutated enemies. Each devour is smaller
+// than a full Mutuj się (less corruption, no timed buff) but permanently
+// raises devouredCount, which in turn raises the STR/WYT bonus mutateSelf()
+// grants every time — the trade-off scales, it doesn't reset like the buff.
+const DEVOUR_CORRUPTION_GAIN = 5;
+const DEVOUR_HEAL_PERCENT = 0.12;
+const DEVOUR_TIER_STEP = 3;
+const DEVOUR_TIER_CAP = 5;
+
+function mutationTier() {
+  return Math.min(DEVOUR_TIER_CAP, Math.floor(devouredCount / DEVOUR_TIER_STEP));
+}
+
 function mutateSelf() {
   if (battleOver || playerActionsRemaining <= 0) return;
   if ((player.mutateCooldown || 0) > 0) return;
 
   playerActionsRemaining--;
   player.mutateCooldown = MUTATE_COOLDOWN;
-  applyTimedEffect(player, "str", MUTATE_STAT_BONUS, MUTATE_BUFF_TURNS, "mutacja spaczenia");
-  applyTimedEffect(player, "wyt", MUTATE_STAT_BONUS, MUTATE_BUFF_TURNS, "mutacja spaczenia");
+  const statBonus = MUTATE_STAT_BONUS + mutationTier();
+  applyTimedEffect(player, "str", statBonus, MUTATE_BUFF_TURNS, "mutacja spaczenia");
+  applyTimedEffect(player, "wyt", statBonus, MUTATE_BUFF_TURNS, "mutacja spaczenia");
   corruption = Math.min(100, corruption + MUTATE_CORRUPTION_GAIN);
   playSpellCastSound();
-  appendLog(`🧬 Poddajesz się mutacji spaczenia: +${MUTATE_STAT_BONUS} STR i +${MUTATE_STAT_BONUS} WYT do końca walki. Twoje spaczenie rośnie do ${corruption}%.`, "system");
+  appendLog(`🧬 Poddajesz się mutacji spaczenia: +${statBonus} STR i +${statBonus} WYT do końca walki. Twoje spaczenie rośnie do ${corruption}%.`, "system");
 
   if (playerActionsRemaining <= 0) {
     enemyPhase();
@@ -745,6 +761,36 @@ function mutateSelf() {
 function mutateButtonLabel() {
   const cd = player && player.mutateCooldown ? player.mutateCooldown : 0;
   return cd > 0 ? `Mutuj się (odnowienie: ${turnsLabel(cd)})` : "Mutuj się";
+}
+
+function devourableCorpse() {
+  if (!enemies) return null;
+  return enemies.find((e) => e.currentHP <= 0 && e.mutated && !e.devoured && hexDistance(player.pos, e.pos) === 1);
+}
+
+function devourButtonLabel() {
+  return devourableCorpse() ? "Pożryj szczątki" : "Pożryj szczątki (brak celu)";
+}
+
+function devourCorpse() {
+  if (battleOver || playerActionsRemaining <= 0) return;
+  const corpse = devourableCorpse();
+  if (!corpse) return;
+
+  playerActionsRemaining--;
+  corpse.devoured = true;
+  devouredCount++;
+  corruption = Math.min(100, corruption + DEVOUR_CORRUPTION_GAIN);
+  const healAmount = Math.round(player.maxHP * DEVOUR_HEAL_PERCENT);
+  player.currentHP = Math.min(player.maxHP, player.currentHP + healAmount);
+  playSpellCastSound();
+  appendLog(`🍖 Pożerasz szczątki ${corpse.name}: leczysz się o ${healAmount} PŻ, spaczenie rośnie do ${corruption}%. Mutacja wzmacnia się (tier ${mutationTier()}).`, "system");
+
+  if (playerActionsRemaining <= 0) {
+    enemyPhase();
+  } else {
+    render();
+  }
 }
 
 // High corruption risks losing control on the very action that was supposed
@@ -902,7 +948,7 @@ function refreshCharacterSheetIfOpen() {
   if (overlay.classList.contains("hidden")) return;
   renderCharacterSheet(
     player, inventory, equipped, resources, potionInventory, equipmentUpgrades,
-    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable, corruption },
+    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable, corruption, devouredCount, mutationTier: mutationTier() },
     { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat, onBuyPotion: buyPotion },
   );
 }
@@ -1046,6 +1092,7 @@ function saveActiveRun() {
     xp,
     statPointsAvailable,
     corruption,
+    devouredCount,
     prologueStep,
     locationKey: currentLocation ? currentLocation.key : null,
     cityPlaceKey: currentCityPlace ? currentCityPlace.key : null,
@@ -1098,6 +1145,7 @@ function applyActiveRunData(data) {
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
   corruption = data.corruption || 0;
+  devouredCount = data.devouredCount || 0;
   prologueStep = data.prologueStep || 0;
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey)
     || (data.locationKey === ARENA_LOCATION.key ? ARENA_LOCATION : null)
@@ -1214,6 +1262,7 @@ function startNewGame() {
   xp = 0;
   statPointsAvailable = 10;
   corruption = 0;
+  devouredCount = 0;
   companions = [];
   recruitPool = [];
   saveCompanionState();
@@ -1541,6 +1590,15 @@ function openPlayerActionMenu() {
       onClick: () => {
         radialMenuOpen = false;
         mutateSelf();
+      },
+    },
+    {
+      icon: "🍖",
+      label: devourButtonLabel(),
+      disabled: playerActionsRemaining <= 0 || !devourableCorpse(),
+      onClick: () => {
+        radialMenuOpen = false;
+        devourCorpse();
       },
     },
   ]);
