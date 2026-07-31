@@ -401,7 +401,7 @@ const EQUIPMENT_SLOTS = [
   { key: "prawa_reka", label: "Prawa ręka" },
 ];
 
-function resolveEquipSlotKey(item) {
+function resolveEquipSlotKey(item, equippedObj) {
   if (item.slot !== "pierscien") return item.slot;
-  return equipped.pierscien1 ? "pierscien2" : "pierscien1";
+  return equippedObj.pierscien1 ? "pierscien2" : "pierscien1";
 }

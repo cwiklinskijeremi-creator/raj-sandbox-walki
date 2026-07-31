@@ -135,6 +135,7 @@ function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeN
   companion.className = cls.name;
   companion.subclassName = sub.name;
   companion.baseName = name;
+  companion.equipped = defaultEquippedState();
   return companion;
 }
 
@@ -142,18 +143,22 @@ function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeN
 // than multiplying the companion's current (already-scaled) stats — since
 // companions persist across battles unlike freshly-created enemies, a
 // scaleEnemyForLevel-style in-place multiply would compound every battle.
+// Equipment bonuses are folded in the same way buildPlayerCharacter() does
+// it for the player, so gear on a companion behaves identically.
 function scaleCompanionToLevel(companion, level) {
+  if (!companion.equipped) companion.equipped = defaultEquippedState();
   const cls = CLASS_DATA.find((c) => c.name === companion.className);
   const sub = cls.subclasses.find((s) => s.name === companion.subclassName);
   const tier = Math.max(0, level - 1);
   const statMult = 1 + tier * 0.10;
   const hpMult = 1 + tier * 0.12;
+  const equipBonus = getEquipmentStatBonusesFor(companion.equipped);
 
-  const str = Math.round(sub.str * statMult);
-  const wyt = Math.round(sub.wyt * statMult);
-  const zre = Math.round(sub.zre * statMult);
-  const int = Math.round(sub.int * statMult);
-  const cha = Math.round(sub.cha * statMult);
+  const str = Math.round(sub.str * statMult) + equipBonus.str;
+  const wyt = Math.round(sub.wyt * statMult) + equipBonus.wyt;
+  const zre = Math.round(sub.zre * statMult) + equipBonus.zre;
+  const int = Math.round(sub.int * statMult) + equipBonus.int;
+  const cha = Math.round(sub.cha * statMult) + equipBonus.cha;
   const derived = computeDerivedStats({ zre, int, cha, przebicie: sub.przebicie });
 
   companion.str = str;
@@ -161,8 +166,8 @@ function scaleCompanionToLevel(companion, level) {
   companion.zre = zre;
   companion.int = int;
   companion.cha = cha;
-  companion.pancerz = sub.pancerz;
-  companion.przebicie = derived.totalPrzebicie;
+  companion.pancerz = sub.pancerz + equipBonus.pancerz;
+  companion.przebicie = derived.totalPrzebicie + equipBonus.przebicie;
   companion.extraD20Rolls = derived.extraD20Rolls;
   companion.extraActions = derived.extraActions;
   companion.d6Bonus = derived.d6Bonus;
@@ -171,4 +176,5 @@ function scaleCompanionToLevel(companion, level) {
   companion.moveRange = derived.moveRange;
   companion.maxHP = Math.round(sub.hp * hpMult);
   companion.currentHP = companion.maxHP;
+  companion.weapons = [...sub.weapons, ...getEquippedWeaponItemsFor(companion.equipped)];
 }

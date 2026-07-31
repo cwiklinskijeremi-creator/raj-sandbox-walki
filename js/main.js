@@ -355,7 +355,35 @@ function closePartyOverlay() {
 function refreshPartyOverlayIfOpen() {
   const overlay = document.getElementById("party-overlay");
   if (overlay.classList.contains("hidden")) return;
-  renderPartyOverlay(companions, dismissCompanion);
+  renderPartyOverlay(companions, dismissCompanion, openCompanionSheet);
+}
+
+let activeCompanionSheetIndex = null;
+
+function openCompanionSheet(index) {
+  if (!companions[index]) return;
+  closePartyOverlay();
+  activeCompanionSheetIndex = index;
+  document.getElementById("companion-sheet-overlay").classList.remove("hidden");
+  refreshCompanionSheetIfOpen();
+}
+
+function closeCompanionSheet() {
+  activeCompanionSheetIndex = null;
+  document.getElementById("companion-sheet-overlay").classList.add("hidden");
+  openPartyOverlay();
+}
+
+function refreshCompanionSheetIfOpen() {
+  const overlay = document.getElementById("companion-sheet-overlay");
+  if (overlay.classList.contains("hidden") || activeCompanionSheetIndex === null) return;
+  const companion = companions[activeCompanionSheetIndex];
+  if (!companion) { closeCompanionSheet(); return; }
+  const companionIndex = activeCompanionSheetIndex;
+  renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades, companions, {
+    onEquip: (itemId) => equipItemToCompanion(companionIndex, itemId),
+    onUnequip: (slotKey) => unequipCompanionSlot(companionIndex, slotKey),
+  });
 }
 
 function claimQuestReward(questId) {
@@ -575,9 +603,9 @@ function closePotionMenu() {
   document.getElementById("potions-overlay").classList.add("hidden");
 }
 
-function getEquipmentStatBonuses() {
+function getEquipmentStatBonusesFor(equippedObj) {
   const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
-  Object.values(equipped).forEach((itemId) => {
+  Object.values(equippedObj).forEach((itemId) => {
     if (!itemId) return;
     const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
     if (!item) return;
@@ -590,14 +618,39 @@ function getEquipmentStatBonuses() {
   return totals;
 }
 
-function getEquippedWeaponItems() {
+function getEquipmentStatBonuses() {
+  return getEquipmentStatBonusesFor(equipped);
+}
+
+function getEquippedWeaponItemsFor(equippedObj) {
   const weapons = [];
-  Object.values(equipped).forEach((itemId) => {
+  Object.values(equippedObj).forEach((itemId) => {
     if (!itemId) return;
     const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
     if (item && item.weapon) weapons.push(item.weapon);
   });
   return weapons;
+}
+
+function getEquippedWeaponItems() {
+  return getEquippedWeaponItemsFor(equipped);
+}
+
+// Equipment is a single shared Gildia stash — one physical copy per itemId,
+// so it can only ever sit in exactly one slot across the player and every
+// companion. Equipping it anywhere else must first pull it out of wherever
+// it currently is.
+function isItemEquippedAnywhere(itemId) {
+  if (Object.values(equipped).includes(itemId)) return true;
+  return companions.some((c) => c.equipped && Object.values(c.equipped).includes(itemId));
+}
+
+function unequipItemEverywhere(itemId) {
+  Object.keys(equipped).forEach((k) => { if (equipped[k] === itemId) equipped[k] = null; });
+  companions.forEach((c) => {
+    if (!c.equipped) return;
+    Object.keys(c.equipped).forEach((k) => { if (c.equipped[k] === itemId) c.equipped[k] = null; });
+  });
 }
 
 function buildPlayerCharacter() {
@@ -651,11 +704,15 @@ function buyEquipment(itemId) {
 function equipItem(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
   if (!item || !inventory.includes(itemId)) return;
-  equipped[resolveEquipSlotKey(item)] = itemId;
+  unequipItemEverywhere(itemId);
+  equipped[resolveEquipSlotKey(item, equipped)] = itemId;
   saveEquipmentState();
+  companions.forEach((c) => scaleCompanionToLevel(c, level));
+  saveCompanionState();
   if (player && phase === "camp") player = buildPlayerCharacter();
   render();
   refreshCharacterSheetIfOpen();
+  refreshCompanionSheetIfOpen();
 }
 
 function unequipSlot(slotKey) {
@@ -666,11 +723,37 @@ function unequipSlot(slotKey) {
   refreshCharacterSheetIfOpen();
 }
 
+function equipItemToCompanion(companionIndex, itemId) {
+  const companion = companions[companionIndex];
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+  if (!companion || !item || !inventory.includes(itemId)) return;
+  if (!companion.equipped) companion.equipped = defaultEquippedState();
+  unequipItemEverywhere(itemId);
+  companion.equipped[resolveEquipSlotKey(item, companion.equipped)] = itemId;
+  companions.forEach((c) => scaleCompanionToLevel(c, level));
+  saveEquipmentState();
+  saveCompanionState();
+  if (player && phase === "camp") player = buildPlayerCharacter();
+  render();
+  refreshCharacterSheetIfOpen();
+  refreshCompanionSheetIfOpen();
+}
+
+function unequipCompanionSlot(companionIndex, slotKey) {
+  const companion = companions[companionIndex];
+  if (!companion || !companion.equipped) return;
+  companion.equipped[slotKey] = null;
+  scaleCompanionToLevel(companion, level);
+  saveCompanionState();
+  render();
+  refreshCompanionSheetIfOpen();
+}
+
 const SELL_REFUND_RATE = 0.5;
 
 function sellEquipment(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
-  if (!item || !inventory.includes(itemId) || Object.values(equipped).includes(itemId)) return;
+  if (!item || !inventory.includes(itemId) || isItemEquippedAnywhere(itemId)) return;
   const refund = Math.ceil(item.cost.amount * SELL_REFUND_RATE);
   resources[item.cost.currency].amount += refund;
   saveResources();
@@ -1941,6 +2024,10 @@ document.getElementById("recruit-scene-close").addEventListener("click", closeRe
 document.getElementById("character-sheet-close").addEventListener("click", closeCharacterSheet);
 document.getElementById("character-sheet-overlay").addEventListener("click", (e) => {
   if (e.target.id === "character-sheet-overlay") closeCharacterSheet();
+});
+document.getElementById("companion-sheet-close").addEventListener("click", closeCompanionSheet);
+document.getElementById("companion-sheet-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "companion-sheet-overlay") closeCompanionSheet();
 });
 document.getElementById("location-back-btn").addEventListener("click", goToCamp);
 

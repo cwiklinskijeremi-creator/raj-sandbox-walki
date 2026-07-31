@@ -1216,6 +1216,12 @@ button:disabled {
   flex: 1;
 }
 
+.sheet-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .sheet-item-cost {
   font-size: 0.82rem;
   color: #a89c8f;

@@ -827,7 +827,7 @@ function renderRecruitScene(recruit, step) {
   document.getElementById("recruit-scene-confirm-btn").classList.toggle("hidden", !isLast);
 }
 
-function renderPartyOverlay(companions, onDismiss) {
+function renderPartyOverlay(companions, onDismiss, onOpenEquipment) {
   const body = document.getElementById("party-body");
   body.innerHTML = `<p class="creation-hint">Drużyna: ${companions.length}/${MAX_COMPANIONS} towarzyszy (+ Ty).</p>` +
     (companions.length === 0
@@ -839,12 +839,112 @@ function renderPartyOverlay(companions, onDismiss) {
               <div class="sheet-item-desc">${c.className} — ${c.subclassName} &nbsp;|&nbsp; Poziom ${level}</div>
               <div class="sheet-item-bonus">HP: ${c.maxHP} &nbsp;|&nbsp; STR ${c.str} &nbsp; WYT ${c.wyt} &nbsp; ZRE ${c.zre} &nbsp; INT ${c.int} &nbsp; CHA ${c.cha}</div>
             </div>
-            <button type="button" class="sheet-action-btn dismiss-companion-btn" data-index="${i}">Zwolnij</button>
+            <div class="sheet-item-actions">
+              <button type="button" class="sheet-action-btn open-companion-equip-btn" data-index="${i}">🎒 Ekwipunek</button>
+              <button type="button" class="sheet-action-btn dismiss-companion-btn" data-index="${i}">Zwolnij</button>
+            </div>
           </div>
         `).join(""));
 
+  body.querySelectorAll(".open-companion-equip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => onOpenEquipment(Number(btn.dataset.index)));
+  });
+
   body.querySelectorAll(".dismiss-companion-btn").forEach((btn) => {
     btn.addEventListener("click", () => onDismiss(Number(btn.dataset.index)));
+  });
+}
+
+function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades, companions, handlers) {
+  const body = document.getElementById("companion-sheet-body");
+  if (!companion) {
+    body.innerHTML = `<p class="creation-hint">Brak towarzysza.</p>`;
+    return;
+  }
+
+  const cEquipped = companion.equipped || {};
+  const statsHtml = `
+    <div class="sheet-section">
+      <h4>${companion.icon} ${companion.name}</h4>
+      <div class="sheet-level-line">${companion.className} — ${companion.subclassName} &nbsp;|&nbsp; Poziom ${level}</div>
+      <div class="sheet-stats-grid">
+        <div>HP: ${companion.maxHP}</div>
+        <div>Pancerz: ${(companion.pancerz * 100).toFixed(0)}%</div>
+        <div>Przebicie: ${(companion.przebicie * 100).toFixed(0)}%</div>
+        <div>Ruch: ${companion.moveRange}</div>
+        <div>STR: ${companion.str}</div>
+        <div>WYT: ${companion.wyt}</div>
+        <div>ZRE: ${companion.zre}</div>
+        <div>INT: ${companion.int}</div>
+        <div>CHA: ${companion.cha}</div>
+      </div>
+    </div>
+  `;
+
+  const slotsHtml = `
+    <div class="sheet-section">
+      <h4>Ekwipunek założony</h4>
+      <div class="sheet-slots">
+        ${EQUIPMENT_SLOTS.map((slot) => {
+          const itemId = cEquipped[slot.key];
+          const item = itemId ? EQUIPMENT_ITEMS.find((i) => i.id === itemId) : null;
+          const upgradeLevel = itemId ? (equipmentUpgrades[itemId] || 0) : 0;
+          return `
+            <div class="sheet-slot">
+              <div class="sheet-slot-label">${slot.label}</div>
+              ${item
+                ? `<div class="sheet-slot-item">
+                    <div>
+                      <div class="sheet-item-name">${item.icon} ${item.name}${upgradeLevel > 0 ? ` <span class="potion-count">+${upgradeLevel}</span>` : ""}</div>
+                      ${formatItemWeapon(item)}
+                      <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + upgradeLevel * 0.25)}</div>
+                    </div>
+                    <button type="button" class="sheet-action-btn companion-unequip-btn" data-slot="${slot.key}">Zdejmij</button>
+                  </div>`
+                : `<div class="sheet-slot-empty">Puste</div>`}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+
+  const equippedElsewhere = new Set(Object.values(equipped).filter(Boolean));
+  companions.forEach((c) => {
+    if (c === companion || !c.equipped) return;
+    Object.values(c.equipped).filter(Boolean).forEach((id) => equippedElsewhere.add(id));
+  });
+  const ownedFree = inventory.filter((id) => !equippedElsewhere.has(id) && !Object.values(cEquipped).includes(id));
+  const inventoryHtml = `
+    <div class="sheet-section">
+      <h4>Wspólny plecak Gildii</h4>
+      ${ownedFree.length === 0
+        ? `<p class="sheet-empty-note">Brak wolnych przedmiotów — reszta jest już założona przez Ciebie lub innych towarzyszy.</p>`
+        : ownedFree.map((id) => {
+            const item = EQUIPMENT_ITEMS.find((i) => i.id === id);
+            const upgradeLevel = equipmentUpgrades[id] || 0;
+            return `
+              <div class="sheet-item-row">
+                <div class="sheet-item-info">
+                  <div class="sheet-item-name">${item.icon} ${item.name}${upgradeLevel > 0 ? ` <span class="potion-count">+${upgradeLevel}</span>` : ""}</div>
+                  <div class="sheet-item-desc">${item.description}</div>
+                  ${formatItemWeapon(item)}
+                  <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + upgradeLevel * 0.25)}</div>
+                </div>
+                <button type="button" class="sheet-action-btn companion-equip-btn" data-item="${item.id}">Załóż</button>
+              </div>
+            `;
+          }).join("")}
+    </div>
+  `;
+
+  body.innerHTML = statsHtml + slotsHtml + inventoryHtml;
+
+  body.querySelectorAll(".companion-unequip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onUnequip(btn.dataset.slot));
+  });
+  body.querySelectorAll(".companion-equip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onEquip(btn.dataset.item));
   });
 }
 
