@@ -950,11 +950,57 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   });
 }
 
+function renderCityNpc(place, claimedNpcQuests, handlers) {
+  const el = document.getElementById("city-place-npc");
+  const npc = CITY_NPCS[place.key];
+  if (!npc) {
+    el.innerHTML = "";
+    return;
+  }
+
+  const line = npc.lines[Math.floor(Math.random() * npc.lines.length)];
+  const quest = npc.quest;
+  const claimed = quest && claimedNpcQuests.includes(place.key);
+
+  let questHtml = "";
+  if (quest && !claimed) {
+    const progress = Math.min(getNpcQuestProgress(quest), quest.goal);
+    const pct = Math.round((progress / quest.goal) * 100);
+    const complete = progress >= quest.goal;
+    questHtml = `
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">${quest.description}</div>
+          <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+          <div class="sheet-item-bonus">${progress}/${quest.goal}${quest.type === "resource" ? ` × ${quest.currency}` : ""}</div>
+          <div class="sheet-item-cost">Nagroda: ${quest.reward.amount} × ${quest.reward.currency}</div>
+        </div>
+        <button type="button" class="sheet-action-btn claim-npc-quest-btn" ${complete ? "" : "disabled"}>Odbierz</button>
+      </div>
+    `;
+  } else if (quest && claimed) {
+    questHtml = `<p class="sheet-empty-note">Zlecenie wykonane — ${npc.name} nie ma dla Ciebie nic więcej.</p>`;
+  }
+
+  el.innerHTML = `
+    <h4>${npc.icon} ${npc.name}</h4>
+    <p class="sheet-item-desc recruit-scene-text">${line}</p>
+    <button type="button" class="sheet-action-btn talk-npc-btn">💬 Zapytaj o coś</button>
+    ${questHtml}
+  `;
+
+  el.querySelector(".talk-npc-btn").addEventListener("click", handlers.onTalkToNpc);
+  const claimBtn = el.querySelector(".claim-npc-quest-btn");
+  if (claimBtn) claimBtn.addEventListener("click", () => handlers.onClaimNpcQuest(place.key));
+}
+
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
-  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption } = state;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, claimedNpcQuests } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
+
+  renderCityNpc(place, claimedNpcQuests || [], handlers);
 
   const recruit = (recruitPool || []).find((r) => r.locationKey === place.key);
   renderRecruitCard(

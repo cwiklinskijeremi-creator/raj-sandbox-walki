@@ -274,17 +274,21 @@ const QUEST_STORAGE_KEY = "raj-sandbox-quests";
 function loadQuestState() {
   try {
     const data = JSON.parse(localStorage.getItem(QUEST_STORAGE_KEY));
-    return { totalKills: (data && data.totalKills) || 0, claimedQuests: (data && data.claimedQuests) || [] };
+    return {
+      totalKills: (data && data.totalKills) || 0,
+      claimedQuests: (data && data.claimedQuests) || [],
+      claimedNpcQuests: (data && data.claimedNpcQuests) || [],
+    };
   } catch {
-    return { totalKills: 0, claimedQuests: [] };
+    return { totalKills: 0, claimedQuests: [], claimedNpcQuests: [] };
   }
 }
 
 function saveQuestState() {
-  localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify({ totalKills, claimedQuests }));
+  localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify({ totalKills, claimedQuests, claimedNpcQuests }));
 }
 
-let { totalKills, claimedQuests } = loadQuestState();
+let { totalKills, claimedQuests, claimedNpcQuests } = loadQuestState();
 
 function registerKill() {
   totalKills++;
@@ -407,6 +411,42 @@ function claimQuestReward(questId) {
 
   appendLog(`📋 Zadanie „${quest.name}” ukończone: +${quest.reward.amount} × ${quest.reward.currency}.`, "system");
   renderQuestBoard(QUESTS, getQuestProgressState(), claimedQuests, claimQuestReward);
+  render();
+}
+
+function talkToNpc() {
+  render();
+}
+
+function getNpcQuestProgress(quest) {
+  if (quest.type === "kills") return totalKills;
+  if (quest.type === "level") return level;
+  if (quest.type === "bestiary") return discoveredEnemies.length;
+  if (quest.type === "resource") return resources[quest.currency] ? resources[quest.currency].amount : 0;
+  return 0;
+}
+
+function claimNpcQuestReward(placeKey) {
+  const npc = CITY_NPCS[placeKey];
+  if (!npc || !npc.quest || claimedNpcQuests.includes(placeKey)) return;
+  const quest = npc.quest;
+  const progress = getNpcQuestProgress(quest);
+  if (progress < quest.goal) return;
+
+  if (quest.type === "resource") {
+    resources[quest.currency].amount -= quest.goal;
+    saveResources();
+  }
+
+  const existing = resources[quest.reward.currency] ? resources[quest.reward.currency].amount : 0;
+  const icon = resources[quest.reward.currency] ? resources[quest.reward.currency].icon : questRewardIcon(quest.reward.currency);
+  resources[quest.reward.currency] = { icon, amount: existing + quest.reward.amount };
+  saveResources();
+
+  claimedNpcQuests.push(placeKey);
+  saveQuestState();
+
+  appendLog(`💬 ${npc.name}: zlecenie wykonane! +${quest.reward.amount} × ${quest.reward.currency}.`, "system");
   render();
 }
 
@@ -1585,11 +1625,12 @@ function render() {
     hideAllExcept(cityPlaceScreen);
     renderCityPlace(
       currentCityPlace,
-      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption },
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, claimedNpcQuests },
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
         onRecruit: openRecruitScene, onCleanseCorruption: cleanseCorruption,
+        onTalkToNpc: talkToNpc, onClaimNpcQuest: claimNpcQuestReward,
       },
     );
     saveActiveRun();
