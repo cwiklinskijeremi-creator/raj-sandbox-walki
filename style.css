@@ -572,6 +572,44 @@ button:disabled {
   text-align: center;
 }
 
+.prologue-screen {
+  background: #1c1a20;
+  border: 1px solid #3a3542;
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 0 auto;
+  max-width: 640px;
+  text-align: center;
+}
+
+.prologue-progress {
+  color: #a89c8f;
+  font-size: 0.85rem;
+  margin: 0.3rem 0 1.2rem;
+}
+
+.prologue-body {
+  min-height: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prologue-text {
+  font-size: 1.05rem;
+  font-style: italic;
+  color: #e8e0d8;
+  line-height: 1.7;
+  text-align: left;
+}
+
+.prologue-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
 .creation-row {
   display: flex;
   align-items: center;

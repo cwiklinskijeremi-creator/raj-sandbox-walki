@@ -1046,6 +1046,7 @@ function saveActiveRun() {
     xp,
     statPointsAvailable,
     corruption,
+    prologueStep,
     locationKey: currentLocation ? currentLocation.key : null,
     cityPlaceKey: currentCityPlace ? currentCityPlace.key : null,
     savedAt: Date.now(),
@@ -1097,6 +1098,7 @@ function applyActiveRunData(data) {
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
   corruption = data.corruption || 0;
+  prologueStep = data.prologueStep || 0;
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey)
     || (data.locationKey === ARENA_LOCATION.key ? ARENA_LOCATION : null)
     || (data.locationKey === CAMPAIGN_FINALE_LOCATION.key ? CAMPAIGN_FINALE_LOCATION : null);
@@ -1277,9 +1279,27 @@ function setPlayerGender(gender) {
   render();
 }
 
+let prologueStep = 0;
+
 function confirmCharacterCreation() {
   if (!playerName.trim() || !playerGender || !selectedSubclassName) return;
   player = buildPlayerCharacter();
+  prologueStep = 0;
+  phase = "prologue";
+  render();
+}
+
+function advancePrologue() {
+  const prologue = CLASS_PROLOGUES[selectedClassName];
+  if (!prologue || prologueStep >= prologue.beats.length - 1) {
+    phase = "camp";
+  } else {
+    prologueStep++;
+  }
+  render();
+}
+
+function skipPrologue() {
   phase = "camp";
   render();
 }
@@ -1612,6 +1632,7 @@ function render() {
   const mainMenuScreen = document.getElementById("main-menu-screen");
   const test3dScreen = document.getElementById("test3d-screen");
   const creationScreen = document.getElementById("character-creation-screen");
+  const prologueScreen = document.getElementById("prologue-screen");
   const campScreen = document.getElementById("camp-screen");
   const cityScreen = document.getElementById("city-screen");
   const cityPlaceScreen = document.getElementById("city-place-screen");
@@ -1619,7 +1640,7 @@ function render() {
   const dungeonScreen = document.getElementById("dungeon-screen");
   const gameScreen = document.getElementById("game-screen");
 
-  const allScreens = [mainMenuScreen, test3dScreen, creationScreen, campScreen, cityScreen, cityPlaceScreen, locationScreen, dungeonScreen, gameScreen];
+  const allScreens = [mainMenuScreen, test3dScreen, creationScreen, prologueScreen, campScreen, cityScreen, cityPlaceScreen, locationScreen, dungeonScreen, gameScreen];
   const hideAllExcept = (visible) => {
     allScreens.forEach((el) => {
       if (el === visible) el.classList.remove("hidden");
@@ -1644,6 +1665,13 @@ function render() {
       { playerName, playerGender, selectedClassName, selectedSubclassName, bonusStats, statPointsAvailable },
       { onSelectClass: selectCreationClass, onSelectSubclass: selectCreationSubclass, onAdjustStat: adjustBonusStat },
     );
+    return;
+  }
+
+  if (phase === "prologue") {
+    hideAllExcept(prologueScreen);
+    renderPrologue(CLASS_PROLOGUES[selectedClassName], prologueStep);
+    saveActiveRun();
     return;
   }
 
@@ -2330,5 +2358,8 @@ document.querySelectorAll(".gender-btn").forEach((btn) => {
   btn.addEventListener("click", () => setPlayerGender(btn.dataset.gender));
 });
 document.getElementById("creation-confirm-btn").addEventListener("click", confirmCharacterCreation);
+document.getElementById("prologue-next-btn").addEventListener("click", advancePrologue);
+document.getElementById("prologue-finish-btn").addEventListener("click", advancePrologue);
+document.getElementById("prologue-skip-btn").addEventListener("click", skipPrologue);
 
 render();

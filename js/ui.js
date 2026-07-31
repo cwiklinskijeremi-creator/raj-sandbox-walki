@@ -438,6 +438,34 @@ function renderCharacterCreation(state, handlers) {
   confirmBtn.disabled = !(playerName.trim().length > 0 && !!playerGender && !!selectedSub);
 }
 
+function renderPrologue(prologue, step) {
+  const titleEl = document.getElementById("prologue-title");
+  const progressEl = document.getElementById("prologue-progress");
+  const bodyEl = document.getElementById("prologue-body");
+  const nextBtn = document.getElementById("prologue-next-btn");
+  const finishBtn = document.getElementById("prologue-finish-btn");
+
+  if (!prologue) {
+    titleEl.textContent = "";
+    progressEl.textContent = "";
+    bodyEl.innerHTML = "";
+    nextBtn.classList.add("hidden");
+    finishBtn.classList.remove("hidden");
+    return;
+  }
+
+  const lastStep = prologue.beats.length - 1;
+  const clampedStep = Math.min(step, lastStep);
+  const isLast = clampedStep >= lastStep;
+
+  titleEl.textContent = `${prologue.icon} ${prologue.title}`;
+  progressEl.textContent = `${clampedStep + 1}/${prologue.beats.length}`;
+  bodyEl.innerHTML = `<p class="prologue-text">${prologue.beats[clampedStep]}</p>`;
+
+  nextBtn.classList.toggle("hidden", isLast);
+  finishBtn.classList.toggle("hidden", !isLast);
+}
+
 const STAT_META = [
   { key: "str", label: "STR" },
   { key: "wyt", label: "WYT" },

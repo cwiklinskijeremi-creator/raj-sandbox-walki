@@ -22,6 +22,7 @@ const TUTORIAL_DATA = {
     paragraphs: [
       "Przy „Nowa gra” najpierw tworzysz postać: wpisujesz imię, wybierasz płeć, a następnie klasę i specjalizację — kliknięcie ikony klasy centruje ją i powiększa, a poniżej pojawia się opis wybranej specjalizacji wraz z jej bronią i umiejętnością.",
       "Masz do rozdania 10 punktów statystyk (STR/WYT/ZRE/INT/CHA) na bazie wybranej specjalizacji — dodatkowe punkty do WYT i STR zwiększają też HP. Klasa i imię są ustalane raz na całą grę — nie da się ich zmienić w trakcie walki.",
+      "Po zatwierdzeniu postaci zobaczysz krótki prolog — osobną historię dla każdej z 5 klas, wyjaśniającą, skąd Twoja postać się wzięła i dlaczego trafia do Gildii Poszukiwaczy Przygód jako „nowy rekrut”. Przycisk „Dalej” przechodzi do kolejnego fragmentu, a „Pomiń prolog” od razu przenosi do obozu, jeśli wolisz przejść od razu do gry.",
     ],
   },
   camp: {
