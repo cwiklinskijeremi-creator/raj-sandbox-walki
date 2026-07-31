@@ -1018,6 +1018,12 @@ button:disabled {
   margin-top: 0.4rem;
 }
 
+.reputation-line {
+  color: #c9a24b;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+}
+
 .camp-buttons {
   display: flex;
   justify-content: center;

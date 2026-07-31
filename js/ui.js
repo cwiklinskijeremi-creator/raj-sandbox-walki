@@ -950,13 +950,19 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   });
 }
 
-function renderCityNpc(place, claimedNpcQuests, handlers) {
+function renderCityNpc(place, claimedNpcQuests, reputation, handlers) {
   const el = document.getElementById("city-place-npc");
   const npc = CITY_NPCS[place.key];
   if (!npc) {
     el.innerHTML = "";
     return;
   }
+
+  const rep = (reputation && reputation[place.key]) || 0;
+  const discountPct = Math.round(getReputationDiscount(place.key) * 100);
+  const repLine = discountPct > 0
+    ? `🤝 Reputacja: ${rep} (-${discountPct}% rabatu w tutejszym sklepie)`
+    : `🤝 Reputacja: ${rep} (buduj ją zakupami i zleceniami, żeby odblokować rabat)`;
 
   const line = npc.lines[Math.floor(Math.random() * npc.lines.length)];
   const quest = npc.quest;
@@ -987,6 +993,7 @@ function renderCityNpc(place, claimedNpcQuests, handlers) {
     <p class="sheet-item-desc recruit-scene-text">${line}</p>
     <button type="button" class="sheet-action-btn talk-npc-btn">💬 Zapytaj o coś</button>
     ${questHtml}
+    <p class="reputation-line">${repLine}</p>
   `;
 
   el.querySelector(".talk-npc-btn").addEventListener("click", handlers.onTalkToNpc);
@@ -996,11 +1003,11 @@ function renderCityNpc(place, claimedNpcQuests, handlers) {
 
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
-  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, claimedNpcQuests } = state;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, claimedNpcQuests, reputation } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
 
-  renderCityNpc(place, claimedNpcQuests || [], handlers);
+  renderCityNpc(place, claimedNpcQuests || [], reputation || {}, handlers);
 
   const recruit = (recruitPool || []).find((r) => r.locationKey === place.key);
   renderRecruitCard(
@@ -1166,7 +1173,12 @@ function renderCityPlace(place, state, handlers) {
       ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>`
       : notOwned.map((item) => {
           const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
-          const affordable = owned >= item.cost.amount;
+          const discountedCost = getDiscountedCost(item);
+          const affordable = owned >= discountedCost;
+          const discountPct = Math.round(getReputationDiscount(item.vendor) * 100);
+          const costLine = discountPct > 0
+            ? `Koszt: <s>${item.cost.amount}</s> ${discountedCost} × ${item.cost.currency} (masz: ${owned}) — rabat -${discountPct}%`
+            : `Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})`;
           return `
             <div class="sheet-item-row">
               <div class="sheet-item-info">
@@ -1174,7 +1186,7 @@ function renderCityPlace(place, state, handlers) {
                 <div class="sheet-item-desc">${item.description}</div>
                 ${formatItemWeapon(item)}
                 <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
-                <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
+                <div class="sheet-item-cost">${costLine}</div>
               </div>
               <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable ? "" : "disabled"}>Kup</button>
             </div>

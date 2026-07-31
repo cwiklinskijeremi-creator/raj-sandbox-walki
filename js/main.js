@@ -445,6 +445,7 @@ function claimNpcQuestReward(placeKey) {
 
   claimedNpcQuests.push(placeKey);
   saveQuestState();
+  gainReputation(placeKey, 5);
 
   appendLog(`💬 ${npc.name}: zlecenie wykonane! +${quest.reward.amount} × ${quest.reward.currency}.`, "system");
   render();
@@ -856,9 +857,44 @@ function buildPlayerCharacter() {
   return p;
 }
 
+const REPUTATION_STORAGE_KEY = "raj-sandbox-reputation";
+
+function loadReputationState() {
+  try {
+    return JSON.parse(localStorage.getItem(REPUTATION_STORAGE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveReputationState() {
+  localStorage.setItem(REPUTATION_STORAGE_KEY, JSON.stringify(reputation));
+}
+
+// Reputation is Gildia-wide progress, like resources/equipment — it persists
+// across "Nowa gra" and is never reset. Each city place tracks its own
+// reputation independently; there is no shared "faction" grouping.
+let reputation = loadReputationState();
+
+function gainReputation(placeKey, amount) {
+  if (!placeKey) return;
+  reputation[placeKey] = (reputation[placeKey] || 0) + amount;
+  saveReputationState();
+}
+
+function getReputationDiscount(placeKey) {
+  return Math.min(0.20, (reputation[placeKey] || 0) * 0.01);
+}
+
+function getDiscountedCost(item) {
+  const discount = getReputationDiscount(item.vendor);
+  if (discount <= 0) return item.cost.amount;
+  return Math.max(1, Math.round(item.cost.amount * (1 - discount)));
+}
+
 function canAffordItem(item) {
   const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
-  return owned >= item.cost.amount;
+  return owned >= getDiscountedCost(item);
 }
 
 function refreshCharacterSheetIfOpen() {
@@ -874,10 +910,11 @@ function refreshCharacterSheetIfOpen() {
 function buyEquipment(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
   if (!item || inventory.includes(itemId) || !canAffordItem(item)) return;
-  resources[item.cost.currency].amount -= item.cost.amount;
+  resources[item.cost.currency].amount -= getDiscountedCost(item);
   saveResources();
   inventory.push(itemId);
   saveEquipmentState();
+  gainReputation(item.vendor, 1);
   render();
   refreshCharacterSheetIfOpen();
 }
@@ -941,6 +978,7 @@ function sellEquipment(itemId) {
   inventory = inventory.filter((id) => id !== itemId);
   delete equipmentUpgrades[itemId];
   saveEquipmentState();
+  gainReputation("czarny_rynek", 1);
   render();
   refreshCharacterSheetIfOpen();
 }
@@ -954,6 +992,7 @@ function sellPotion(potionId) {
   potionInventory[potionId]--;
   if (potionInventory[potionId] <= 0) delete potionInventory[potionId];
   savePotionInventory();
+  gainReputation("czarny_rynek", 1);
   render();
   refreshCharacterSheetIfOpen();
 }
@@ -979,6 +1018,7 @@ function gambleAtTavern(currency, betAmount) {
   }
   if (payout > 0) resources[currency].amount += payout;
   saveResources();
+  gainReputation("tawerna", 1);
 
   lastGambleResult = { roll, payout, text };
   render();
@@ -1625,7 +1665,7 @@ function render() {
     hideAllExcept(cityPlaceScreen);
     renderCityPlace(
       currentCityPlace,
-      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, claimedNpcQuests },
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, claimedNpcQuests, reputation },
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
@@ -1773,6 +1813,9 @@ function awardVictory(message) {
   }
   const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
   awardXp(xpGained);
+  if (currentLocation && currentLocation.key === ARENA_LOCATION.key) {
+    gainReputation("arena", 1);
+  }
   if (isCampaignBattle && activeCampaignChapterId) {
     completeCampaignChapter(activeCampaignChapterId);
     isCampaignBattle = false;
