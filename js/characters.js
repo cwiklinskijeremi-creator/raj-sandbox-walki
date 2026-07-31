@@ -442,6 +442,29 @@ const BOSS_TEMPLATES = {
     };
     return c;
   },
+  // Unique finale boss for the story campaign (js/campaign.js) — not tied to
+  // any LOCATIONS entry, so it never appears in the roaming bestiary and is
+  // noticeably stronger than the four world bosses above.
+  boss_dorian: () => {
+    const c = createCharacter({
+      name: "Dorian Vex",
+      str: 13, wyt: 12, zre: 11, int: 18, cha: 15,
+      weapons: [
+        { name: "Iluzoryczny Sztylet", minDmg: 13, maxDmg: 19, range: 1 },
+        { name: "Rozdzierający Impuls Many", minDmg: 15, maxDmg: 22, range: 6 },
+      ],
+      pancerz: 0.18, przebicie: 0.20, hp: 380, icon: "🎭",
+    });
+    c.isBoss = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Zdrada Iluzji", icon: "🎭", cooldown: 4,
+      minDmg: 12, maxDmg: 18, range: 6,
+      effectType: "armor_shred", effectValue: 0.25, effectTurns: 3,
+      label: "roztrzaskana obrona",
+    };
+    return c;
+  },
 };
 
 function createEnemies(location = null) {

@@ -1127,6 +1127,52 @@ function renderCityPlace(place, state, handlers) {
   });
 }
 
+function renderCampaignBoard(chapters, completedChapterIds, currentChapter, onStart) {
+  const body = document.getElementById("campaign-body");
+  const allDone = completedChapterIds.length >= chapters.length;
+
+  const banner = allDone
+    ? `<p class="creation-hint">🏆 Kampania ukończona — zemsta na Dorianie Vex dopełniona. Możesz nadal grać dalej, wracając do zwykłych wypraw i Areny Krwi.</p>`
+    : `<p class="creation-hint">Twoja osobista historia zemsty w Aetherionie. Każdy rozdział to unikalna walka z bossem — bez lochu po drodze.</p>`;
+
+  const cards = chapters.map((chapter) => {
+    const completed = completedChapterIds.includes(chapter.id);
+    const isCurrent = !completed && currentChapter && currentChapter.id === chapter.id;
+    const locked = !completed && !isCurrent;
+
+    if (locked) {
+      return `
+        <div class="sheet-item-row">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name codex-undiscovered">🔒 ${chapter.icon} ${chapter.title}</div>
+            <div class="sheet-item-desc">Zablokowane — ukończ poprzedni rozdział, aby odblokować.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    const text = completed ? chapter.outro : chapter.intro;
+    return `
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-name">${completed ? "✅ " : ""}${chapter.icon} ${chapter.title}</div>
+          ${text.map((line) => `<div class="sheet-item-desc recruit-scene-text">${line}</div>`).join("")}
+          ${completed
+            ? `<div class="sheet-item-bonus">Otrzymano: ${chapter.reward.amount} × ${chapter.reward.currency}</div>`
+            : `<div class="sheet-item-bonus">Nagroda: ${chapter.reward.amount} × ${chapter.reward.currency}</div>`}
+        </div>
+        ${isCurrent ? `<button type="button" class="sheet-action-btn start-campaign-btn" data-chapter="${chapter.id}">Rozpocznij rozdział</button>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  body.innerHTML = banner + cards;
+
+  body.querySelectorAll(".start-campaign-btn").forEach((btn) => {
+    btn.addEventListener("click", () => onStart(btn.dataset.chapter));
+  });
+}
+
 function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
   const body = document.getElementById("quest-board-body");
   body.innerHTML = quests.map((quest) => {

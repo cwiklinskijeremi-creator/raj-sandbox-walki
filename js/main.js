@@ -23,6 +23,8 @@ let dungeonRoomResolved = false;
 let dungeonOutcomeText = "";
 let pendingBossFight = false;
 let isBossBattle = false;
+let isCampaignBattle = false;
+let activeCampaignChapterId = null;
 
 function xpToNextLevel(lvl) {
   return lvl * 50;
@@ -197,6 +199,8 @@ function advanceDungeon() {
   dungeonRoomResolved = false;
   dungeonOutcomeText = "";
   if (dungeonIndex >= dungeonRooms.length) {
+    isCampaignBattle = false;
+    activeCampaignChapterId = null;
     startNewBattle();
   } else {
     render();
@@ -408,6 +412,70 @@ function claimQuestReward(questId) {
 function questRewardIcon(currencyName) {
   const loc = LOCATIONS.find((l) => l.resource.name === currencyName);
   return loc ? loc.resource.icon : "🪙";
+}
+
+const CAMPAIGN_STORAGE_KEY = "raj-sandbox-campaign";
+
+function loadCampaignState() {
+  try {
+    const data = JSON.parse(localStorage.getItem(CAMPAIGN_STORAGE_KEY));
+    return { completedChapterIds: (data && data.completedChapterIds) || [] };
+  } catch {
+    return { completedChapterIds: [] };
+  }
+}
+
+function saveCampaignState() {
+  localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify({ completedChapterIds }));
+}
+
+let { completedChapterIds } = loadCampaignState();
+
+function getCurrentCampaignChapter() {
+  return CAMPAIGN_CHAPTERS.find((c) => !completedChapterIds.includes(c.id)) || null;
+}
+
+function isCampaignComplete() {
+  return CAMPAIGN_CHAPTERS.every((c) => completedChapterIds.includes(c.id));
+}
+
+function openCampaignBoard() {
+  document.getElementById("campaign-overlay").classList.remove("hidden");
+  renderCampaignBoard(CAMPAIGN_CHAPTERS, completedChapterIds, getCurrentCampaignChapter(), startCampaignChapter);
+}
+
+function closeCampaignBoard() {
+  document.getElementById("campaign-overlay").classList.add("hidden");
+}
+
+function startCampaignChapter(chapterId) {
+  const chapter = getCurrentCampaignChapter();
+  if (!chapter || chapter.id !== chapterId) return;
+  const location = getCampaignChapterLocation(chapter);
+  if (!location) return;
+  closeCampaignBoard();
+  currentLocation = location;
+  activeCampaignChapterId = chapter.id;
+  isCampaignBattle = true;
+  pendingBossFight = true;
+  startNewBattle();
+}
+
+function completeCampaignChapter(chapterId) {
+  const chapter = CAMPAIGN_CHAPTERS.find((c) => c.id === chapterId);
+  if (!chapter || completedChapterIds.includes(chapterId)) return;
+  completedChapterIds.push(chapterId);
+  saveCampaignState();
+
+  const existing = resources[chapter.reward.currency] ? resources[chapter.reward.currency].amount : 0;
+  const icon = resources[chapter.reward.currency] ? resources[chapter.reward.currency].icon : questRewardIcon(chapter.reward.currency);
+  resources[chapter.reward.currency] = { icon, amount: existing + chapter.reward.amount };
+  saveResources();
+
+  appendLog(`📖 Rozdział „${chapter.title}” ukończony! +${chapter.reward.amount} × ${chapter.reward.currency}.`, "system");
+  if (chapter.isFinale) {
+    appendLog("🏆 Kampania fabularna zakończona!", "system");
+  }
 }
 
 const COMPANION_STORAGE_KEY = "raj-sandbox-companions";
@@ -846,6 +914,8 @@ function saveActiveRun() {
     data.obstacles = OBSTACLES;
     data.obstacleTypes = [...OBSTACLE_TYPES.entries()];
     data.isBossBattle = isBossBattle;
+    data.isCampaignBattle = isCampaignBattle;
+    data.activeCampaignChapterId = activeCampaignChapterId;
   }
   localStorage.setItem(ACTIVE_RUN_KEY, JSON.stringify(data));
 }
@@ -873,7 +943,8 @@ function applyActiveRunData(data) {
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey)
-    || (data.locationKey === ARENA_LOCATION.key ? ARENA_LOCATION : null);
+    || (data.locationKey === ARENA_LOCATION.key ? ARENA_LOCATION : null)
+    || (data.locationKey === CAMPAIGN_FINALE_LOCATION.key ? CAMPAIGN_FINALE_LOCATION : null);
   currentCityPlace = CITY_PLACES.find((p) => p.key === data.cityPlaceKey) || null;
   phase = data.phase;
 
@@ -895,6 +966,8 @@ function applyActiveRunData(data) {
     enemies = data.enemies;
     companions = data.companions || companions;
     isBossBattle = data.isBossBattle || false;
+    isCampaignBattle = data.isCampaignBattle || false;
+    activeCampaignChapterId = data.activeCampaignChapterId || null;
     selectedTargetIndex = data.selectedTargetIndex;
     battleOver = data.battleOver;
     playerActionsRemaining = data.playerActionsRemaining;
@@ -955,6 +1028,8 @@ function selectCityPlace(place) {
 
 function enterArena() {
   currentLocation = ARENA_LOCATION;
+  isCampaignBattle = false;
+  activeCampaignChapterId = null;
   startNewBattle();
 }
 
@@ -1557,6 +1632,11 @@ function awardVictory(message) {
   }
   const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
   awardXp(xpGained);
+  if (isCampaignBattle && activeCampaignChapterId) {
+    completeCampaignChapter(activeCampaignChapterId);
+    isCampaignBattle = false;
+    activeCampaignChapterId = null;
+  }
 }
 
 function finishPlayerAction(target) {
@@ -2016,6 +2096,8 @@ document.getElementById("camp-main-menu-btn").addEventListener("click", goToMain
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
 document.getElementById("camp-quests-btn").addEventListener("click", openQuestBoard);
 document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
+document.getElementById("camp-campaign-btn").addEventListener("click", openCampaignBoard);
+document.getElementById("campaign-close").addEventListener("click", closeCampaignBoard);
 document.getElementById("camp-party-btn").addEventListener("click", openPartyOverlay);
 document.getElementById("party-close").addEventListener("click", closePartyOverlay);
 document.getElementById("recruit-scene-next-btn").addEventListener("click", advanceRecruitScene);
