@@ -52,8 +52,12 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
     ? `<div class="stats fighter-effects">Efekty: ${effectParts.join(", ")}</div>`
     : "";
 
+  const mutatedTag = fighter.mutated && !fighter.isPlayer
+    ? `<span class="mutated-tag" title="Spaczony przeciwnik — po pokonaniu będzie można pożreć jego szczątki.">🧟 spaczony</span> `
+    : "";
+
   el.innerHTML = `
-    <strong>${fighter.isBoss ? "👑 " : fighter.isCompanion ? "👥 " : ""}${fighter.name}</strong> ${dead ? "(martwy)" : ""}
+    <strong>${fighter.isBoss ? "👑 " : fighter.isCompanion ? "👥 " : ""}${fighter.name}</strong> ${dead ? "(martwy)" : ""} ${mutatedTag}
     <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${hpPct}%"></div>${hpBarPreview}</div>
     ${bodyHtml}
     ${effectsHtml}
@@ -1417,7 +1421,7 @@ function renderCodexTabBody(tabKey) {
           const e = ENEMY_TEMPLATES[key]();
           return `
             <div class="codex-subclass">
-              <div class="codex-subclass-title">${e.icon} ${e.name}</div>
+              <div class="codex-subclass-title">${e.icon} ${e.name} ${e.mutated ? `<span class="mutated-tag" title="Można pożreć jego szczątki po pokonaniu w walce.">🧟 spaczony</span>` : ""}</div>
               <div class="codex-subclass-gear">
                 HP: ${e.maxHP} &nbsp;|&nbsp; STR: ${e.str} &nbsp; WYT: ${e.wyt} &nbsp; ZRE: ${e.zre} &nbsp; INT: ${e.int} &nbsp; CHA: ${e.cha}
                 &nbsp;|&nbsp; Pancerz: ${(e.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(e.przebicie * 100).toFixed(0)}%
@@ -1438,7 +1442,7 @@ function renderCodexTabBody(tabKey) {
           const b = BOSS_TEMPLATES[loc.bossKey]();
           return `
             <div class="codex-subclass codex-boss-entry">
-              <div class="codex-subclass-title">👑 ${b.icon} ${b.name}</div>
+              <div class="codex-subclass-title">👑 ${b.icon} ${b.name} ${b.mutated ? `<span class="mutated-tag" title="Można pożreć jego szczątki po pokonaniu w walce.">🧟 spaczony</span>` : ""}</div>
               <div class="codex-subclass-gear">
                 HP: ${b.maxHP} &nbsp;|&nbsp; STR: ${b.str} &nbsp; WYT: ${b.wyt} &nbsp; ZRE: ${b.zre} &nbsp; INT: ${b.int} &nbsp; CHA: ${b.cha}
                 &nbsp;|&nbsp; Pancerz: ${(b.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(b.przebicie * 100).toFixed(0)}%
