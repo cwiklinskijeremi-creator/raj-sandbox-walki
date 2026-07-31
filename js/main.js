@@ -15,6 +15,7 @@ let bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
 let level = 1;
 let xp = 0;
 let statPointsAvailable = 10;
+let corruption = 0;
 let dungeonRooms = [];
 let dungeonIndex = 0;
 let dungeonHpLoss = 0;
@@ -671,6 +672,78 @@ function closePotionMenu() {
   document.getElementById("potions-overlay").classList.add("hidden");
 }
 
+// "Mutuj się": an opt-in power spike (reused timed-effect infra also used by
+// skills/boss specials) that permanently raises `corruption`. High corruption
+// then risks a madness episode on later attacks/skills (see
+// rollMadnessEpisode/triggerMadnessEpisode) — the trade-off the user asked
+// for: stronger now, but you might turn on your own companions later.
+const MUTATE_COOLDOWN = 4;
+const MUTATE_CORRUPTION_GAIN = 15;
+const MUTATE_STAT_BONUS = 6;
+const MUTATE_BUFF_TURNS = 20;
+
+function mutateSelf() {
+  if (battleOver || playerActionsRemaining <= 0) return;
+  if ((player.mutateCooldown || 0) > 0) return;
+
+  playerActionsRemaining--;
+  player.mutateCooldown = MUTATE_COOLDOWN;
+  applyTimedEffect(player, "str", MUTATE_STAT_BONUS, MUTATE_BUFF_TURNS, "mutacja spaczenia");
+  applyTimedEffect(player, "wyt", MUTATE_STAT_BONUS, MUTATE_BUFF_TURNS, "mutacja spaczenia");
+  corruption = Math.min(100, corruption + MUTATE_CORRUPTION_GAIN);
+  playSpellCastSound();
+  appendLog(`🧬 Poddajesz się mutacji spaczenia: +${MUTATE_STAT_BONUS} STR i +${MUTATE_STAT_BONUS} WYT do końca walki. Twoje spaczenie rośnie do ${corruption}%.`, "system");
+
+  if (playerActionsRemaining <= 0) {
+    enemyPhase();
+  } else {
+    render();
+  }
+}
+
+function mutateButtonLabel() {
+  const cd = player && player.mutateCooldown ? player.mutateCooldown : 0;
+  return cd > 0 ? `Mutuj się (odnowienie: ${turnsLabel(cd)})` : "Mutuj się";
+}
+
+// High corruption risks losing control on the very action that was supposed
+// to use it — below 20% you're always safe, above it the odds climb with
+// how deep the spaczenie runs (100% corruption ≈ 1-in-3 per action).
+function rollMadnessEpisode() {
+  if (corruption <= 20) return false;
+  return Math.random() < corruption / 300;
+}
+
+function triggerMadnessEpisode() {
+  playerActionsRemaining--;
+  const livingCompanions = companions.filter((c) => c.currentHP > 0);
+
+  if (livingCompanions.length > 0) {
+    const victim = livingCompanions[Math.floor(Math.random() * livingCompanions.length)];
+    const context = { allCombatants: [player, ...companions, ...enemies], obstacles: OBSTACLES };
+    const result = resolveAttack(player, victim, context);
+    const { text, cssClass } = formatAttackResult(result);
+    appendLog(`😵‍💫 Spaczenie przejmuje nad Tobą kontrolę! Atakujesz ${victim.icon} ${victim.name} zamiast wroga! ${text}`, cssClass);
+    triggerAttackFx(result, victim.pos);
+    if (result.hit) playHitSound(result.d6 === 6); else playMissSound();
+    if (victim.currentHP <= 0) resolveUnitDeath(victim);
+  } else {
+    const selfDmg = Math.max(1, Math.round(player.maxHP * 0.08));
+    player.currentHP = Math.max(0, player.currentHP - selfDmg);
+    appendLog(`😵‍💫 Spaczenie przejmuje nad Tobą kontrolę! W szale zadajesz sobie ${selfDmg} obrażeń.`, "damage");
+    playHitSound(false);
+    if (player.currentHP <= 0) resolveUnitDeath(player);
+  }
+
+  if (battleOver) {
+    render();
+  } else if (playerActionsRemaining <= 0) {
+    enemyPhase();
+  } else {
+    render();
+  }
+}
+
 function getEquipmentStatBonusesFor(equippedObj) {
   const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
   Object.values(equippedObj).forEach((itemId) => {
@@ -753,7 +826,7 @@ function refreshCharacterSheetIfOpen() {
   if (overlay.classList.contains("hidden")) return;
   renderCharacterSheet(
     player, inventory, equipped, resources, potionInventory, equipmentUpgrades,
-    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable },
+    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable, corruption },
     { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat, onBuyPotion: buyPotion },
   );
 }
@@ -892,6 +965,7 @@ function saveActiveRun() {
     level,
     xp,
     statPointsAvailable,
+    corruption,
     locationKey: currentLocation ? currentLocation.key : null,
     cityPlaceKey: currentCityPlace ? currentCityPlace.key : null,
     savedAt: Date.now(),
@@ -942,6 +1016,7 @@ function applyActiveRunData(data) {
   level = data.level || 1;
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
+  corruption = data.corruption || 0;
   currentLocation = LOCATIONS.find((l) => l.key === data.locationKey)
     || (data.locationKey === ARENA_LOCATION.key ? ARENA_LOCATION : null)
     || (data.locationKey === CAMPAIGN_FINALE_LOCATION.key ? CAMPAIGN_FINALE_LOCATION : null);
@@ -1056,6 +1131,7 @@ function startNewGame() {
   level = 1;
   xp = 0;
   statPointsAvailable = 10;
+  corruption = 0;
   companions = [];
   recruitPool = [];
   saveCompanionState();
@@ -1096,6 +1172,17 @@ function respecStats() {
   saveResources();
   bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
   if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
+const CORRUPTION_CLEANSE_COST = { currency: "Fiolki Światła", amount: 25 };
+
+function cleanseCorruption() {
+  if (corruption <= 0 || !canAffordItem({ cost: CORRUPTION_CLEANSE_COST })) return;
+  resources[CORRUPTION_CLEANSE_COST.currency].amount -= CORRUPTION_CLEANSE_COST.amount;
+  saveResources();
+  corruption = 0;
   render();
   refreshCharacterSheetIfOpen();
 }
@@ -1347,6 +1434,15 @@ function openPlayerActionMenu() {
         openPotionMenu();
       },
     },
+    {
+      icon: "🧬",
+      label: mutateButtonLabel(),
+      disabled: playerActionsRemaining <= 0 || (player.mutateCooldown || 0) > 0,
+      onClick: () => {
+        radialMenuOpen = false;
+        mutateSelf();
+      },
+    },
   ]);
 }
 
@@ -1489,11 +1585,11 @@ function render() {
     hideAllExcept(cityPlaceScreen);
     renderCityPlace(
       currentCityPlace,
-      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions },
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption },
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
-        onRecruit: openRecruitScene,
+        onRecruit: openRecruitScene, onCleanseCorruption: cleanseCorruption,
       },
     );
     saveActiveRun();
@@ -1599,6 +1695,10 @@ function playerAttack() {
   if (battleOver || playerActionsRemaining <= 0) return;
   closeRadialMenu();
   radialMenuOpen = false;
+  if (rollMadnessEpisode()) {
+    triggerMadnessEpisode();
+    return;
+  }
   const target = enemies[selectedTargetIndex];
   if (!target || target.currentHP <= 0) {
     appendLog("Wybierz żywy cel.", "system");
@@ -1811,6 +1911,10 @@ function castSkill(index) {
   if (battleOver || playerActionsRemaining <= 0) return;
   closeRadialMenu();
   radialMenuOpen = false;
+  if (rollMadnessEpisode()) {
+    triggerMadnessEpisode();
+    return;
+  }
 
   const skill = playerSkills()[index];
   if (!skill) {
@@ -2046,6 +2150,7 @@ function enemyPhase() {
     (player.skillCooldowns || []).forEach((cd, i) => {
       if (cd > 0) player.skillCooldowns[i]--;
     });
+    if (player.mutateCooldown > 0) player.mutateCooldown--;
     tickTimedEffectsFor(player);
     companions.forEach((companion) => tickTimedEffectsFor(companion));
     enemies.forEach((enemy) => {

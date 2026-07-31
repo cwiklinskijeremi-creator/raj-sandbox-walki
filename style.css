@@ -1012,6 +1012,12 @@ button:disabled {
   margin-bottom: 0.6rem;
 }
 
+.corruption-line {
+  color: #b48ce0;
+  font-size: 0.88rem;
+  margin-top: 0.4rem;
+}
+
 .camp-buttons {
   display: flex;
   justify-content: center;

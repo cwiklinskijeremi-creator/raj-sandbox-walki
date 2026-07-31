@@ -30,6 +30,7 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
         Broń: <strong>${fighter.weapon.name} (${fighter.weapon.minDmg}-${fighter.weapon.maxDmg}, zas.${fighter.weapon.range})</strong>
         ${fighter.isPlayer ? "<em>(kliknij swój token, żeby otworzyć menu)</em>" : ""}
       </div>
+      ${fighter.isPlayer ? `<div class="stats corruption-line">🧬 Spaczenie: ${corruption || 0}%${corruption > 20 ? " — ryzyko obłędu!" : ""}</div>` : ""}
     `;
   }
 
@@ -530,7 +531,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
     return;
   }
 
-  const { level, xp, xpToNext, bonusStats, statPointsAvailable } = progress;
+  const { level, xp, xpToNext, bonusStats, statPointsAvailable, corruption } = progress;
   const spentPoints = Object.values(bonusStats).reduce((a, b) => a + b, 0);
   const unspentPoints = statPointsAvailable - spentPoints;
 
@@ -551,6 +552,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
         <div>INT: ${player.int}</div>
         <div>CHA: ${player.cha}</div>
       </div>
+      <div class="corruption-line">🧬 Spaczenie: ${corruption || 0}%${corruption > 20 ? " — ryzyko obłędu w walce!" : ""}</div>
     </div>
   `;
 
@@ -950,7 +952,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
 
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
-  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions } = state;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
 
@@ -1077,6 +1079,8 @@ function renderCityPlace(place, state, handlers) {
     const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
     const owned = resources[RESPEC_COST.currency] ? resources[RESPEC_COST.currency].amount : 0;
     const affordable = owned >= RESPEC_COST.amount;
+    const corruptionOwned = resources[CORRUPTION_CLEANSE_COST.currency] ? resources[CORRUPTION_CLEANSE_COST.currency].amount : 0;
+    const corruptionAffordable = corruptionOwned >= CORRUPTION_CLEANSE_COST.amount;
     activityEl.innerHTML = `
       <h4>🕯️ Oczyszczenie Wspomnień</h4>
       <div class="sheet-item-row">
@@ -1086,8 +1090,17 @@ function renderCityPlace(place, state, handlers) {
         </div>
         <button type="button" class="sheet-action-btn respec-btn" ${spent > 0 && affordable ? "" : "disabled"}>Oczyść</button>
       </div>
+      <h4>🧬 Oczyszczenie Spaczenia</h4>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">Kapłani wypalą z Twojego ciała nagromadzone spaczenie many, usuwając ryzyko obłędu — ale nie cofną mocy, którą już zdążyłeś dzięki niemu zdobyć (obecne spaczenie: ${corruption || 0}%).</div>
+          <div class="sheet-item-cost">Koszt: ${CORRUPTION_CLEANSE_COST.amount} × ${CORRUPTION_CLEANSE_COST.currency} (masz: ${corruptionOwned})</div>
+        </div>
+        <button type="button" class="sheet-action-btn cleanse-corruption-btn" ${corruption > 0 && corruptionAffordable ? "" : "disabled"}>Oczyść</button>
+      </div>
     `;
     activityEl.querySelector(".respec-btn").addEventListener("click", handlers.onRespec);
+    activityEl.querySelector(".cleanse-corruption-btn").addEventListener("click", handlers.onCleanseCorruption);
   } else {
     activityEl.innerHTML = "";
   }
