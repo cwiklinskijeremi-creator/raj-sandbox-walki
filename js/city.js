@@ -32,11 +32,12 @@ const CITY_PLACES = [
 ];
 
 // One named NPC per city location — pure flavor/gossip dialogue (a random
-// line re-rolls each time the player talks), plus an optional one-time side
-// quest on two of them. Reuses the same progress-tracking state as the Guild
-// quest board (totalKills/level/discoveredCount) and, for "resource" quests,
-// the same read-only-threshold pattern as companion recruitment — except
-// here the resource is actually spent on claim, since it's framed as a sale.
+// line re-rolls each time the player talks) plus a one-time side quest, each
+// using a different progress type (kills/level/bestiary/resource x2) for
+// variety. Reuses the same progress-tracking state as the Guild quest board
+// (totalKills/level/discoveredCount) and, for "resource" quests, the same
+// read-only-threshold pattern as companion recruitment — except here the
+// resource is actually spent on claim, since it's framed as a sale.
 const CITY_NPCS = {
   kuznia: {
     name: "Brenna Żelazna Dłoń",
@@ -47,6 +48,11 @@ const CITY_NPCS = {
       "Widziałam, jak wracałeś z Kopalni okryty pyłem esencji. Miej się na baczności — to nie znika, nawet gdy pancerz już dawno rdzewieje.",
       "Kuźnia nigdy nie gaśnie. Nawet w nocy słychać młoty — podobno robią coś dla samej Rady, ale nikt z nas tego nie widział.",
     ],
+    quest: {
+      type: "level", goal: 4,
+      description: "Wróć, gdy udowodnisz, że potrafisz udźwignąć to, co kujemy — osiągnij 4. poziom doświadczenia, a dorzucę ci coś z warsztatu.",
+      reward: { currency: "Kryształy Esencji", amount: 20 },
+    },
   },
   swiatynia: {
     name: "Brat Aldric",
@@ -57,6 +63,11 @@ const CITY_NPCS = {
       "Niektórzy szepczą, że dawno temu Zakon ukrywał zbiegów z kopalni. Ja w to nie wierzę — ale też się nie afiszuję z pytaniami.",
       "Modlę się za twoją duszę, wędrowcze. Sądząc po bliznach spaczenia, potrzebujesz tego bardziej niż inni.",
     ],
+    quest: {
+      type: "bestiary", goal: 6,
+      description: "Aby zrozumieć plagę tego świata, musisz najpierw ją poznać. Odkryj 6 różnych stworzeń w Bestiariuszu, a pobłogosławię cię za to poświęcenie.",
+      reward: { currency: "Fiolki Światła", amount: 20 },
+    },
   },
   arena: {
     name: "Grom",
@@ -96,5 +107,10 @@ const CITY_NPCS = {
       "Słyszałam więcej sekretów przy tym barze niż niejeden szpieg Rady. Ale barmanka, która gada, szybko zostaje bezrobotna.",
       "Pęknięty Kryształ w nazwie? Podobno pierwszy właściciel rozbił go o głowę oszusta przy kościach. Od tego czasu nikt tu nie oszukuje… otwarcie.",
     ],
+    quest: {
+      type: "resource", currency: "Nagroda Gildii", goal: 40,
+      description: "Przynieś mi 40 Nagrody Gildii, a wytoczę ci coś specjalnego zza baru — coś, czego nie ma w oficjalnym menu.",
+      reward: { currency: "Spaczone Zioła", amount: 20 },
+    },
   },
 };
