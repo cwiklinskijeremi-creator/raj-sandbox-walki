@@ -1305,6 +1305,71 @@ button:disabled {
   text-align: center;
 }
 
+.char-portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.portrait-hood {
+  opacity: 0.88;
+}
+
+.portrait-icon {
+  font-size: 34px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+}
+
+.portrait-frame {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  transition: stroke 0.3s ease;
+}
+
+.char-portrait-corrupted .portrait-frame {
+  stroke: var(--arcane);
+  animation: portrait-corrupt-pulse 2.4s ease-in-out infinite;
+}
+
+.portrait-crack {
+  stroke: var(--arcane);
+  stroke-width: 1.2;
+  fill: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 2px var(--arcane));
+}
+
+@keyframes portrait-corrupt-pulse {
+  0%, 100% { stroke-opacity: 0.7; }
+  50% { stroke-opacity: 1; }
+}
+
+.portrait-frame-box {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.portrait-lg { width: 88px; height: 88px; }
+.portrait-md { width: 56px; height: 56px; }
+.portrait-sm { width: 42px; height: 42px; }
+
+.camp-character-portrait {
+  display: block;
+  margin: 0 auto;
+}
+
+.fighter-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.fighter-portrait {
+  flex-shrink: 0;
+}
+
 .camp-character-name {
   font-weight: 600;
   font-size: 1.15rem;
@@ -1346,6 +1411,21 @@ button:disabled {
   color: #c9a24b;
   font-size: 0.92rem;
   margin-bottom: 0.6rem;
+}
+
+.sheet-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.sheet-header-row h4 {
+  margin: 0;
+}
+
+.sheet-header-row .sheet-level-line {
+  margin-bottom: 0;
 }
 
 .corruption-line {
