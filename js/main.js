@@ -1876,6 +1876,11 @@ function render() {
     : `Poza zasięgiem (zasięg ${player.weapon.range})`;
   endTurnBtn.disabled = battleOver;
 
+  const changeLocationBtn = document.getElementById("change-location-btn");
+  const midEncounter = (phase === "deployment" || phase === "battle") && !battleOver;
+  changeLocationBtn.disabled = midEncounter;
+  changeLocationBtn.title = midEncounter ? "Nie możesz opuścić starcia w jego trakcie — dokończ walkę." : "";
+
   saveActiveRun();
 }
 
@@ -2216,11 +2221,29 @@ function bestWeaponFor(character, target) {
   return character.weapons.slice().sort((a, b) => b.range - a.range)[0];
 }
 
+// Losing has to sting, or "Wróć do obozu" becoming available again on defeat
+// would just be a free, risk-free retreat. Costs a slice of whatever the
+// current location's resource is — same currentLocation.resource shape spent
+// everywhere else (dungeon events, city shop costs) rather than a new currency.
+const DEFEAT_RESOURCE_LOSS_PERCENT = 0.25;
+
+function applyDefeatPenalty() {
+  if (!currentLocation || !currentLocation.resource) return;
+  const { name, icon } = currentLocation.resource;
+  const owned = resources[name] ? resources[name].amount : 0;
+  const lost = Math.round(owned * DEFEAT_RESOURCE_LOSS_PERCENT);
+  if (lost <= 0) return;
+  resources[name].amount -= lost;
+  saveResources();
+  appendLog(`Porażka ma swoją cenę — w odwrocie gubisz część zapasów: -${lost} × ${icon} ${name}.`, "system");
+}
+
 function resolveUnitDeath(target) {
   if (target === player) {
     appendLog("Zginąłeś. Koniec gry — brak auto-healu.", "system");
     playDeathSound();
     battleOver = true;
+    applyDefeatPenalty();
   } else {
     appendLog(`${target.name} pada bez sił.`, "system");
     playDeathSound();
