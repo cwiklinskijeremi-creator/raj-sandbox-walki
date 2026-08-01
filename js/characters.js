@@ -471,6 +471,46 @@ const BOSS_TEMPLATES = {
     };
     return c;
   },
+  // Campaign-only mini-bosses (chapters between the four world bosses and
+  // the Dorian finale) — like boss_dorian, not tied to any LOCATIONS entry.
+  boss_cien_rady: () => {
+    const c = createCharacter({
+      name: "Cichy Egzekutor Rady",
+      str: 14, wyt: 9, zre: 16, int: 8, cha: 7,
+      weapons: [
+        { name: "Egzekucyjny Sztylet", minDmg: 14, maxDmg: 20, range: 1 },
+        { name: "Zatrute Rzutki", minDmg: 9, maxDmg: 14, range: 4 },
+      ],
+      pancerz: 0.14, przebicie: 0.22, hp: 300, icon: "🗡️",
+    });
+    c.isBoss = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Cień Skrytobójcy", icon: "🌑", cooldown: 4,
+      effectType: "self_buff", stat: "zre", effectValue: 4, effectTurns: 3,
+      label: "przyspieszony skrytobójca",
+    };
+    return c;
+  },
+  boss_odrzucony: () => {
+    const c = createCharacter({
+      name: "Odrzucony",
+      str: 15, wyt: 14, zre: 7, int: 5, cha: 3,
+      weapons: [
+        { name: "Zdeformowane Szpony", minDmg: 15, maxDmg: 23, range: 1 },
+        { name: "Żrąca Plwocina", minDmg: 10, maxDmg: 15, range: 4 },
+      ],
+      pancerz: 0.10, przebicie: 0.14, hp: 330, icon: "🧟",
+    });
+    c.isBoss = true;
+    c.mutated = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Szczątkowa Regeneracja", icon: "🧬", cooldown: 5,
+      effectType: "heal_self", effectValue: 0.15,
+    };
+    return c;
+  },
 };
 
 function createEnemies(location = null, { minCount = 1, maxCount = 4 } = {}) {

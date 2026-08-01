@@ -439,6 +439,27 @@ const EQUIPMENT_ITEMS = [
     bonus: { int: 5, cha: 3 },
     cost: { currency: "Kryształy Esencji", amount: 60 },
   },
+  {
+    id: "sztylet_egzekutora_rady",
+    name: "Sztylet Egzekutora Rady",
+    slot: "prawa_reka",
+    icon: "🌑",
+    bossDrop: "boss_cien_rady",
+    description: "Ostrze Cichego Egzekutora Rady — wyważone tak, by nigdy nie chybić i nigdy nie zostać usłyszane.",
+    weapon: { name: "Sztylet Egzekutora Rady", minDmg: 14, maxDmg: 20, range: 1 },
+    bonus: { zre: 4 },
+    cost: { currency: "Nagroda Gildii", amount: 45 },
+  },
+  {
+    id: "szpony_odrzuconego",
+    name: "Szpony Odrzuconego",
+    slot: "rekawice",
+    icon: "🧟",
+    bossDrop: "boss_odrzucony",
+    description: "Zdeformowane szczątki dłoni pierwszego eksperymentu Doriana — wciąż drgają, jakby pamiętały, czym miały się stać.",
+    bonus: { str: 4, przebicie: 0.06 },
+    cost: { currency: "Kryształy Esencji", amount: 45 },
+  },
 ];
 
 const EQUIPMENT_SLOTS = [
