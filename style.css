@@ -716,7 +716,83 @@ button:disabled {
   padding: 2rem;
 }
 
+.intro-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  --intro-mood-color: #f0be3c;
+}
+
+.intro-skyline {
+  position: absolute;
+  bottom: 0;
+  left: -3%;
+  width: 106%;
+  height: 48%;
+  animation: intro-skyline-drift 24s ease-in-out infinite alternate;
+}
+
+@keyframes intro-skyline-drift {
+  0% { transform: translateX(0) scale(1.02); }
+  100% { transform: translateX(-2.5%) scale(1.07); }
+}
+
+.intro-tower {
+  fill: #14101c;
+  stroke: rgba(201, 162, 75, 0.25);
+  stroke-width: 1;
+  transition: fill 1.2s ease;
+}
+
+.intro-tower-tall {
+  fill: #100c18;
+}
+
+.intro-glow-window {
+  fill: var(--intro-mood-color);
+  filter: drop-shadow(0 0 6px var(--intro-mood-color));
+  animation: intro-window-flicker 3.6s ease-in-out infinite;
+  transition: fill 1.2s ease;
+}
+
+.intro-glow-window:nth-child(odd) {
+  animation-delay: -1.8s;
+}
+
+@keyframes intro-window-flicker {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.intro-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.intro-particle {
+  position: absolute;
+  bottom: -5%;
+  border-radius: 50%;
+  background: var(--intro-mood-color);
+  box-shadow: 0 0 6px 1px var(--intro-mood-color);
+  opacity: 0;
+  animation-name: intro-ember-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes intro-ember-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 0.9; }
+  85% { opacity: 0.5; }
+  100% { transform: translate(8px, -115vh); opacity: 0; }
+}
+
 .intro-eyebrow {
+  position: relative;
   color: var(--accent);
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -725,6 +801,7 @@ button:disabled {
 }
 
 .intro-body {
+  position: relative;
   max-width: 680px;
 }
 
@@ -745,12 +822,14 @@ button:disabled {
 }
 
 .intro-progress {
+  position: relative;
   color: var(--text-dim);
   font-size: 0.8rem;
   letter-spacing: 0.05em;
 }
 
 .intro-buttons {
+  position: relative;
   display: flex;
   gap: 1rem;
 }

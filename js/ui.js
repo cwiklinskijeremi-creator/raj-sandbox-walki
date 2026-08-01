@@ -442,7 +442,28 @@ function renderCharacterCreation(state, handlers) {
   confirmBtn.disabled = !(playerName.trim().length > 0 && !!playerGender && !!selectedSub);
 }
 
+const INTRO_MOOD_COLORS = ["#f0be3c", "#e0574b", "#b48ce0"];
+
+function ensureIntroParticles() {
+  const layer = document.getElementById("intro-particles");
+  if (!layer || layer.childElementCount > 0) return;
+  const count = 22;
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement("span");
+    particle.className = "intro-particle";
+    const size = 2 + Math.random() * 3;
+    const duration = 9 + Math.random() * 10;
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.animationDuration = `${duration}s`;
+    particle.style.animationDelay = `${-Math.random() * duration}s`;
+    layer.appendChild(particle);
+  }
+}
+
 function renderIntroCinematic(step) {
+  const sceneEl = document.getElementById("intro-scene");
   const bodyEl = document.getElementById("intro-body");
   const progressEl = document.getElementById("intro-progress");
   const nextBtn = document.getElementById("intro-next-btn");
@@ -451,6 +472,9 @@ function renderIntroCinematic(step) {
   const lastStep = beats.length - 1;
   const clampedStep = Math.min(step, lastStep);
   const isLast = clampedStep >= lastStep;
+
+  ensureIntroParticles();
+  sceneEl.style.setProperty("--intro-mood-color", INTRO_MOOD_COLORS[clampedStep % INTRO_MOOD_COLORS.length]);
 
   bodyEl.innerHTML = `<p class="intro-text">${beats[clampedStep]}</p>`;
   progressEl.textContent = `${clampedStep + 1} / ${beats.length}`;
