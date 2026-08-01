@@ -337,6 +337,44 @@ function saveDiscoveredEnemies() {
 
 let discoveredEnemies = loadDiscoveredEnemies();
 
+const DEFEATED_BOSSES_STORAGE_KEY = "raj-sandbox-defeated-bosses";
+
+function loadDefeatedBosses() {
+  try {
+    return JSON.parse(localStorage.getItem(DEFEATED_BOSSES_STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDefeatedBosses() {
+  localStorage.setItem(DEFEATED_BOSSES_STORAGE_KEY, JSON.stringify(defeatedBosses));
+}
+
+let defeatedBosses = loadDefeatedBosses();
+
+const BOSS_LOOT_CURRENCY_ICONS = {
+  "Kryształy Esencji": "💎",
+  "Spaczone Zioła": "🌿",
+  "Nagroda Gildii": "🪙",
+  "Fiolki Światła": "🧴",
+};
+
+function grantBossLoot(bossKey) {
+  if (!bossKey || defeatedBosses.includes(bossKey)) return;
+  const item = EQUIPMENT_ITEMS.find((i) => i.bossDrop === bossKey);
+  if (!item) return;
+  defeatedBosses.push(bossKey);
+  saveDefeatedBosses();
+  inventory.push(item.id);
+  if (!resources[item.cost.currency]) {
+    resources[item.cost.currency] = { icon: BOSS_LOOT_CURRENCY_ICONS[item.cost.currency] || "🔸", amount: 0 };
+    saveResources();
+  }
+  saveEquipmentState();
+  appendLog(`👑 Zdobywasz unikalny łup: ${item.icon} ${item.name}!`, "system");
+}
+
 function discoverEnemy(templateKey) {
   if (!templateKey || discoveredEnemies.includes(templateKey)) return;
   discoveredEnemies.push(templateKey);
@@ -1499,6 +1537,8 @@ function clearAllProgress() {
   savePotionInventory();
   discoveredEnemies = [];
   saveDiscoveredEnemies();
+  defeatedBosses = [];
+  saveDefeatedBosses();
   totalKills = 0;
   claimedQuests = [];
   saveQuestState();
@@ -2040,6 +2080,7 @@ function awardVictory(message) {
     awardLocationResources();
     awardLocationResources();
     appendLog("👑 Pokonanie bossa przynosi potrójną nagrodę surowców!", "system");
+    if (enemies[0]) grantBossLoot(enemies[0].templateKey);
   }
   const xpGained = enemies.reduce((sum, e) => sum + Math.round(e.maxHP / 4), 0);
   awardXp(xpGained);
