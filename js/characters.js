@@ -473,9 +473,9 @@ const BOSS_TEMPLATES = {
   },
 };
 
-function createEnemies(location = null) {
+function createEnemies(location = null, { minCount = 1, maxCount = 4 } = {}) {
   const keys = location && location.enemyKeys ? location.enemyKeys : Object.keys(ENEMY_TEMPLATES);
-  const count = 1 + Math.floor(Math.random() * 4);
+  const count = minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
   const chosen = [];
   for (let i = 0; i < count; i++) {
     const key = keys[Math.floor(Math.random() * keys.length)];

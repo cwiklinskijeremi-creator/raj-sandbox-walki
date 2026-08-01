@@ -1327,55 +1327,159 @@ function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
   });
 }
 
-function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance, onChoose) {
+let dungeonTokenElements = new Map();
+
+function resetDungeonTokenLayer() {
+  dungeonTokenElements = new Map();
+  const svg = document.getElementById("dungeon-map-svg");
+  const layer = svg && svg.querySelector("#dungeon-token-layer");
+  if (layer) layer.innerHTML = "";
+}
+
+// Same two-pass technique as renderGrid (full hex-tile rebuild + identity-
+// diffed token layer for smooth CSS-transition glide) but for the bigger,
+// procedurally generated exploration map — see js/dungeonmap.js. Uses one
+// uniform hex size throughout; "rooms" read as big open areas purely because
+// they're a cluster of many hexes sharing the .hex-room class, not because
+// any hex is drawn larger (see plan: mixing two hex sizes breaks axial math).
+function renderDungeonMap({ mapData, playerHex, revealedKeys, activeInteraction, location, onHexClick, onChooseA, onChooseB, onDismiss }) {
+  const svg = document.getElementById("dungeon-map-svg");
   const title = document.getElementById("dungeon-title");
   title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";
 
-  const pathEl = document.getElementById("dungeon-path");
-  const pathIcons = [];
-  for (let i = 0; i < DUNGEON_TOTAL_ROOMS; i++) {
-    const known = rooms[i];
-    pathIcons.push({
-      icon: known ? known.icon : "❔",
-      state: i < index ? "done" : i === index ? "current" : "upcoming",
-    });
-  }
-  pathIcons.push({ icon: "⚔️", state: index >= DUNGEON_TOTAL_ROOMS ? "current" : "upcoming" });
-  pathEl.innerHTML = pathIcons.map((p) => `<span class="dungeon-path-icon dungeon-path-${p.state}">${p.icon}</span>`).join("");
-
-  const roomEl = document.getElementById("dungeon-room");
-  const room = rooms[index];
-  const choiceButtons = document.getElementById("dungeon-choice-buttons");
-  const advanceBtn = document.getElementById("dungeon-advance-btn");
-  const optionABtn = document.getElementById("dungeon-option-a-btn");
-  const optionBBtn = document.getElementById("dungeon-option-b-btn");
-
-  if (room) {
-    roomEl.innerHTML = `
-      <div class="dungeon-room-icon">${room.icon}</div>
-      <div class="dungeon-room-label">${room.label}</div>
-      <p class="dungeon-room-outcome">${resolved ? outcomeText : room.prompt}</p>
-    `;
-  } else {
-    roomEl.innerHTML = `
-      <div class="dungeon-room-icon">⚔️</div>
-      <div class="dungeon-room-label">Komnata walki</div>
-      <p class="dungeon-room-outcome">Słychać za drzwiami warczenie. To już ostatni krok.</p>
-    `;
+  if (!svg || !mapData) {
+    renderDungeonInteractionOverlay(null, location, onChooseA, onChooseB, onDismiss);
+    return;
   }
 
-  if (room && !resolved) {
+  const positions = mapData.hexes.map((h) => axialToPixel(h));
+  const minX = Math.min(...positions.map((p) => p.x)) - HEX_SIZE;
+  const minY = Math.min(...positions.map((p) => p.y)) - HEX_SIZE;
+  const maxX = Math.max(...positions.map((p) => p.x)) + HEX_SIZE;
+  const maxY = Math.max(...positions.map((p) => p.y)) + HEX_SIZE;
+  svg.setAttribute("viewBox", `${minX} ${minY} ${maxX - minX} ${maxY - minY}`);
+
+  let hexLayer = svg.querySelector("#dungeon-hex-layer");
+  if (!hexLayer) {
+    hexLayer = svgEl("g", { id: "dungeon-hex-layer" });
+    svg.appendChild(hexLayer);
+  }
+  hexLayer.innerHTML = "";
+
+  let tokenLayer = svg.querySelector("#dungeon-token-layer");
+  if (!tokenLayer) {
+    tokenLayer = svgEl("g", { id: "dungeon-token-layer" });
+    svg.appendChild(tokenLayer);
+  }
+
+  const revealedSet = revealedKeys instanceof Set ? revealedKeys : new Set(revealedKeys);
+
+  for (const hex of mapData.hexes) {
+    const revealed = revealedSet.has(hexKey(hex));
+    const { x, y } = axialToPixel(hex);
+    const corners = hexCorners(x, y).map((c) => `${c.x},${c.y}`).join(" ");
+
+    const classes = ["hex-tile", hex.kind === "room" ? "hex-room" : "hex-corridor"];
+    if (!revealed) classes.push("hex-fog");
+
+    const poly = svgEl("polygon", { points: corners, class: classes.join(" ") });
+    if (revealed) {
+      poly.classList.add("hex-clickable");
+      poly.addEventListener("click", () => onHexClick(hex));
+    }
+    hexLayer.appendChild(poly);
+
+    if (!revealed) continue;
+
+    const ambush = mapData.ambushHexes.find((a) => a.q === hex.q && a.r === hex.r);
+    const prop = mapData.propHexes.find((p) => p.q === hex.q && p.r === hex.r);
+    const isExit = hex.q === mapData.exitHex.q && hex.r === mapData.exitHex.r;
+    const isEntrance = hex.q === mapData.entranceHex.q && hex.r === mapData.entranceHex.r;
+
+    let iconText = null;
+    let iconClass = "hex-prop-icon";
+    if (ambush && !ambush.resolved) {
+      iconText = ambush.isBossAmbush ? "❓" : "⚔️";
+      iconClass = "hex-ambush-icon";
+    } else if (prop && !prop.resolved) {
+      iconText = findDungeonRoomType(prop.propType).icon;
+    } else if (isExit) {
+      iconText = "🚪";
+    } else if (isEntrance) {
+      iconText = "🏁";
+    }
+
+    if (iconText) {
+      const icon = svgEl("text", { x, y: y + 8, class: iconClass, "text-anchor": "middle" });
+      icon.textContent = iconText;
+      icon.style.pointerEvents = "none";
+      hexLayer.appendChild(icon);
+    }
+  }
+
+  const { x, y } = axialToPixel(playerHex);
+  let entry = dungeonTokenElements.get("player");
+  if (!entry) {
+    const circle = svgEl("circle", { cx: x, cy: y, r: HEX_SIZE * 0.5, class: "token token-player" });
+    const label = svgEl("text", { x, y: y + 9, class: "token-label", "text-anchor": "middle" });
+    label.textContent = player.icon;
+    tokenLayer.appendChild(circle);
+    tokenLayer.appendChild(label);
+    entry = { circle, label };
+    dungeonTokenElements.set("player", entry);
+  }
+  entry.circle.setAttribute("cx", x);
+  entry.circle.setAttribute("cy", y);
+  entry.label.setAttribute("x", x);
+  entry.label.setAttribute("y", y + 9);
+
+  renderDungeonInteractionOverlay(activeInteraction, location, onChooseA, onChooseB, onDismiss);
+}
+
+function renderDungeonInteractionOverlay(interaction, location, onChooseA, onChooseB, onDismiss) {
+  const overlay = document.getElementById("dungeon-interaction-overlay");
+  if (!overlay) return;
+
+  if (!interaction) {
+    overlay.classList.add("hidden");
+    return;
+  }
+  overlay.classList.remove("hidden");
+
+  const titleEl = document.getElementById("dungeon-interaction-title");
+  const bodyEl = document.getElementById("dungeon-interaction-body");
+  const choiceButtons = document.getElementById("dungeon-interaction-choice-buttons");
+  const dismissBtn = document.getElementById("dungeon-interaction-dismiss-btn");
+  const optionABtn = document.getElementById("dungeon-interaction-option-a-btn");
+  const optionBBtn = document.getElementById("dungeon-interaction-option-b-btn");
+
+  if (interaction.kind === "boss-ambush") {
+    titleEl.textContent = "❓ Nieznana głębia";
+    bodyEl.innerHTML = `<p class="dungeon-room-outcome">Wyczuwasz przytłaczającą obecność — to legowisko potężnego przeciwnika tej okolicy${location ? ` (${location.icon} ${location.name})` : ""}. Możesz go wyzwać już teraz, albo wycofać się w milczeniu.</p>`;
     choiceButtons.classList.remove("hidden");
-    advanceBtn.classList.add("hidden");
-    optionABtn.textContent = room.optionALabel;
-    optionABtn.onclick = () => onChoose("A");
-    optionBBtn.textContent = room.optionBLabel;
-    optionBBtn.onclick = () => onChoose("B");
+    dismissBtn.classList.add("hidden");
+    optionABtn.textContent = "⚔️ Wyzwij bossa";
+    optionABtn.onclick = () => onChooseA();
+    optionBBtn.textContent = "🚪 Wycofaj się w ciszy";
+    optionBBtn.onclick = () => onChooseB();
+    return;
+  }
+
+  const roomType = findDungeonRoomType(interaction.propType);
+  titleEl.textContent = `${roomType.icon} ${roomType.label}`;
+  bodyEl.innerHTML = `<p class="dungeon-room-outcome">${interaction.resolved ? interaction.outcomeText : roomType.prompt}</p>`;
+
+  if (!interaction.resolved) {
+    choiceButtons.classList.remove("hidden");
+    dismissBtn.classList.add("hidden");
+    optionABtn.textContent = roomType.optionALabel;
+    optionABtn.onclick = () => onChooseA();
+    optionBBtn.textContent = roomType.optionBLabel;
+    optionBBtn.onclick = () => onChooseB();
   } else {
     choiceButtons.classList.add("hidden");
-    advanceBtn.classList.remove("hidden");
-    advanceBtn.textContent = index >= DUNGEON_TOTAL_ROOMS - 1 ? "⚔️ Wejdź do walki" : "➡️ Idź dalej";
-    advanceBtn.onclick = onAdvance;
+    dismissBtn.classList.remove("hidden");
+    dismissBtn.onclick = () => onDismiss();
   }
 }
 

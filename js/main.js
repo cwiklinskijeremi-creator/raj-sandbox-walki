@@ -17,12 +17,15 @@ let xp = 0;
 let statPointsAvailable = 10;
 let corruption = 0;
 let devouredCount = 0;
-let dungeonRooms = [];
-let dungeonIndex = 0;
+let dungeonMapState = null;
+let dungeonPlayerHex = null;
+let dungeonRevealedKeys = new Set();
+let dungeonActiveInteraction = null;
+let dungeonMoveTimer = null;
 let dungeonHpLoss = 0;
 let dungeonBattleBuff = { pancerz: 0 };
-let dungeonRoomResolved = false;
-let dungeonOutcomeText = "";
+let postBattleReturnPhase = "camp";
+let pendingAmbushEnemyBounds = null;
 let pendingBossFight = false;
 let isBossBattle = false;
 let isCampaignBattle = false;
@@ -32,26 +35,26 @@ function xpToNextLevel(lvl) {
   return lvl * 50;
 }
 
+// Interactive-prop flavor/prompt text, reused verbatim from the old linear
+// room-card dungeon system — only the trigger changed (walking onto a map
+// hex instead of resolving a card in sequence). "skirmish" is gone: real
+// spatial ambush hexes (see startAmbushBattle) cover combat now instead of
+// an abstract dice roll.
 const DUNGEON_ROOM_TYPES = [
   {
-    type: "empty", icon: "🚪", label: "Cichy korytarz",
+    type: "empty", icon: "🚪", label: "Cichy zaułek",
     prompt: "Korytarz ciągnie się w ciszy — coś tu może być, ale trudno powiedzieć co.",
     optionALabel: "🔍 Przeszukaj kąty", optionBLabel: "➡️ Idź dalej bez zwłoki",
   },
   {
     type: "trap", icon: "⚠️", label: "Pułapka",
-    prompt: "Coś w tym korytarzu wygląda podejrzanie — wyczuwasz mechanizm w podłodze.",
+    prompt: "Coś w tym miejscu wygląda podejrzanie — wyczuwasz mechanizm w podłodze.",
     optionALabel: "🛠️ Rozbrój pułapkę", optionBLabel: "🚶 Omiń ostrożnie",
   },
   {
     type: "find", icon: "✨", label: "Znalezisko",
-    prompt: "Coś błyszczy w gruzach na końcu korytarza.",
+    prompt: "Coś błyszczy w gruzach nieopodal.",
     optionALabel: "🧐 Zbadaj dokładnie", optionBLabel: "🤏 Zabierz szybko i idź dalej",
-  },
-  {
-    type: "skirmish", icon: "🗡️", label: "Zasadzka",
-    prompt: "Słyszysz kroki w ciemności — coś się zbliża.",
-    optionALabel: "⚔️ Walcz", optionBLabel: "🤫 Wymknij się chyłkiem",
   },
   {
     type: "shrine", icon: "🩸", label: "Zapomniany ołtarz",
@@ -60,65 +63,87 @@ const DUNGEON_ROOM_TYPES = [
   },
 ];
 
-// Dungeon crawling is a chain of blind forks rather than a pre-rolled list:
-// each junction is its own "room" (type: "junction") that only reveals what's
-// down a corridor once you commit to it, by swapping itself out for a real
-// DUNGEON_ROOM_TYPES entry in place — see chooseDungeonDirection/advanceDungeon.
-const DUNGEON_TOTAL_ROOMS = 3;
-const DUNGEON_LEFT_TYPES = ["trap", "skirmish", "shrine"];
-const DUNGEON_RIGHT_TYPES = ["empty", "find"];
-
-function makeJunctionRoom(junctionIndex) {
-  const isFinal = junctionIndex === DUNGEON_TOTAL_ROOMS - 1;
-  const bossAvailable = isFinal && !!(currentLocation && currentLocation.bossKey) && Math.random() < 0.2;
-  return {
-    type: "junction", icon: "🧭", label: "Rozdroże",
-    prompt: "Korytarz rozdziela się na dwie strony. Którą pójdziesz?",
-    optionALabel: bossAvailable ? "❓ Nieznana głębia" : "⬅️ Mroczniejszy korytarz",
-    optionBLabel: "➡️ Spokojniejszy korytarz",
-    bossAvailable,
-  };
+function findDungeonRoomType(propType) {
+  return DUNGEON_ROOM_TYPES.find((r) => r.type === propType);
 }
 
-function chooseDungeonDirection(choice, junctionRoom) {
-  let nextRoom;
-  if (junctionRoom.bossAvailable && choice === "A") {
-    const boss = BOSS_TEMPLATES[currentLocation.bossKey]();
-    nextRoom = {
-      type: "boss", icon: "👑", label: "Komnata Bossa",
-      prompt: `Schodzisz w nieznaną głąb i natrafiasz na legowisko ${boss.icon} ${boss.name}. Możesz go wyzwać już teraz, zanim wrócisz do zwykłej walki, albo wycofać się w milczeniu.`,
-      optionALabel: "⚔️ Wyzwij bossa", optionBLabel: "🚪 Wycofaj się w ciszy",
-    };
-  } else {
-    const pool = choice === "A" ? DUNGEON_LEFT_TYPES : DUNGEON_RIGHT_TYPES;
-    const key = pool[Math.floor(Math.random() * pool.length)];
-    nextRoom = DUNGEON_ROOM_TYPES.find((r) => r.type === key);
-  }
-  dungeonRooms[dungeonIndex] = nextRoom;
-  render();
-}
-
-function startDungeonCrawl() {
-  dungeonRooms = [makeJunctionRoom(0)];
-  dungeonIndex = 0;
+function startDungeonMapCrawl() {
+  resetDungeonTokenLayer();
+  dungeonMapState = generateDungeonMap(currentLocation);
+  dungeonPlayerHex = { q: dungeonMapState.entranceHex.q, r: dungeonMapState.entranceHex.r };
+  dungeonRevealedKeys = new Set(
+    dungeonRevealRadius(dungeonMapState, dungeonPlayerHex, DUNGEON_FOG_REVEAL_RADIUS).map(hexKey),
+  );
+  dungeonActiveInteraction = null;
   dungeonHpLoss = 0;
   dungeonBattleBuff = { pancerz: 0 };
-  dungeonRoomResolved = false;
-  dungeonOutcomeText = "";
+  postBattleReturnPhase = "camp";
+  pendingAmbushEnemyBounds = null;
   pendingBossFight = false;
-  phase = "dungeon";
+  phase = "dungeon-map";
   render();
 }
 
-function chooseDungeonOption(choice) {
-  const room = dungeonRooms[dungeonIndex];
-
-  if (room.type === "junction") {
-    chooseDungeonDirection(choice, room);
-    return;
+// Called once per step while the player token glides toward a clicked
+// destination (see handleDungeonHexClick) — returns true (and stops the
+// glide) the moment the newly-entered hex holds something to react to.
+function checkDungeonHexEncounter(hex) {
+  const { exitHex, ambushHexes, propHexes } = dungeonMapState;
+  if (hex.q === exitHex.q && hex.r === exitHex.r) {
+    startExitBattle();
+    return true;
   }
+  const ambush = ambushHexes.find((a) => a.q === hex.q && a.r === hex.r && !a.resolved);
+  if (ambush) {
+    if (ambush.isBossAmbush) {
+      dungeonActiveInteraction = { kind: "boss-ambush", hex: { q: hex.q, r: hex.r }, resolved: false };
+      render();
+    } else {
+      startAmbushBattle(ambush);
+    }
+    return true;
+  }
+  const prop = propHexes.find((p) => p.q === hex.q && p.r === hex.r && !p.resolved);
+  if (prop) {
+    triggerPropInteraction(prop);
+    return true;
+  }
+  return false;
+}
 
-  if (room.type === "empty") {
+function handleDungeonHexClick(hex) {
+  if (!dungeonMapState || dungeonActiveInteraction) return;
+  if (!dungeonRevealedKeys.has(hexKey(hex))) return;
+  const path = dungeonBfsShortestPath(dungeonMapState, dungeonPlayerHex, hex);
+  if (!path || path.length < 2) return;
+
+  if (dungeonMoveTimer) clearInterval(dungeonMoveTimer);
+  let stepIndex = 1;
+  dungeonMoveTimer = setInterval(() => {
+    dungeonPlayerHex = { q: path[stepIndex].q, r: path[stepIndex].r };
+    const revealedNow = dungeonRevealRadius(dungeonMapState, dungeonPlayerHex, DUNGEON_FOG_REVEAL_RADIUS);
+    for (const revealedHex of revealedNow) dungeonRevealedKeys.add(hexKey(revealedHex));
+    render();
+
+    const arrived = checkDungeonHexEncounter(dungeonPlayerHex);
+    stepIndex++;
+    if (arrived || stepIndex >= path.length) {
+      clearInterval(dungeonMoveTimer);
+      dungeonMoveTimer = null;
+    }
+  }, 160);
+}
+
+function triggerPropInteraction(prop) {
+  dungeonActiveInteraction = { kind: "prop", hex: { q: prop.q, r: prop.r }, propType: prop.propType, resolved: false };
+  render();
+}
+
+function resolvePropChoice(choice) {
+  const interaction = dungeonActiveInteraction;
+  if (!interaction || interaction.kind !== "prop") return;
+
+  if (interaction.propType === "empty") {
     if (choice === "A") {
       const roll = rollD20();
       if (roll >= 14) {
@@ -127,14 +152,14 @@ function chooseDungeonOption(choice) {
         const existing = resources[name] ? resources[name].amount : 0;
         resources[name] = { icon, amount: existing + amount };
         saveResources();
-        dungeonOutcomeText = `Znajdujesz drobny skarb w pęknięciu muru: +${amount} × ${icon} ${name}.`;
+        interaction.outcomeText = `Znajdujesz drobny skarb w pęknięciu muru: +${amount} × ${icon} ${name}.`;
       } else {
-        dungeonOutcomeText = "Nic tu nie ma poza kurzem i twoim czasem.";
+        interaction.outcomeText = "Nic tu nie ma poza kurzem i twoim czasem.";
       }
     } else {
-      dungeonOutcomeText = "Nie tracisz czasu na szukanie po kątach.";
+      interaction.outcomeText = "Nie tracisz czasu na szukanie po kątach.";
     }
-  } else if (room.type === "trap") {
+  } else if (interaction.propType === "trap") {
     if (choice === "A") {
       const roll = rollD20();
       if (roll >= 11) {
@@ -143,16 +168,16 @@ function chooseDungeonOption(choice) {
         const existing = resources[name] ? resources[name].amount : 0;
         resources[name] = { icon, amount: existing + amount };
         saveResources();
-        dungeonOutcomeText = `Rozbrajasz pułapkę i wyciągasz z niej użyteczne części (K20=${roll}): +${amount} × ${icon} ${name}.`;
+        interaction.outcomeText = `Rozbrajasz pułapkę i wyciągasz z niej użyteczne części (K20=${roll}): +${amount} × ${icon} ${name}.`;
       } else {
         const dmg = rollD6() * 3;
         dungeonHpLoss += dmg;
-        dungeonOutcomeText = `Nie zdążyłeś rozbroić mechanizmu (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
+        interaction.outcomeText = `Nie zdążyłeś rozbroić mechanizmu (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
       }
     } else {
-      dungeonOutcomeText = "Ostrożnie omijasz zagrożenie, nie ryzykując niczego.";
+      interaction.outcomeText = "Ostrożnie omijasz zagrożenie, nie ryzykując niczego.";
     }
-  } else if (room.type === "find") {
+  } else if (interaction.propType === "find") {
     if (choice === "A") {
       const roll = rollD20();
       if (roll >= 11) {
@@ -161,11 +186,11 @@ function chooseDungeonOption(choice) {
         const existing = resources[name] ? resources[name].amount : 0;
         resources[name] = { icon, amount: existing + amount };
         saveResources();
-        dungeonOutcomeText = `Dokładne poszukiwania się opłacają (K20=${roll}): +${amount} × ${icon} ${name}.`;
+        interaction.outcomeText = `Dokładne poszukiwania się opłacają (K20=${roll}): +${amount} × ${icon} ${name}.`;
       } else {
         const dmg = rollD6() * 3;
         dungeonHpLoss += dmg;
-        dungeonOutcomeText = `To była pułapka na złodziei (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
+        interaction.outcomeText = `To była pułapka na złodziei (K20=${roll}) — tracisz ${dmg} HP przed walką.`;
       }
     } else {
       const { name, icon, min, max } = currentLocation.resource;
@@ -173,60 +198,88 @@ function chooseDungeonOption(choice) {
       const existing = resources[name] ? resources[name].amount : 0;
       resources[name] = { icon, amount: existing + amount };
       saveResources();
-      dungeonOutcomeText = `Zabierasz co się da bez ryzyka: +${amount} × ${icon} ${name}.`;
+      interaction.outcomeText = `Zabierasz co się da bez ryzyka: +${amount} × ${icon} ${name}.`;
     }
-  } else if (room.type === "skirmish") {
-    if (choice === "A") {
-      const roll = rollD20();
-      if (roll >= 11) {
-        awardXp(20);
-        const { name, icon, min, max } = currentLocation.resource;
-        const amount = Math.max(1, Math.round((min + Math.floor(Math.random() * (max - min + 1))) / 2));
-        const existing = resources[name] ? resources[name].amount : 0;
-        resources[name] = { icon, amount: existing + amount };
-        saveResources();
-        dungeonOutcomeText = `Pokonujesz napastnika w krótkiej walce (K20=${roll}): +${amount} × ${icon} ${name}.`;
-      } else {
-        const dmg = rollD6() * 4;
-        dungeonHpLoss += dmg;
-        dungeonOutcomeText = `Starcie idzie źle (K20=${roll}) — tracisz ${dmg} HP przed właściwą walką.`;
-      }
-    } else {
-      dungeonOutcomeText = "Udaje ci się przemknąć niezauważenie.";
-    }
-  } else if (room.type === "shrine") {
+  } else if (interaction.propType === "shrine") {
     if (choice === "A") {
       dungeonHpLoss += 8;
       dungeonBattleBuff.pancerz += 0.08;
-      dungeonOutcomeText = "Ołtarz przyjmuje ofiarę — czujesz, jak coś niewidzialnego otacza twoją skórę (-8 HP, +8% pancerza na nadchodzącą walkę).";
+      interaction.outcomeText = "Ołtarz przyjmuje ofiarę — czujesz, jak coś niewidzialnego otacza twoją skórę (-8 HP, +8% pancerza na nadchodzącą walkę).";
     } else {
-      dungeonOutcomeText = "Odchodzisz od ołtarza — wolisz nie ryzykować.";
-    }
-  } else if (room.type === "boss") {
-    if (choice === "A") {
-      pendingBossFight = true;
-      dungeonOutcomeText = "Wyzywasz bossa na pojedynek. Następna walka będzie tą najcięższą.";
-    } else {
-      pendingBossFight = false;
-      dungeonOutcomeText = "Odwracasz się i odchodzisz — ten pojedynek poczeka na inną okazję.";
+      interaction.outcomeText = "Odchodzisz od ołtarza — wolisz nie ryzykować.";
     }
   }
 
-  dungeonRoomResolved = true;
+  const propHex = dungeonMapState.propHexes.find((p) => p.q === interaction.hex.q && p.r === interaction.hex.r);
+  if (propHex) propHex.resolved = true;
+  interaction.resolved = true;
   render();
 }
 
-function advanceDungeon() {
-  dungeonIndex++;
-  dungeonRoomResolved = false;
-  dungeonOutcomeText = "";
-  if (dungeonIndex >= DUNGEON_TOTAL_ROOMS) {
-    isCampaignBattle = false;
-    activeCampaignChapterId = null;
-    startNewBattle();
-  } else {
-    dungeonRooms.push(makeJunctionRoom(dungeonIndex));
+function dismissDungeonInteraction() {
+  dungeonActiveInteraction = null;
+  render();
+}
+
+function confirmBossAmbush() {
+  const interaction = dungeonActiveInteraction;
+  if (!interaction || interaction.kind !== "boss-ambush") return;
+  const ambush = dungeonMapState.ambushHexes.find((a) => a.q === interaction.hex.q && a.r === interaction.hex.r);
+  dungeonActiveInteraction = null;
+  if (ambush) startAmbushBattle(ambush);
+}
+
+function declineBossAmbush() {
+  const interaction = dungeonActiveInteraction;
+  if (!interaction || interaction.kind !== "boss-ambush") return;
+  const ambush = dungeonMapState.ambushHexes.find((a) => a.q === interaction.hex.q && a.r === interaction.hex.r);
+  if (ambush) ambush.resolved = true;
+  dungeonActiveInteraction = null;
+  render();
+}
+
+function chooseDungeonInteractionA() {
+  const interaction = dungeonActiveInteraction;
+  if (!interaction) return;
+  if (interaction.kind === "boss-ambush") confirmBossAmbush();
+  else resolvePropChoice("A");
+}
+
+function chooseDungeonInteractionB() {
+  const interaction = dungeonActiveInteraction;
+  if (!interaction) return;
+  if (interaction.kind === "boss-ambush") declineBossAmbush();
+  else resolvePropChoice("B");
+}
+
+function startAmbushBattle(ambush) {
+  ambush.resolved = true;
+  postBattleReturnPhase = "dungeon-map";
+  pendingAmbushEnemyBounds = { minCount: 1, maxCount: 1 };
+  pendingBossFight = !!ambush.isBossAmbush;
+  isCampaignBattle = false;
+  activeCampaignChapterId = null;
+  startNewBattle();
+}
+
+function startExitBattle() {
+  postBattleReturnPhase = "camp";
+  pendingAmbushEnemyBounds = null;
+  isCampaignBattle = false;
+  activeCampaignChapterId = null;
+  startNewBattle();
+}
+
+// Wired to change-location-btn INSTEAD of goToCamp (see returnFromBattle
+// wiring below) — goToCamp itself stays untouched since city-back-btn and
+// location-back-btn also use it and must always mean literally "camp."
+function returnFromBattle() {
+  if (postBattleReturnPhase === "dungeon-map" && dungeonMapState) {
+    postBattleReturnPhase = "camp";
+    phase = "dungeon-map";
     render();
+  } else {
+    goToCamp();
   }
 }
 
@@ -1125,14 +1178,14 @@ function saveActiveRun() {
     cityPlaceKey: currentCityPlace ? currentCityPlace.key : null,
     savedAt: Date.now(),
   };
-  if (phase === "dungeon") {
-    data.dungeonRooms = dungeonRooms;
-    data.dungeonIndex = dungeonIndex;
+  if (dungeonMapState !== null) {
+    data.dungeonMapState = dungeonMapState;
+    data.dungeonPlayerHex = dungeonPlayerHex;
+    data.dungeonRevealedKeys = Array.from(dungeonRevealedKeys);
+    data.dungeonActiveInteraction = dungeonActiveInteraction;
+    data.postBattleReturnPhase = postBattleReturnPhase;
     data.dungeonHpLoss = dungeonHpLoss;
     data.dungeonBattleBuff = dungeonBattleBuff;
-    data.dungeonRoomResolved = dungeonRoomResolved;
-    data.dungeonOutcomeText = dungeonOutcomeText;
-    data.pendingBossFight = pendingBossFight;
   }
   if (phase === "deployment" || phase === "battle") {
     data.enemies = enemies;
@@ -1184,14 +1237,20 @@ function applyActiveRunData(data) {
   radialMenuOpen = false;
   clearLog();
 
-  if (phase === "dungeon") {
-    dungeonRooms = data.dungeonRooms || [];
-    dungeonIndex = data.dungeonIndex || 0;
+  if (data.dungeonMapState) {
+    dungeonMapState = data.dungeonMapState;
+    dungeonPlayerHex = data.dungeonPlayerHex || dungeonMapState.entranceHex;
+    dungeonRevealedKeys = new Set(data.dungeonRevealedKeys || []);
+    dungeonActiveInteraction = data.dungeonActiveInteraction || null;
+    postBattleReturnPhase = data.postBattleReturnPhase || "camp";
     dungeonHpLoss = data.dungeonHpLoss || 0;
     dungeonBattleBuff = data.dungeonBattleBuff || { pancerz: 0 };
-    dungeonRoomResolved = data.dungeonRoomResolved || false;
-    dungeonOutcomeText = data.dungeonOutcomeText || "";
-    pendingBossFight = data.pendingBossFight || false;
+  } else {
+    dungeonMapState = null;
+    dungeonPlayerHex = null;
+    dungeonRevealedKeys = new Set();
+    dungeonActiveInteraction = null;
+    postBattleReturnPhase = "camp";
   }
 
   if (phase === "deployment" || phase === "battle") {
@@ -1220,7 +1279,7 @@ function resumeGame() {
 function selectLocation(location) {
   currentLocation = location;
   appendLog(`${location.icon} ${location.name}: ${location.description}`, "system");
-  startDungeonCrawl();
+  startDungeonMapCrawl();
 }
 
 function backToLocationSelect() {
@@ -1240,6 +1299,14 @@ function goToMainMenu() {
 
 function goToCamp() {
   phase = "camp";
+  // Reaching camp always means any dungeon crawl has concluded (ambush
+  // battles use postBattleReturnPhase="dungeon-map" specifically to route
+  // through returnFromBattle instead of here) — clear it so a finished
+  // crawl's map doesn't linger in every future save.
+  dungeonMapState = null;
+  dungeonPlayerHex = null;
+  dungeonRevealedKeys = new Set();
+  dungeonActiveInteraction = null;
   closeRadialMenu();
   radialMenuOpen = false;
   closePotionMenu();
@@ -1290,6 +1357,11 @@ function startNewGame() {
   statPointsAvailable = 10;
   corruption = 0;
   devouredCount = 0;
+  dungeonMapState = null;
+  dungeonPlayerHex = null;
+  dungeonRevealedKeys = new Set();
+  dungeonActiveInteraction = null;
+  postBattleReturnPhase = "camp";
   companions = [];
   recruitPool = [];
   saveCompanionState();
@@ -1500,10 +1572,11 @@ function startNewBattle() {
     enemies = [boss];
     isBossBattle = true;
   } else {
-    enemies = createEnemies(currentLocation);
+    enemies = createEnemies(currentLocation, pendingAmbushEnemyBounds || {});
     isBossBattle = false;
   }
   pendingBossFight = false;
+  pendingAmbushEnemyBounds = null;
   enemies.forEach((enemy) => scaleEnemyForLevel(enemy, level));
   companions.forEach((companion) => scaleCompanionToLevel(companion, level));
 
@@ -1805,9 +1878,19 @@ function render() {
     return;
   }
 
-  if (phase === "dungeon") {
+  if (phase === "dungeon-map") {
     hideAllExcept(dungeonScreen);
-    renderDungeon(currentLocation, dungeonRooms, dungeonIndex, dungeonRoomResolved, dungeonOutcomeText, advanceDungeon, chooseDungeonOption);
+    renderDungeonMap({
+      mapData: dungeonMapState,
+      playerHex: dungeonPlayerHex,
+      revealedKeys: dungeonRevealedKeys,
+      activeInteraction: dungeonActiveInteraction,
+      location: currentLocation,
+      onHexClick: handleDungeonHexClick,
+      onChooseA: chooseDungeonInteractionA,
+      onChooseB: chooseDungeonInteractionB,
+      onDismiss: dismissDungeonInteraction,
+    });
     saveActiveRun();
     return;
   }
@@ -1894,6 +1977,7 @@ function render() {
   const midEncounter = (phase === "deployment" || phase === "battle") && !battleOver;
   changeLocationBtn.disabled = midEncounter;
   changeLocationBtn.title = midEncounter ? "Nie możesz opuścić starcia w jego trakcie — dokończ walkę." : "";
+  changeLocationBtn.textContent = postBattleReturnPhase === "dungeon-map" ? "↩️ Wróć do lochu" : "🏕️ Wróć do obozu";
 
   saveActiveRun();
 }
@@ -2418,7 +2502,7 @@ document.getElementById("view-toggle-btn").addEventListener("click", () => {
   radialMenuOpen = false;
   render();
 });
-document.getElementById("change-location-btn").addEventListener("click", goToCamp);
+document.getElementById("change-location-btn").addEventListener("click", returnFromBattle);
 document.getElementById("main-menu-btn").addEventListener("click", goToMainMenu);
 document.getElementById("camp-expedition-btn").addEventListener("click", backToLocationSelect);
 document.getElementById("camp-city-btn").addEventListener("click", goToCitySelect);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=55">
+<link rel="stylesheet" href="style.css?v=56">
 <script type="importmap">
 {
   "imports": {
@@ -127,14 +127,34 @@
 
   <section class="dungeon-screen hidden" id="dungeon-screen">
     <h2 id="dungeon-title">🗺️ Wnętrze lokacji</h2>
-    <div class="dungeon-path" id="dungeon-path"></div>
-    <div class="dungeon-room" id="dungeon-room"></div>
-    <div class="dungeon-choice-buttons" id="dungeon-choice-buttons">
-      <button type="button" id="dungeon-option-a-btn"></button>
-      <button type="button" id="dungeon-option-b-btn"></button>
-    </div>
-    <button type="button" id="dungeon-advance-btn"></button>
+    <section class="map-panel dungeon-map-panel">
+      <div class="map-stage">
+        <svg id="dungeon-map-svg"></svg>
+      </div>
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-swatch swatch-room"></span>Komnata</span>
+        <span class="legend-item"><span class="legend-swatch swatch-corridor"></span>Korytarz</span>
+        <span class="legend-item"><span class="legend-swatch swatch-fog"></span>Nieodkryte</span>
+        <span class="legend-item">⚔️ Zasadzka</span>
+        <span class="legend-item">❓ Nieznana głębia</span>
+        <span class="legend-item">🚪 Wyjście</span>
+      </div>
+    </section>
   </section>
+
+  <div class="codex-overlay hidden" id="dungeon-interaction-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <h3 id="dungeon-interaction-title"></h3>
+      </div>
+      <div class="codex-body" id="dungeon-interaction-body"></div>
+      <div class="dungeon-choice-buttons" id="dungeon-interaction-choice-buttons">
+        <button type="button" id="dungeon-interaction-option-a-btn"></button>
+        <button type="button" id="dungeon-interaction-option-b-btn"></button>
+      </div>
+      <button type="button" id="dungeon-interaction-dismiss-btn">Kontynuuj</button>
+    </div>
+  </div>
 
   <div class="hidden" id="game-screen">
     <div class="current-location-banner" id="current-location-banner"></div>
@@ -311,25 +331,26 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=55"></script>
-  <script src="js/dice.js?v=55"></script>
-  <script src="js/grid.js?v=55"></script>
-  <script src="js/classes.js?v=55"></script>
-  <script src="js/lore.js?v=55"></script>
-  <script src="js/prologue.js?v=55"></script>
-  <script src="js/locations.js?v=55"></script>
-  <script src="js/city.js?v=55"></script>
-  <script src="js/quests.js?v=55"></script>
-  <script src="js/campaign.js?v=55"></script>
-  <script src="js/equipment.js?v=55"></script>
-  <script src="js/potions.js?v=55"></script>
-  <script src="js/tutorial.js?v=55"></script>
-  <script src="js/characters.js?v=55"></script>
-  <script src="js/companions.js?v=55"></script>
-  <script src="js/combat.js?v=55"></script>
-  <script src="js/ui.js?v=55"></script>
-  <script src="js/main.js?v=55"></script>
-  <script type="module" src="js/test3d.js?v=55"></script>
-  <script type="module" src="js/board3d.js?v=55"></script>
+  <script src="js/audio.js?v=56"></script>
+  <script src="js/dice.js?v=56"></script>
+  <script src="js/grid.js?v=56"></script>
+  <script src="js/dungeonmap.js?v=56"></script>
+  <script src="js/classes.js?v=56"></script>
+  <script src="js/lore.js?v=56"></script>
+  <script src="js/prologue.js?v=56"></script>
+  <script src="js/locations.js?v=56"></script>
+  <script src="js/city.js?v=56"></script>
+  <script src="js/quests.js?v=56"></script>
+  <script src="js/campaign.js?v=56"></script>
+  <script src="js/equipment.js?v=56"></script>
+  <script src="js/potions.js?v=56"></script>
+  <script src="js/tutorial.js?v=56"></script>
+  <script src="js/characters.js?v=56"></script>
+  <script src="js/companions.js?v=56"></script>
+  <script src="js/combat.js?v=56"></script>
+  <script src="js/ui.js?v=56"></script>
+  <script src="js/main.js?v=56"></script>
+  <script type="module" src="js/test3d.js?v=56"></script>
+  <script type="module" src="js/board3d.js?v=56"></script>
 </body>
 </html>
