@@ -911,20 +911,34 @@ function renderLocationBanner(location, isBossBattle = false) {
   banner.innerHTML = `<span class="location-banner-icon">${location.icon}</span> <span class="location-banner-name">${location.name}</span>${bossBadge}`;
 }
 
+// Hotspot positions (percent of image width/height) matched to landmarks in
+// img/city-aetherion.jpg: the central crystal spire, the purple ritual flame,
+// the blood-stained arena, and the two banner-hung buildings by the gate.
+const CITY_HOTSPOTS = {
+  swiatynia: { x: 42, y: 22 },
+  kult_spaczenia: { x: 59, y: 37 },
+  arena: { x: 16, y: 76 },
+  czarny_rynek: { x: 49, y: 77 },
+  tawerna: { x: 61, y: 75 },
+  kuznia: { x: 80, y: 48 },
+};
+
 function renderCityPicker(places, onSelect) {
-  const grid = document.getElementById("city-grid");
-  grid.innerHTML = "";
+  const layer = document.getElementById("city-grid");
+  layer.innerHTML = "";
   places.forEach((place) => {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "location-card";
-    card.innerHTML = `
-      <div class="location-card-icon">${place.icon}</div>
-      <div class="location-card-name">${place.name}</div>
-      <div class="location-card-desc">${place.description}</div>
+    const spot = CITY_HOTSPOTS[place.key] || { x: 50, y: 50 };
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "city-hotspot";
+    btn.style.left = `${spot.x}%`;
+    btn.style.top = `${spot.y}%`;
+    btn.innerHTML = `
+      <span class="city-hotspot-label">${place.icon} ${place.name}</span>
+      <span class="city-hotspot-icon">${place.icon}</span>
     `;
-    card.addEventListener("click", () => onSelect(place));
-    grid.appendChild(card);
+    btn.addEventListener("click", () => onSelect(place));
+    layer.appendChild(btn);
   });
 }
 
