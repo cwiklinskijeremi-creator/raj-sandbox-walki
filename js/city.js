@@ -29,6 +29,12 @@ const CITY_PLACES = [
     icon: "🍺",
     description: "Najemnicy, przemytnicy i oszuści grają tu w kości do białego rana. Rada nie zabrania hazardu — pobiera od niego podatek.",
   },
+  {
+    key: "kult_spaczenia",
+    name: "Kult Spaczenia",
+    icon: "🌀",
+    description: "Ukryta w piwnicach pod miastem sekta wierzy, że spaczenie many to nie klątwa, lecz dar — krok w stronę czegoś więcej niż człowiek. Zakon Światła nazwałby ich heretykami, gdyby wiedział, gdzie szukać.",
+  },
 ];
 
 // One named NPC per city location — pure flavor/gossip dialogue (a random
@@ -111,6 +117,21 @@ const CITY_NPCS = {
       type: "resource", currency: "Nagroda Gildii", goal: 40,
       description: "Przynieś mi 40 Nagrody Gildii, a wytoczę ci coś specjalnego zza baru — coś, czego nie ma w oficjalnym menu.",
       reward: { currency: "Spaczone Zioła", amount: 20 },
+    },
+  },
+  kult_spaczenia: {
+    name: "Matka Esencja",
+    icon: "👁️",
+    lines: [
+      "Zakon nazywa to skażeniem. My nazywamy to przebudzeniem.",
+      "Widziałam bliznę spaczenia na twojej skórze, wędrowcze. To nie wstyd — to znak, że esencja cię wybrała.",
+      "Egzekutorzy Wiary już dwa razy próbowali nas znaleźć. Wciąż szukają.",
+      "Im głębiej schodzisz w kopalnie, tym głośniej esencja szepcze. Niektórzy z nas już nie chcą, żeby przestała.",
+    ],
+    quest: {
+      type: "corruption", goal: 40,
+      description: "Udowodnij, że nie boisz się przemiany — osiągnij 40% spaczenia many, a podzielimy się z tobą sekretem esencji.",
+      reward: { currency: "Spaczone Zioła", amount: 25 },
     },
   },
 };

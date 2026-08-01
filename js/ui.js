@@ -1058,7 +1058,7 @@ function renderCityNpc(place, claimedNpcQuests, reputation, handlers) {
 
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
-  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, claimedNpcQuests, reputation } = state;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, devouredCount, mutationTier, claimedNpcQuests, reputation } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
 
@@ -1209,6 +1209,20 @@ function renderCityPlace(place, state, handlers) {
     `;
     activityEl.querySelector(".respec-btn").addEventListener("click", handlers.onRespec);
     activityEl.querySelector(".cleanse-corruption-btn").addEventListener("click", handlers.onCleanseCorruption);
+  } else if (place.key === "kult_spaczenia") {
+    const ritualOwned = resources[EMBRACE_RITUAL_COST.currency] ? resources[EMBRACE_RITUAL_COST.currency].amount : 0;
+    const ritualAffordable = ritualOwned >= EMBRACE_RITUAL_COST.amount;
+    activityEl.innerHTML = `
+      <h4>🌀 Rytuał Wchłonięcia</h4>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">Kult złoży ofiarę z Twojej krwi esencji, przyspieszając to, co i tak w tobie już się zaczęło — spaczenie rośnie, ale mutacja robi się silniejsza na stałe, nawet po Oczyszczeniu w Świątyni (obecnie: ${corruption || 0}% spaczenia, tier ${mutationTier || 0}, pożarte szczątki: ${devouredCount || 0}).</div>
+          <div class="sheet-item-cost">Koszt: ${EMBRACE_RITUAL_COST.amount} × ${EMBRACE_RITUAL_COST.currency} (masz: ${ritualOwned}) — +${EMBRACE_RITUAL_CORRUPTION_GAIN}% spaczenia</div>
+        </div>
+        <button type="button" class="sheet-action-btn embrace-ritual-btn" ${ritualAffordable ? "" : "disabled"}>Poddaj się rytuałowi</button>
+      </div>
+    `;
+    activityEl.querySelector(".embrace-ritual-btn").addEventListener("click", handlers.onEmbraceRitual);
   } else {
     activityEl.innerHTML = "";
   }

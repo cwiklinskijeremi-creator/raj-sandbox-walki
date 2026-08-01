@@ -498,6 +498,7 @@ function getNpcQuestProgress(quest) {
   if (quest.type === "level") return level;
   if (quest.type === "bestiary") return discoveredEnemies.length;
   if (quest.type === "resource") return resources[quest.currency] ? resources[quest.currency].amount : 0;
+  if (quest.type === "corruption") return corruption;
   return 0;
 }
 
@@ -1417,6 +1418,25 @@ function cleanseCorruption() {
   refreshCharacterSheetIfOpen();
 }
 
+// The Kult Spaczenia's mirror-image service to the Temple's cleanse: instead
+// of erasing corruption, it deliberately buys more of it — and, unlike
+// Mutuj się/Pożryj szczątki (battle-only), reuses the exact same
+// devouredCount/mutationTier system to grant a permanent mutation step
+// outside of combat.
+const EMBRACE_RITUAL_COST = { currency: "Spaczone Zioła", amount: 20 };
+const EMBRACE_RITUAL_CORRUPTION_GAIN = 8;
+
+function performEmbraceRitual() {
+  if (!canAffordItem({ cost: EMBRACE_RITUAL_COST })) return;
+  resources[EMBRACE_RITUAL_COST.currency].amount -= EMBRACE_RITUAL_COST.amount;
+  saveResources();
+  corruption = Math.min(100, corruption + EMBRACE_RITUAL_CORRUPTION_GAIN);
+  devouredCount++;
+  appendLog(`🌀 Rytuał wchłonięcia podnosi Twoje spaczenie do ${corruption}% i wzmacnia mutację (tier ${mutationTier()}).`, "system");
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
 function setPlayerName(value) {
   playerName = value;
   render();
@@ -1859,11 +1879,11 @@ function render() {
     hideAllExcept(cityPlaceScreen);
     renderCityPlace(
       currentCityPlace,
-      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, claimedNpcQuests, reputation },
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, devouredCount, mutationTier: mutationTier(), claimedNpcQuests, reputation },
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
-        onRecruit: openRecruitScene, onCleanseCorruption: cleanseCorruption,
+        onRecruit: openRecruitScene, onCleanseCorruption: cleanseCorruption, onEmbraceRitual: performEmbraceRitual,
         onTalkToNpc: talkToNpc, onClaimNpcQuest: claimNpcQuestReward,
       },
     );
