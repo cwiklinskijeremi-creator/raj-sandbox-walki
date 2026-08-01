@@ -539,7 +539,13 @@ function completeCampaignChapter(chapterId) {
   appendLog(`📖 Rozdział „${chapter.title}” ukończony! +${chapter.reward.amount} × ${chapter.reward.currency}.`, "system");
   if (chapter.isFinale) {
     appendLog("🏆 Kampania fabularna zakończona!", "system");
+    phase = "epilogue";
   }
+}
+
+function closeEpilogue() {
+  phase = "camp";
+  render();
 }
 
 const COMPANION_STORAGE_KEY = "raj-sandbox-companions";
@@ -1712,6 +1718,7 @@ function render() {
   const test3dScreen = document.getElementById("test3d-screen");
   const creationScreen = document.getElementById("character-creation-screen");
   const prologueScreen = document.getElementById("prologue-screen");
+  const epilogueScreen = document.getElementById("epilogue-screen");
   const campScreen = document.getElementById("camp-screen");
   const cityScreen = document.getElementById("city-screen");
   const cityPlaceScreen = document.getElementById("city-place-screen");
@@ -1719,7 +1726,7 @@ function render() {
   const dungeonScreen = document.getElementById("dungeon-screen");
   const gameScreen = document.getElementById("game-screen");
 
-  const allScreens = [mainMenuScreen, test3dScreen, creationScreen, prologueScreen, campScreen, cityScreen, cityPlaceScreen, locationScreen, dungeonScreen, gameScreen];
+  const allScreens = [mainMenuScreen, test3dScreen, creationScreen, prologueScreen, epilogueScreen, campScreen, cityScreen, cityPlaceScreen, locationScreen, dungeonScreen, gameScreen];
   const hideAllExcept = (visible) => {
     allScreens.forEach((el) => {
       if (el === visible) el.classList.remove("hidden");
@@ -1750,6 +1757,13 @@ function render() {
   if (phase === "prologue") {
     hideAllExcept(prologueScreen);
     renderPrologue(CLASS_PROLOGUES[selectedClassName], prologueStep);
+    saveActiveRun();
+    return;
+  }
+
+  if (phase === "epilogue") {
+    hideAllExcept(epilogueScreen);
+    renderEpilogue(CAMPAIGN_CHAPTERS.find((c) => c.isFinale), selectedClassName, corruption);
     saveActiveRun();
     return;
   }
@@ -2463,5 +2477,6 @@ document.getElementById("creation-confirm-btn").addEventListener("click", confir
 document.getElementById("prologue-next-btn").addEventListener("click", advancePrologue);
 document.getElementById("prologue-finish-btn").addEventListener("click", advancePrologue);
 document.getElementById("prologue-skip-btn").addEventListener("click", skipPrologue);
+document.getElementById("epilogue-close-btn").addEventListener("click", closeEpilogue);
 
 render();

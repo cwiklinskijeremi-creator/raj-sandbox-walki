@@ -55,3 +55,38 @@ const CLASS_PROLOGUES = {
     ],
   },
 };
+
+// Personal codas shown right after CAMPAIGN_CHAPTERS' finale.outro (the shared,
+// deliberately ambiguous "objective" ending) — each one closes the loop on the
+// specific grievance that opened that class's CLASS_PROLOGUES entry above.
+const CLASS_EPILOGUES = {
+  "Mag": {
+    reflection: "Kaelon, twój brat, wciąż zasiada w Radzie — nietknięty przez to, co właśnie zrobiłeś jego zdrajcy. Dorian nie żyje, ale krew Rady, dla której cię wygnano, płynie dalej bez ciebie w tych samych żyłach. Zemsta smakuje inaczej, niż sądziłeś, gdy planowałeś ją siedem lat w wygnaniu.",
+    icon: "🧙",
+  },
+  "Paladyn": {
+    reflection: "Zakon Światła nigdy nie dowie się, że to ty rozliczyłeś się z człowiekiem, który testował „oczyszczenie” na ich niewolnikach. Miłosierdzie, którego cię uczono, nie wróciło razem z Dorianem — ale przynajmniej dziecko, które kiedyś odesłano do kopalni zamiast uzdrowić, ma teraz jednego mściciela mniej samotnego w swoim gniewie.",
+    icon: "🛡️",
+  },
+  "Wojownik": {
+    reflection: "Notatki Doriana o „oczyszczeniu” w Skażonym Lesie tłumaczą teraz więcej, niż chciałeś wiedzieć o własnych mięśniach i o tym, co nadzorcy zrobili z tobą w kopalnianym szybie. Uciekłeś kiedyś dzięki sile, której się bałeś — dziś ta sama siła pogrzebała człowieka, który tę siłę wymyślił.",
+    icon: "⚔️",
+  },
+  "Łotrzyk": {
+    reflection: "Dokument, który ukradłeś tyle lat temu, wciąż leży gdzieś schowany — dowód na defraudację sięgającą Rady, którego nigdy nie zdążyłeś wykorzystać. Egzekutorzy przestaną szukać „złodzieja z dokumentem” dopiero, gdy przestaniesz nim być. Dorian był tylko jednym ogniwem — reszta łańcucha wciąż czeka w cieniu, którego znasz najlepiej.",
+    icon: "🗡️",
+  },
+  "Alchemik": {
+    reflection: "Gildia Rzemieślników spaliła twoje notatki, ale nie wiedzę, którą wciąż masz w głowie — a Dorian, umierając, nie zdążył ci powiedzieć, czy jego eksperymenty na niewolnikach kiedykolwiek doszły tak daleko, jak twoje własne. To pytanie zostaje bez odpowiedzi, razem z resztą jego sekretów w Wieży Rady.",
+    icon: "⚗️",
+  },
+};
+
+// Two short codas branching on how deep the player's spaczenie (corruption)
+// ran by the time they reached the finale — a last payoff for the whole
+// Mutuj się / Pożryj szczątki arc built alongside the campaign this session.
+const CORRUPTION_EPILOGUE_HIGH_THRESHOLD = 40;
+const CORRUPTION_EPILOGUE_ADDENDUM = {
+  high: "Twoje odbicie w kryształowych ścianach Wieży Rady już dawno przestało wyglądać jak twoje własne. Pokonałeś Doriana z siłą, którą kupiłeś własnym ciałem i umysłem — i teraz, stojąc nad jego zwłokami, nie jesteś już pewien, kto tu naprawdę wygrał.",
+  low: "Siedem lat wygnania i cała ta droga nie zmieniły cię tak, jak mogły. Stoisz nad ciałem Doriana wciąż sobą — obolały, zmęczony, ale rozpoznawalny we własnej skórze. To też jest rodzaj zwycięstwa, o którym niewielu w Aetherionie mogłoby dziś powiedzieć to samo.",
+};

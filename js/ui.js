@@ -470,6 +470,28 @@ function renderPrologue(prologue, step) {
   finishBtn.classList.toggle("hidden", !isLast);
 }
 
+function renderEpilogue(chapter, className, corruptionValue) {
+  const titleEl = document.getElementById("epilogue-title");
+  const bodyEl = document.getElementById("epilogue-body");
+  if (!chapter) {
+    titleEl.textContent = "";
+    bodyEl.innerHTML = "";
+    return;
+  }
+
+  const classEpilogue = CLASS_EPILOGUES[className];
+  const corruptionCoda = (corruptionValue || 0) >= CORRUPTION_EPILOGUE_HIGH_THRESHOLD
+    ? CORRUPTION_EPILOGUE_ADDENDUM.high
+    : CORRUPTION_EPILOGUE_ADDENDUM.low;
+
+  titleEl.textContent = `${chapter.icon} ${chapter.title} — Epilog`;
+  bodyEl.innerHTML = `
+    ${chapter.outro.map((line) => `<p class="prologue-text">${line}</p>`).join("")}
+    ${classEpilogue ? `<p class="prologue-text">${classEpilogue.icon} ${classEpilogue.reflection}</p>` : ""}
+    <p class="prologue-text">${corruptionCoda}</p>
+  `;
+}
+
 const STAT_META = [
   { key: "str", label: "STR" },
   { key: "wyt", label: "WYT" },
