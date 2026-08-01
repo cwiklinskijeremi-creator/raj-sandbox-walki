@@ -547,8 +547,11 @@ function renderCamp(player, level, xp, xpToNext) {
     <div class="camp-character-class">${player.class || ""}${player.subclass ? " — " + player.subclass : ""}</div>
     <div class="camp-character-level">Poziom ${level} &nbsp;|&nbsp; ${xp}/${xpToNext} PD</div>
     <div class="camp-character-meta">
-      ${player.gender ? "Płeć: " + player.gender + " &nbsp;|&nbsp; " : ""}HP: ${player.maxHP}
-      &nbsp;|&nbsp; STR ${player.str} &nbsp; WYT ${player.wyt} &nbsp; ZRE ${player.zre} &nbsp; INT ${player.int} &nbsp; CHA ${player.cha}
+      ${[
+        player.gender ? `Płeć: ${player.gender}` : "",
+        `HP: ${player.maxHP}`,
+        `STR ${player.str}`, `WYT ${player.wyt}`, `ZRE ${player.zre}`, `INT ${player.int}`, `CHA ${player.cha}`,
+      ].filter(Boolean).map((part) => `<span class="meta-chip">${part}</span>`).join("")}
     </div>
   `;
 }
