@@ -1310,8 +1310,15 @@ function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance,
   title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";
 
   const pathEl = document.getElementById("dungeon-path");
-  const pathIcons = rooms.map((room, i) => ({ icon: room.icon, state: i < index ? "done" : i === index ? "current" : "upcoming" }));
-  pathIcons.push({ icon: "⚔️", state: index >= rooms.length ? "current" : "upcoming" });
+  const pathIcons = [];
+  for (let i = 0; i < DUNGEON_TOTAL_ROOMS; i++) {
+    const known = rooms[i];
+    pathIcons.push({
+      icon: known ? known.icon : "❔",
+      state: i < index ? "done" : i === index ? "current" : "upcoming",
+    });
+  }
+  pathIcons.push({ icon: "⚔️", state: index >= DUNGEON_TOTAL_ROOMS ? "current" : "upcoming" });
   pathEl.innerHTML = pathIcons.map((p) => `<span class="dungeon-path-icon dungeon-path-${p.state}">${p.icon}</span>`).join("");
 
   const roomEl = document.getElementById("dungeon-room");
@@ -1345,7 +1352,7 @@ function renderDungeon(location, rooms, index, resolved, outcomeText, onAdvance,
   } else {
     choiceButtons.classList.add("hidden");
     advanceBtn.classList.remove("hidden");
-    advanceBtn.textContent = index >= rooms.length - 1 ? "⚔️ Wejdź do walki" : "➡️ Idź dalej";
+    advanceBtn.textContent = index >= DUNGEON_TOTAL_ROOMS - 1 ? "⚔️ Wejdź do walki" : "➡️ Idź dalej";
     advanceBtn.onclick = onAdvance;
   }
 }

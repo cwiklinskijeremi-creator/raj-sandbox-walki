@@ -34,57 +34,72 @@ function xpToNextLevel(lvl) {
 
 const DUNGEON_ROOM_TYPES = [
   {
-    type: "empty", icon: "🚪", weight: 2, label: "Cichy korytarz",
+    type: "empty", icon: "🚪", label: "Cichy korytarz",
     prompt: "Korytarz ciągnie się w ciszy — coś tu może być, ale trudno powiedzieć co.",
     optionALabel: "🔍 Przeszukaj kąty", optionBLabel: "➡️ Idź dalej bez zwłoki",
   },
   {
-    type: "trap", icon: "⚠️", weight: 2, label: "Pułapka",
+    type: "trap", icon: "⚠️", label: "Pułapka",
     prompt: "Coś w tym korytarzu wygląda podejrzanie — wyczuwasz mechanizm w podłodze.",
     optionALabel: "🛠️ Rozbrój pułapkę", optionBLabel: "🚶 Omiń ostrożnie",
   },
   {
-    type: "find", icon: "✨", weight: 2, label: "Znalezisko",
+    type: "find", icon: "✨", label: "Znalezisko",
     prompt: "Coś błyszczy w gruzach na końcu korytarza.",
     optionALabel: "🧐 Zbadaj dokładnie", optionBLabel: "🤏 Zabierz szybko i idź dalej",
   },
   {
-    type: "skirmish", icon: "🗡️", weight: 2, label: "Zasadzka",
+    type: "skirmish", icon: "🗡️", label: "Zasadzka",
     prompt: "Słyszysz kroki w ciemności — coś się zbliża.",
     optionALabel: "⚔️ Walcz", optionBLabel: "🤫 Wymknij się chyłkiem",
   },
   {
-    type: "shrine", icon: "🩸", weight: 1, label: "Zapomniany ołtarz",
+    type: "shrine", icon: "🩸", label: "Zapomniany ołtarz",
     prompt: "Stary, zapomniany ołtarz stoi w mroku — wciąż pulsuje esencją.",
     optionALabel: "🩸 Złóż ofiarę z krwi", optionBLabel: "🙅 Odejdź",
   },
 ];
 
-function pickWeightedRoomType() {
-  const totalWeight = DUNGEON_ROOM_TYPES.reduce((sum, r) => sum + r.weight, 0);
-  let roll = Math.random() * totalWeight;
-  for (const roomType of DUNGEON_ROOM_TYPES) {
-    if (roll < roomType.weight) return roomType;
-    roll -= roomType.weight;
-  }
-  return DUNGEON_ROOM_TYPES[0];
+// Dungeon crawling is a chain of blind forks rather than a pre-rolled list:
+// each junction is its own "room" (type: "junction") that only reveals what's
+// down a corridor once you commit to it, by swapping itself out for a real
+// DUNGEON_ROOM_TYPES entry in place — see chooseDungeonDirection/advanceDungeon.
+const DUNGEON_TOTAL_ROOMS = 3;
+const DUNGEON_LEFT_TYPES = ["trap", "skirmish", "shrine"];
+const DUNGEON_RIGHT_TYPES = ["empty", "find"];
+
+function makeJunctionRoom(junctionIndex) {
+  const isFinal = junctionIndex === DUNGEON_TOTAL_ROOMS - 1;
+  const bossAvailable = isFinal && !!(currentLocation && currentLocation.bossKey) && Math.random() < 0.2;
+  return {
+    type: "junction", icon: "🧭", label: "Rozdroże",
+    prompt: "Korytarz rozdziela się na dwie strony. Którą pójdziesz?",
+    optionALabel: bossAvailable ? "❓ Nieznana głębia" : "⬅️ Mroczniejszy korytarz",
+    optionBLabel: "➡️ Spokojniejszy korytarz",
+    bossAvailable,
+  };
 }
 
-function generateDungeonRooms() {
-  const rooms = [0, 1, 2].map(() => pickWeightedRoomType());
-  if (currentLocation && currentLocation.bossKey && Math.random() < 0.2) {
+function chooseDungeonDirection(choice, junctionRoom) {
+  let nextRoom;
+  if (junctionRoom.bossAvailable && choice === "A") {
     const boss = BOSS_TEMPLATES[currentLocation.bossKey]();
-    rooms.push({
+    nextRoom = {
       type: "boss", icon: "👑", label: "Komnata Bossa",
-      prompt: `W głębi wyczuwasz przytłaczającą obecność — to legowisko ${boss.icon} ${boss.name}. Możesz go wyzwać już teraz, zanim wrócisz do zwykłej walki, albo zostawić go w spokoju.`,
-      optionALabel: "⚔️ Wyzwij bossa", optionBLabel: "🚪 Odejdź, nie ryzykuj",
-    });
+      prompt: `Schodzisz w nieznaną głąb i natrafiasz na legowisko ${boss.icon} ${boss.name}. Możesz go wyzwać już teraz, zanim wrócisz do zwykłej walki, albo wycofać się w milczeniu.`,
+      optionALabel: "⚔️ Wyzwij bossa", optionBLabel: "🚪 Wycofaj się w ciszy",
+    };
+  } else {
+    const pool = choice === "A" ? DUNGEON_LEFT_TYPES : DUNGEON_RIGHT_TYPES;
+    const key = pool[Math.floor(Math.random() * pool.length)];
+    nextRoom = DUNGEON_ROOM_TYPES.find((r) => r.type === key);
   }
-  return rooms;
+  dungeonRooms[dungeonIndex] = nextRoom;
+  render();
 }
 
 function startDungeonCrawl() {
-  dungeonRooms = generateDungeonRooms();
+  dungeonRooms = [makeJunctionRoom(0)];
   dungeonIndex = 0;
   dungeonHpLoss = 0;
   dungeonBattleBuff = { pancerz: 0 };
@@ -97,6 +112,11 @@ function startDungeonCrawl() {
 
 function chooseDungeonOption(choice) {
   const room = dungeonRooms[dungeonIndex];
+
+  if (room.type === "junction") {
+    chooseDungeonDirection(choice, room);
+    return;
+  }
 
   if (room.type === "empty") {
     if (choice === "A") {
@@ -200,11 +220,12 @@ function advanceDungeon() {
   dungeonIndex++;
   dungeonRoomResolved = false;
   dungeonOutcomeText = "";
-  if (dungeonIndex >= dungeonRooms.length) {
+  if (dungeonIndex >= DUNGEON_TOTAL_ROOMS) {
     isCampaignBattle = false;
     activeCampaignChapterId = null;
     startNewBattle();
   } else {
+    dungeonRooms.push(makeJunctionRoom(dungeonIndex));
     render();
   }
 }
