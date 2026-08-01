@@ -442,6 +442,21 @@ function renderCharacterCreation(state, handlers) {
   confirmBtn.disabled = !(playerName.trim().length > 0 && !!playerGender && !!selectedSub);
 }
 
+function renderIntroCinematic(step) {
+  const bodyEl = document.getElementById("intro-body");
+  const progressEl = document.getElementById("intro-progress");
+  const nextBtn = document.getElementById("intro-next-btn");
+
+  const beats = LORE_DATA.world.paragraphs;
+  const lastStep = beats.length - 1;
+  const clampedStep = Math.min(step, lastStep);
+  const isLast = clampedStep >= lastStep;
+
+  bodyEl.innerHTML = `<p class="intro-text">${beats[clampedStep]}</p>`;
+  progressEl.textContent = `${clampedStep + 1} / ${beats.length}`;
+  nextBtn.textContent = isLast ? "Stwórz postać" : "Dalej";
+}
+
 function renderPrologue(prologue, step) {
   const titleEl = document.getElementById("prologue-title");
   const progressEl = document.getElementById("prologue-progress");

@@ -675,6 +675,86 @@ button:disabled {
   text-align: center;
 }
 
+.intro-cinematic-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(ellipse at center, #241a2e 0%, #0d0a12 70%);
+  overflow: hidden;
+}
+
+.intro-cinematic-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(201, 162, 75, 0.14), transparent 60%);
+  animation: intro-glow-pulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes intro-glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.intro-letterbox {
+  flex: 0 0 9vh;
+  background: #000;
+}
+
+.intro-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.intro-eyebrow {
+  color: var(--accent);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.intro-body {
+  max-width: 680px;
+}
+
+.intro-text {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  line-height: 1.85;
+  color: var(--text-soft);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: intro-fade-in-up 1.4s var(--ease) forwards;
+}
+
+@keyframes intro-fade-in-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.intro-progress {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.intro-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
 .prologue-screen {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 40%), var(--surface-alt);
   border: 1px solid var(--border);
