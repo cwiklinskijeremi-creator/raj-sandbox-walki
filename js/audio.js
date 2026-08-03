@@ -12,8 +12,86 @@ function getAudioCtx() {
 
 function toggleAudioMuted() {
   audioMuted = !audioMuted;
+  applyMusicMuteState();
   return audioMuted;
 }
+
+const MUSIC_SRC = {
+  menu: "audio/menu.mp3",
+  camp: "audio/camp.mp3",
+  city: "audio/city.mp3",
+  tavern: "audio/tavern.mp3",
+  dungeon: "audio/dungeon.mp3",
+  battle: "audio/battle.mp3",
+  boss: "audio/boss.mp3",
+  corruption: "audio/corruption.mp3",
+};
+
+const MUSIC_FADE_MS = 900;
+const MUSIC_VOLUME_STORAGE_KEY = "raj_music_volume";
+
+let musicVolume = (() => {
+  const stored = parseFloat(localStorage.getItem(MUSIC_VOLUME_STORAGE_KEY));
+  return Number.isFinite(stored) ? Math.min(1, Math.max(0, stored)) : 0.45;
+})();
+let currentMusicKey = null;
+let currentMusicEl = null;
+
+function musicEffectiveVolume() {
+  return audioMuted ? 0 : musicVolume;
+}
+
+function fadeMusicElement(el, toVolume, durationMs, onDone) {
+  clearInterval(el._fadeInterval);
+  const steps = 18;
+  const stepMs = durationMs / steps;
+  const fromVolume = el.volume;
+  let step = 0;
+  el._fadeInterval = setInterval(() => {
+    step++;
+    const t = step / steps;
+    el.volume = fromVolume + (toVolume - fromVolume) * t;
+    if (step >= steps) {
+      clearInterval(el._fadeInterval);
+      el.volume = toVolume;
+      if (onDone) onDone();
+    }
+  }, stepMs);
+}
+
+function playMusicKey(key) {
+  const src = MUSIC_SRC[key];
+  if (!src || key === currentMusicKey) return;
+  currentMusicKey = key;
+
+  const prevEl = currentMusicEl;
+  const nextEl = new Audio(src);
+  nextEl.loop = true;
+  nextEl.volume = 0;
+  nextEl.play().catch(() => {});
+  currentMusicEl = nextEl;
+
+  fadeMusicElement(nextEl, musicEffectiveVolume(), MUSIC_FADE_MS);
+  if (prevEl) {
+    fadeMusicElement(prevEl, 0, MUSIC_FADE_MS, () => prevEl.pause());
+  }
+}
+
+function setMusicVolume(v) {
+  musicVolume = Math.min(1, Math.max(0, v));
+  localStorage.setItem(MUSIC_VOLUME_STORAGE_KEY, String(musicVolume));
+  if (currentMusicEl) currentMusicEl.volume = musicEffectiveVolume();
+}
+
+function applyMusicMuteState() {
+  if (currentMusicEl) currentMusicEl.volume = musicEffectiveVolume();
+}
+
+function unlockMusicPlayback() {
+  if (currentMusicEl && currentMusicEl.paused) currentMusicEl.play().catch(() => {});
+}
+document.addEventListener("pointerdown", unlockMusicPlayback, { once: true });
+document.addEventListener("keydown", unlockMusicPlayback, { once: true });
 
 function playTone({ freq, duration, type = "sine", volume = 0.2, freqEnd = null }) {
   if (audioMuted) return;

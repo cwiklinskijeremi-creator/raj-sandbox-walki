@@ -1,0 +1,13 @@
+Muzyka w tej grze pochodzi z kolekcji "CC0 Fantasy Music & Sounds"
+(opengameart.org/content/cc0-fantasy-music-sounds), licencja CC0
+(domena publiczna) - użycie bez ograniczeń, atrybucja nie jest
+wymagana, ale poniżej z podziękowaniem dla autorów:
+
+menu.mp3        - "A Legend Will Rise" - CodeManu
+camp.mp3        - "The Field Of Dreams" - pauliuw
+city.mp3        - "Town Theme RPG" - cynicmusic
+tavern.mp3      - "Medieval: The Old Tower Inn" - RandomMind
+dungeon.mp3     - "Forgoten Tomb Ambience" - kindland
+battle.mp3      - "Battle Theme" - Wolfgang_
+boss.mp3        - "Boss Fight" - Lisboa
+corruption.mp3  - "Ancient Power Of Serpents" - Kevin MacLeod

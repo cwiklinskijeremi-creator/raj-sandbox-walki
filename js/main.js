@@ -1537,6 +1537,7 @@ function exitGame() {
 
 function openSettingsModal() {
   document.getElementById("settings-overlay").classList.remove("hidden");
+  document.getElementById("music-volume-slider").value = Math.round(musicVolume * 100);
 }
 
 function closeSettingsModal() {
@@ -1861,7 +1862,23 @@ function findSubclassData(className, subclassName) {
 
 let boardViewMode = "2d";
 
+function musicKeyForGameState() {
+  if (phase === "city-place" && currentCityPlace) {
+    if (currentCityPlace.key === "tawerna") return "tavern";
+    if (currentCityPlace.key === "kult_spaczenia") return "corruption";
+    return "city";
+  }
+  if (phase === "city-select") return "city";
+  if (phase === "dungeon-map") return "dungeon";
+  if (phase === "deployment" || phase === "battle") return isBossBattle ? "boss" : "battle";
+  if (phase === "epilogue") return "corruption";
+  if (phase === "camp" || phase === "location-select") return "camp";
+  return "menu";
+}
+
 function render() {
+  playMusicKey(musicKeyForGameState());
+
   if (phase !== "deployment" && phase !== "battle" && window.stopBoard3D) {
     window.stopBoard3D();
   }
@@ -2635,6 +2652,9 @@ document.getElementById("settings-mute-btn").addEventListener("click", (e) => {
   const muted = toggleAudioMuted();
   e.target.textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
   document.getElementById("mute-btn").textContent = muted ? "🔇 Dźwięk" : "🔊 Dźwięk";
+});
+document.getElementById("music-volume-slider").addEventListener("input", (e) => {
+  setMusicVolume(Number(e.target.value) / 100);
 });
 document.getElementById("clear-progress-btn").addEventListener("click", clearAllProgress);
 document.getElementById("exit-game-btn").addEventListener("click", exitGame);
