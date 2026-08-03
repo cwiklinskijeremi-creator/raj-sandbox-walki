@@ -1,36 +1,25 @@
-const CLASS_PORTRAIT_THEMES = {
-  "Mag": { primary: "#6a9fd8", secondary: "#1f2a4a" },
-  "Paladyn": { primary: "#f0be3c", secondary: "#4a3a10" },
-  "Wojownik": { primary: "#d0654a", secondary: "#4a1f16" },
-  "Łotrzyk": { primary: "#4f9f6a", secondary: "#173325" },
-  "Alchemik": { primary: "#8fbf3f", secondary: "#2a3a12" },
+// Maps each of the 10 subclass names to the matching cropped portrait file
+// (game/img/portraits/<gender>_<slug>.jpg), cut from the hand-painted
+// character sheets for the two genders.
+const PORTRAIT_SUBCLASS_SLUGS = {
+  "Arcymag": "arcymag",
+  "Apostata": "apostata",
+  "Świetlisty obrońca": "swietlisty_obronca",
+  "Mroczny rycerz": "mroczny_rycerz",
+  "Najemnik bractwa": "najemnik_bractwa",
+  "Berserk": "berserk",
+  "Łowca": "lowca",
+  "Skrytobójca": "skrytobojca",
+  "Truciciel": "truciciel",
+  "Medyk": "medyk",
 };
 
-let portraitIdCounter = 0;
-
-function renderPortraitSvg(className, icon, { corrupted = false } = {}) {
-  const theme = CLASS_PORTRAIT_THEMES[className] || { primary: "#c9a24b", secondary: "#2a2016" };
-  const gradId = `portrait-grad-${portraitIdCounter++}`;
-  const cracks = corrupted ? `
-    <path class="portrait-crack" d="M50 20 L44 34 L52 40 L40 52"></path>
-    <path class="portrait-crack" d="M50 20 L58 32 L50 42 L60 54"></path>
-    <path class="portrait-crack" d="M30 62 L38 66 L34 76"></path>
-  ` : "";
-  return `
-    <svg class="char-portrait${corrupted ? " char-portrait-corrupted" : ""}" viewBox="0 0 100 100" role="img" aria-hidden="true">
-      <defs>
-        <radialGradient id="${gradId}" cx="50%" cy="38%" r="65%">
-          <stop offset="0%" stop-color="${theme.primary}" stop-opacity="0.6"></stop>
-          <stop offset="100%" stop-color="${theme.secondary}" stop-opacity="1"></stop>
-        </radialGradient>
-      </defs>
-      <circle cx="50" cy="50" r="48" fill="url(#${gradId})"></circle>
-      <path class="portrait-hood" d="M50 18 C35 18 24 30 24 47 C24 58 29 64 29 74 L29 96 L71 96 L71 74 C71 64 76 58 76 47 C76 30 65 18 50 18 Z" fill="${theme.secondary}"></path>
-      <text class="portrait-icon" x="50" y="47" text-anchor="middle" dominant-baseline="central">${icon}</text>
-      ${cracks}
-      <circle class="portrait-frame" cx="50" cy="50" r="48" fill="none"></circle>
-    </svg>
-  `;
+function renderPortraitImage(gender, subclassName, { corrupted = false } = {}) {
+  const slug = PORTRAIT_SUBCLASS_SLUGS[subclassName];
+  const genderPrefix = gender === "Kobieta" ? "kobieta" : "mezczyzna";
+  if (!slug) return "";
+  const src = `img/portraits/${genderPrefix}_${slug}.jpg`;
+  return `<img class="char-portrait${corrupted ? " char-portrait-corrupted" : ""}" src="${src}" alt="${subclassName}">`;
 }
 
 function renderFighter(container, fighter, { selectable = false, selected = false, onClick = null, damagePreview = null } = {}) {
@@ -92,9 +81,9 @@ function renderFighter(container, fighter, { selectable = false, selected = fals
     : "";
 
   const portraitHtml = fighter.isPlayer
-    ? `<div class="portrait-frame-box portrait-sm fighter-portrait">${renderPortraitSvg(fighter.class, fighter.icon, { corrupted: corruption >= 20 || mutationTier() > 0 })}</div>`
+    ? `<div class="portrait-frame-box portrait-sm fighter-portrait">${renderPortraitImage(fighter.gender, fighter.subclass, { corrupted: corruption >= 20 || mutationTier() > 0 })}</div>`
     : fighter.isCompanion
-      ? `<div class="portrait-frame-box portrait-sm fighter-portrait">${renderPortraitSvg(fighter.className, fighter.icon)}</div>`
+      ? `<div class="portrait-frame-box portrait-sm fighter-portrait">${renderPortraitImage(fighter.gender, fighter.subclassName)}</div>`
       : "";
 
   el.innerHTML = `
@@ -627,7 +616,7 @@ function renderCamp(player, level, xp, xpToNext) {
     return;
   }
   card.innerHTML = `
-    <div class="portrait-frame-box portrait-lg camp-character-portrait">${renderPortraitSvg(player.class, player.icon, { corrupted: corruption >= 20 || mutationTier() > 0 })}</div>
+    <div class="portrait-frame-box portrait-lg camp-character-portrait">${renderPortraitImage(player.gender, player.subclass, { corrupted: corruption >= 20 || mutationTier() > 0 })}</div>
     <div class="camp-character-name">${player.name}</div>
     <div class="camp-character-class">${player.class || ""}${player.subclass ? " — " + player.subclass : ""}</div>
     <div class="camp-character-level">Poziom ${level} &nbsp;|&nbsp; ${xp}/${xpToNext} PD</div>
@@ -680,7 +669,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
   const statsHtml = `
     <div class="sheet-section">
       <div class="sheet-header-row">
-        <div class="portrait-frame-box portrait-md">${renderPortraitSvg(player.class, player.icon, { corrupted: corruption >= 20 || mutationTier > 0 })}</div>
+        <div class="portrait-frame-box portrait-md">${renderPortraitImage(player.gender, player.subclass, { corrupted: corruption >= 20 || mutationTier > 0 })}</div>
         <div>
           <h4>${player.name}</h4>
           <div class="sheet-level-line">Poziom ${level} &nbsp;|&nbsp; ${xp}/${xpToNext} PD</div>
@@ -959,7 +948,7 @@ function renderRecruitCard(recruit, progress, canRecruit, onRecruit) {
   el.innerHTML = `
     <h4>👥 Potencjalny towarzysz</h4>
     <div class="sheet-item-row">
-      <div class="portrait-frame-box portrait-sm">${renderPortraitSvg(companion.className, companion.icon)}</div>
+      <div class="portrait-frame-box portrait-sm">${renderPortraitImage(companion.gender, companion.subclassName)}</div>
       <div class="sheet-item-info">
         <div class="sheet-item-name">${companion.name}</div>
         <div class="sheet-item-desc">${companion.className} — ${companion.subclassName}. ${quest.flavor}</div>
@@ -999,7 +988,7 @@ function renderPartyOverlay(companions, onDismiss, onOpenEquipment) {
       ? `<p class="sheet-empty-note">Nie masz jeszcze żadnych towarzyszy — poszukaj ich w mieście Aetherion.</p>`
       : companions.map((c, i) => `
           <div class="sheet-item-row">
-            <div class="portrait-frame-box portrait-sm">${renderPortraitSvg(c.className, c.icon)}</div>
+            <div class="portrait-frame-box portrait-sm">${renderPortraitImage(c.gender, c.subclassName)}</div>
             <div class="sheet-item-info">
               <div class="sheet-item-name">${c.name}</div>
               <div class="sheet-item-desc">${c.className} — ${c.subclassName} &nbsp;|&nbsp; Poziom ${level}</div>
@@ -1032,7 +1021,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   const statsHtml = `
     <div class="sheet-section">
       <div class="sheet-header-row">
-        <div class="portrait-frame-box portrait-md">${renderPortraitSvg(companion.className, companion.icon)}</div>
+        <div class="portrait-frame-box portrait-md">${renderPortraitImage(companion.gender, companion.subclassName)}</div>
         <div>
           <h4>${companion.name}</h4>
           <div class="sheet-level-line">${companion.className} — ${companion.subclassName} &nbsp;|&nbsp; Poziom ${level}</div>

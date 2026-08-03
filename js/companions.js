@@ -134,6 +134,7 @@ function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeN
   companion.isCompanion = true;
   companion.className = cls.name;
   companion.subclassName = sub.name;
+  companion.gender = Math.random() < 0.5 ? "Mężczyzna" : "Kobieta";
   companion.baseName = name;
   companion.equipped = defaultEquippedState();
   return companion;
