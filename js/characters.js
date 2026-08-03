@@ -223,6 +223,33 @@ const ENEMY_TEMPLATES = {
     ],
     pancerz: 0.14, przebicie: 0, hp: 170, icon: "🗿", mutated: true,
   }),
+  rdzawyautomat: () => createCharacter({
+    name: "Rdzawy Automat Wydobywczy",
+    str: 9, wyt: 9, zre: 4, int: 0, cha: 0,
+    weapons: [
+      { name: "Wiertło Górnicze", minDmg: 9, maxDmg: 14, range: 1 },
+      { name: "Parowy Wystrzał", minDmg: 6, maxDmg: 10, range: 3 },
+    ],
+    pancerz: 0.13, przebicie: 0.04, hp: 145, icon: "🔩",
+  }),
+  iskiernikesencji: () => createCharacter({
+    name: "Iskiernik Esencji",
+    str: 4, wyt: 4, zre: 10, int: 6, cha: 2,
+    weapons: [
+      { name: "Wyładowanie Esencji", minDmg: 8, maxDmg: 13, range: 5 },
+      { name: "Iskrzące Dotknięcie", minDmg: 5, maxDmg: 9, range: 1 },
+    ],
+    pancerz: 0.03, przebicie: 0.10, hp: 90, icon: "⚡", mutated: true,
+  }),
+  skalnysluga: () => createCharacter({
+    name: "Skalny Sługa Głębi",
+    str: 11, wyt: 10, zre: 3, int: 0, cha: 0,
+    weapons: [
+      { name: "Kamienna Maczuga", minDmg: 10, maxDmg: 16, range: 1 },
+      { name: "Osuwisko", minDmg: 7, maxDmg: 11, range: 2 },
+    ],
+    pancerz: 0.14, przebicie: 0.02, hp: 155, icon: "⛰️", mutated: true,
+  }),
 
   // Skażony Las
   wilk: () => createCharacter({
@@ -269,6 +296,33 @@ const ENEMY_TEMPLATES = {
       { name: "Nóż Myśliwski", minDmg: 7, maxDmg: 11, range: 1 },
     ],
     pancerz: 0.08, przebicie: 0.05, hp: 115, icon: "🪤",
+  }),
+  pajeczydozorca: () => createCharacter({
+    name: "Pajęczy Dozorca",
+    str: 6, wyt: 5, zre: 12, int: 0, cha: 3,
+    weapons: [
+      { name: "Jadowity Kęs", minDmg: 7, maxDmg: 12, range: 1 },
+      { name: "Sieć Oplatająca", minDmg: 5, maxDmg: 9, range: 3 },
+    ],
+    pancerz: 0.05, przebicie: 0.07, hp: 100, icon: "🕸️", mutated: true,
+  }),
+  spaczonymotyl: () => createCharacter({
+    name: "Spaczony Motyl",
+    str: 3, wyt: 3, zre: 15, int: 0, cha: 5,
+    weapons: [
+      { name: "Pyłek Odurzenia", minDmg: 6, maxDmg: 10, range: 3 },
+      { name: "Trzepot Ostrzy", minDmg: 5, maxDmg: 8, range: 1 },
+    ],
+    pancerz: 0.02, przebicie: 0.08, hp: 70, icon: "🦋", mutated: true,
+  }),
+  fungalnypomiot: () => createCharacter({
+    name: "Fungalny Pomiot",
+    str: 8, wyt: 8, zre: 5, int: 0, cha: 0,
+    weapons: [
+      { name: "Zarodniki Rozkładu", minDmg: 7, maxDmg: 12, range: 2 },
+      { name: "Uderzenie Grzybni", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.09, przebicie: 0.05, hp: 125, icon: "🍄", mutated: true,
   }),
 
   // Szlak Gildii
@@ -317,6 +371,33 @@ const ENEMY_TEMPLATES = {
     ],
     pancerz: 0.14, przebicie: 0.09, hp: 160, icon: "🎖️",
   }),
+  tarczownikgildii: () => createCharacter({
+    name: "Tarczownik Gildii",
+    str: 9, wyt: 10, zre: 7, int: 3, cha: 6,
+    weapons: [
+      { name: "Kolczasta Tarcza", minDmg: 8, maxDmg: 13, range: 1 },
+      { name: "Okucia Bojowe", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.15, przebicie: 0.06, hp: 150, icon: "🔰",
+  }),
+  jezdziecgildii: () => createCharacter({
+    name: "Jeździec Zwiadu",
+    str: 7, wyt: 6, zre: 13, int: 4, cha: 7,
+    weapons: [
+      { name: "Kopia Jeździecka", minDmg: 9, maxDmg: 14, range: 2 },
+      { name: "Szabla", minDmg: 7, maxDmg: 11, range: 1 },
+    ],
+    pancerz: 0.10, przebicie: 0.07, hp: 120, icon: "🐎",
+  }),
+  sabotazysta: () => createCharacter({
+    name: "Sabotażysta Gildii",
+    str: 5, wyt: 5, zre: 9, int: 7, cha: 5,
+    weapons: [
+      { name: "Bomba Dymna", minDmg: 8, maxDmg: 13, range: 4 },
+      { name: "Ukryty Nóż", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.08, przebicie: 0.09, hp: 105, icon: "💣",
+  }),
 
   // Placówka Zakonu Światła
   nowicjusz: () => createCharacter({
@@ -363,6 +444,107 @@ const ENEMY_TEMPLATES = {
       { name: "Laska Kapłańska", minDmg: 5, maxDmg: 9, range: 1 },
     ],
     pancerz: 0.07, przebicie: 0.06, hp: 110, icon: "🕊️",
+  }),
+  kustoszrelikwii: () => createCharacter({
+    name: "Kustosz Relikwii",
+    str: 6, wyt: 7, zre: 6, int: 10, cha: 8,
+    weapons: [
+      { name: "Święty Płomień", minDmg: 8, maxDmg: 13, range: 5 },
+      { name: "Relikwiarz Bojowy", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.10, przebicie: 0.07, hp: 115, icon: "🏺",
+  }),
+  flagellant: () => createCharacter({
+    name: "Biczownik Pokutny",
+    str: 8, wyt: 6, zre: 8, int: 3, cha: 4,
+    weapons: [
+      { name: "Bicz Pokutny", minDmg: 8, maxDmg: 13, range: 2 },
+      { name: "Kolczasty Łańcuch", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.06, przebicie: 0.08, hp: 110, icon: "🩸",
+  }),
+  straznikllancuchow: () => createCharacter({
+    name: "Strażnik Łańcuchów",
+    str: 10, wyt: 11, zre: 5, int: 2, cha: 3,
+    weapons: [
+      { name: "Okuty Łańcuch", minDmg: 9, maxDmg: 14, range: 2 },
+      { name: "Kajdaniarska Pięść", minDmg: 7, maxDmg: 11, range: 1 },
+    ],
+    pancerz: 0.13, przebicie: 0.05, hp: 145, icon: "⛓️",
+  }),
+  inkwizycyjnypodpalacz: () => createCharacter({
+    name: "Inkwizycyjny Podpalacz",
+    str: 5, wyt: 5, zre: 7, int: 11, cha: 6,
+    weapons: [
+      { name: "Ogień Oczyszczający", minDmg: 9, maxDmg: 14, range: 6 },
+      { name: "Pochodnia Rytualna", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.07, przebicie: 0.10, hp: 100, icon: "🔥",
+  }),
+
+  // Zatopione Krypty
+  utopiony: () => createCharacter({
+    name: "Utopiony Grabarz",
+    str: 7, wyt: 8, zre: 5, int: 0, cha: 0,
+    weapons: [
+      { name: "Zardzewiała Łopata", minDmg: 8, maxDmg: 13, range: 1 },
+      { name: "Uścisk Topielca", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.08, przebicie: 0.03, hp: 140, icon: "🪦", mutated: true,
+  }),
+  widmokrypty: () => createCharacter({
+    name: "Widmo Krypty",
+    str: 3, wyt: 4, zre: 9, int: 10, cha: 2,
+    weapons: [
+      { name: "Mroźne Dotknięcie", minDmg: 7, maxDmg: 12, range: 3 },
+      { name: "Jęk Umarłych", minDmg: 5, maxDmg: 9, range: 4 },
+    ],
+    pancerz: 0.02, przebicie: 0.08, hp: 85, icon: "👻",
+  }),
+  kostotwor: () => createCharacter({
+    name: "Kościany Twór",
+    str: 10, wyt: 10, zre: 4, int: 0, cha: 0,
+    weapons: [
+      { name: "Kościane Szpony", minDmg: 9, maxDmg: 14, range: 1 },
+      { name: "Rzut Żebrem", minDmg: 5, maxDmg: 9, range: 2 },
+    ],
+    pancerz: 0.12, przebicie: 0.04, hp: 150, icon: "☠️",
+  }),
+  mackaglebin: () => createCharacter({
+    name: "Macka Głębin",
+    str: 8, wyt: 5, zre: 9, int: 0, cha: 0,
+    weapons: [
+      { name: "Oplatające Mackowisko", minDmg: 8, maxDmg: 13, range: 2 },
+      { name: "Toksyczny Śluz", minDmg: 6, maxDmg: 10, range: 3 },
+    ],
+    pancerz: 0.04, przebicie: 0.06, hp: 110, icon: "🐙", mutated: true,
+  }),
+  straznikkrypty: () => createCharacter({
+    name: "Strażnik Krypty",
+    str: 11, wyt: 10, zre: 6, int: 2, cha: 4,
+    weapons: [
+      { name: "Zardzewiały Miecz Grobowy", minDmg: 10, maxDmg: 15, range: 1 },
+      { name: "Tarcza Kościana", minDmg: 7, maxDmg: 11, range: 1 },
+    ],
+    pancerz: 0.15, przebicie: 0.07, hp: 145, icon: "🛡️",
+  }),
+  zjawabagienna: () => createCharacter({
+    name: "Zjawa Bagienna",
+    str: 6, wyt: 3, zre: 14, int: 0, cha: 3,
+    weapons: [
+      { name: "Szponiaste Macanie", minDmg: 7, maxDmg: 12, range: 1 },
+      { name: "Bagienny Poślizg", minDmg: 5, maxDmg: 9, range: 2 },
+    ],
+    pancerz: 0.03, przebicie: 0.09, hp: 90, icon: "🌫️", mutated: true,
+  }),
+  nekromantaodrzuconych: () => createCharacter({
+    name: "Nekromanta Odrzuconych",
+    str: 4, wyt: 5, zre: 7, int: 14, cha: 9,
+    weapons: [
+      { name: "Klątwa Rozkładu", minDmg: 9, maxDmg: 14, range: 6 },
+      { name: "Kościany Sztylet", minDmg: 6, maxDmg: 10, range: 1 },
+    ],
+    pancerz: 0.06, przebicie: 0.09, hp: 100, icon: "🔮",
   }),
 };
 
@@ -445,6 +627,27 @@ const BOSS_TEMPLATES = {
       minDmg: 11, maxDmg: 16, range: 5,
       effectType: "lifesteal", effectValue: 0.6,
       label: "mroczne wysysanie",
+    };
+    return c;
+  },
+  boss_krypty: () => {
+    const c = createCharacter({
+      name: "Utopiona Królowa",
+      str: 12, wyt: 11, zre: 9, int: 10, cha: 12,
+      weapons: [
+        { name: "Berło Topielicy", minDmg: 13, maxDmg: 19, range: 1 },
+        { name: "Fala Przekleństwa", minDmg: 10, maxDmg: 15, range: 4 },
+      ],
+      pancerz: 0.15, przebicie: 0.13, hp: 300, icon: "👑",
+    });
+    c.isBoss = true;
+    c.mutated = true;
+    c.specialCooldown = 0;
+    c.special = {
+      name: "Uścisk Głębin", icon: "🌊", cooldown: 4,
+      minDmg: 10, maxDmg: 15, range: 5,
+      effectType: "armor_shred", effectValue: 0.22, effectTurns: 3,
+      label: "rozmoczony pancerz",
     };
     return c;
   },
