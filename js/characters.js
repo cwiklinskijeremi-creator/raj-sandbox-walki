@@ -46,7 +46,7 @@ function createCharacter({
     pos: null,
     activeEffects: [],
     poison: null,
-    skillCooldowns: [],
+    skillCooldowns: {},
   };
 }
 

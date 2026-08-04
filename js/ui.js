@@ -1498,9 +1498,48 @@ function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
   });
 }
 
-const TALENT_TIER_LABELS = ["Poziom I", "Poziom II", "Mistrzostwo"];
+const TALENT_KIND_BADGE = { passive: "💠", active: "⚡", sustained: "🛡️" };
+const TALENT_KIND_LABEL = { passive: "Bierna", active: "Aktywowana", sustained: "Podtrzymywana" };
 
-function renderTalentTree(tree, unlockedIds, pointsAvailable, handlers) {
+// Human-readable effect line for active/sustained nodes — mirrors the combat
+// log phrasing in main.js applySkillEffect(), but as a static description
+// (no live roll result) for the side detail panel.
+function describeTalentEffect(node) {
+  switch (node.effectType) {
+    case "aoe_damage":
+      return `Obrażenia obszarowe: ${Math.round(node.effectValue * 100)}% w promieniu ${node.effectRadius} od celu.`;
+    case "aoe_poison":
+      return `Trucizna obszarowa: ${node.effectValue} PD/turę na ${turnsLabel(node.effectTurns)}, promień ${node.effectRadius}.`;
+    case "poison_dot":
+      return `Zatruwa cel: ${node.effectValue} PD/turę na ${turnsLabel(node.effectTurns)}.`;
+    case "armor_shred":
+      return `Osłabia pancerz celu o ${Math.round(node.effectValue * 100)}% na ${turnsLabel(node.effectTurns)}.`;
+    case "debuff_enemy_stat":
+      return `Osłabia ${node.stat.toUpperCase()} celu o ${node.effectValue} na ${turnsLabel(node.effectTurns)}.`;
+    case "self_buff": {
+      const amount = node.stat === "pancerz" ? `${Math.round(node.effectValue * 100)}%` : `+${node.effectValue}`;
+      return `${amount} ${node.stat.toUpperCase()} na ${turnsLabel(node.effectTurns)}.`;
+    }
+    case "heal_self":
+      return `Leczy się o ${Math.round(node.effectValue * 100)}% maks. HP.`;
+    case "party_heal":
+      return `Leczy całą drużynę o ${Math.round(node.effectValue * 100)}% maks. HP.`;
+    case "lifesteal":
+      return `Wysysa ${Math.round(node.effectValue * 100)}% zadanych obrażeń jako HP.`;
+    case "stun":
+      return `Ogłusza cel — traci następną turę.`;
+    case "guaranteed_crit":
+      return `Gwarantowane trafienie krytyczne.`;
+    case "ignore_armor":
+      return `Ignoruje pancerz celu.`;
+    case "cleanse_self":
+      return `Usuwa trucizny i osłabienia działające na ciebie.`;
+    default:
+      return "";
+  }
+}
+
+function renderTalentTree(tree, unlockedIds, pointsAvailable, selectedNodeId, handlers) {
   const body = document.getElementById("talent-tree-body");
   if (!tree) {
     body.innerHTML = `<p class="sheet-empty-note">Stwórz postać, aby odblokować własne drzewko umiejętności.</p>`;
@@ -1509,42 +1548,75 @@ function renderTalentTree(tree, unlockedIds, pointsAvailable, handlers) {
 
   const header = `
     <h4>${tree.icon} ${tree.name}</h4>
-    <p class="camp-flavor">Dostępne punkty umiejętności: <strong>${pointsAvailable}</strong> — kolejny punkt zdobywasz co każdy poziom postaci.</p>
+    <p class="camp-flavor">Dostępne punkty umiejętności: <strong>${pointsAvailable}</strong> — kolejny punkt zdobywasz co każdy poziom postaci. Kliknij węzeł, aby zobaczyć szczegóły.</p>
   `;
 
-  const tiersHtml = tree.tiers.map((tier, tierIndex) => {
-    const nodesHtml = tier.map((node) => {
+  const branchesHtml = tree.branches.map((branch) => {
+    const nodesHtml = branch.nodes.map((node, rankIndex) => {
       const unlocked = unlockedIds.includes(node.id);
       const canUnlock = !unlocked && canUnlockTalent(node.id);
-      let stateHtml;
-      if (unlocked) {
-        stateHtml = `<span class="potion-count">Odblokowano ✅</span>`;
-      } else if (canUnlock) {
-        stateHtml = `<button type="button" class="sheet-action-btn talent-unlock-btn" data-node="${node.id}">Odblokuj (1 pkt)</button>`;
-      } else {
-        stateHtml = `<span class="sheet-empty-note">Zablokowane</span>`;
-      }
+      const selected = node.id === selectedNodeId;
+      let stateClass = "talent-node-locked";
+      if (unlocked) stateClass = "talent-node-unlocked";
+      else if (canUnlock) stateClass = "talent-node-available";
+      const connector = rankIndex > 0
+        ? `<div class="talent-connector${unlockedIds.includes(branch.nodes[rankIndex - 1].id) && unlocked ? " talent-connector-lit" : ""}"></div>`
+        : "";
       return `
-        <div class="sheet-item-row talent-node${unlocked ? " talent-node-unlocked" : ""}">
-          <div class="sheet-item-info">
-            <div class="sheet-item-name">${node.icon} ${node.name}</div>
-            <div class="sheet-item-desc">${node.description}</div>
-            <div class="sheet-item-bonus">${formatItemBonus({ bonus: node.bonus })}</div>
-          </div>
-          ${stateHtml}
-        </div>
+        ${connector}
+        <button type="button" class="talent-node-btn ${stateClass}${selected ? " talent-node-selected" : ""}" data-node="${node.id}" title="${node.name}">
+          <span class="talent-node-icon">${node.icon}</span>
+          <span class="talent-kind-badge">${TALENT_KIND_BADGE[node.kind]}</span>
+          ${unlocked ? `<span class="talent-node-check">✓</span>` : ""}
+          ${!unlocked && !canUnlock ? `<span class="talent-node-lock">🔒</span>` : ""}
+        </button>
       `;
     }).join("");
     return `
-      <div class="talent-tier">
-        <div class="talent-tier-label">${TALENT_TIER_LABELS[tierIndex] || `Poziom ${tierIndex + 1}`}</div>
-        ${nodesHtml}
+      <div class="talent-branch-col">
+        <div class="talent-branch-label">${branch.name}</div>
+        <div class="talent-branch-nodes">${nodesHtml}</div>
       </div>
     `;
   }).join("");
 
-  body.innerHTML = header + tiersHtml;
+  const selectedNode = selectedNodeId ? findTalentNode(selectedNodeId) : null;
+  let detailHtml = `<p class="sheet-empty-note">Kliknij węzeł drzewka, aby zobaczyć jego opis.</p>`;
+  if (selectedNode) {
+    const unlocked = unlockedIds.includes(selectedNode.id);
+    const canUnlock = !unlocked && canUnlockTalent(selectedNode.id);
+    const effectLines = selectedNode.kind === "passive"
+      ? [formatItemBonus({ bonus: selectedNode.bonus })]
+      : [
+          `Obrażenia: ${selectedNode.minDmg}-${selectedNode.maxDmg}, zasięg ${selectedNode.range}`,
+          `Odnowienie: ${turnsLabel(selectedNode.cooldown)}`,
+          describeTalentEffect(selectedNode),
+        ].filter(Boolean);
+    let actionHtml;
+    if (unlocked) actionHtml = `<span class="potion-count">Odblokowano ✅</span>`;
+    else if (canUnlock) actionHtml = `<button type="button" class="sheet-action-btn talent-unlock-btn" data-node="${selectedNode.id}">Odblokuj (1 pkt)</button>`;
+    else actionHtml = `<span class="sheet-empty-note">Zablokowane — odblokuj wcześniejszą rangę tej gałęzi.</span>`;
 
+    detailHtml = `
+      <div class="talent-detail-title">${selectedNode.icon} ${selectedNode.name}</div>
+      <div class="talent-detail-kind">${TALENT_KIND_BADGE[selectedNode.kind]} ${TALENT_KIND_LABEL[selectedNode.kind]}</div>
+      <div class="sheet-item-desc">${selectedNode.description}</div>
+      ${effectLines.map((line) => `<div class="sheet-item-bonus">${line}</div>`).join("")}
+      <div class="talent-detail-action">${actionHtml}</div>
+    `;
+  }
+
+  body.innerHTML = `
+    ${header}
+    <div class="talent-tree-layout">
+      <div class="talent-grid">${branchesHtml}</div>
+      <div class="talent-detail-panel">${detailHtml}</div>
+    </div>
+  `;
+
+  body.querySelectorAll(".talent-node-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onSelect(btn.dataset.node));
+  });
   body.querySelectorAll(".talent-unlock-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onUnlock(btn.dataset.node));
   });

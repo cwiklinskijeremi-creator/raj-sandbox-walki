@@ -17,6 +17,7 @@ let xp = 0;
 let statPointsAvailable = 10;
 let unlockedTalentIds = [];
 let talentPointsAvailable = 0;
+let talentTreeSelectedNodeId = null;
 let corruption = 0;
 let devouredCount = 0;
 let dungeonMapState = null;
@@ -991,22 +992,29 @@ function getEquipmentStatBonuses() {
   return getEquipmentStatBonusesFor(equipped);
 }
 
-// Talent bonuses use the exact same {str,wyt,zre,int,cha,pancerz,przebicie}
-// shape as equipment bonuses (see equipment.js EQUIPMENT_ITEMS), so they can
-// be merged into buildPlayerCharacter() the same way, with zero new combat
-// resolution logic — every talent node is a passive stat/combat bonus, never
-// a new active skill (that would need reworking the fixed 2-slot radial
-// skill menu — see js/talents.js header comment for the reasoning).
+// Passive talent nodes use the exact same {str,wyt,zre,int,cha,pancerz,
+// przebicie} shape as equipment bonuses (see equipment.js EQUIPMENT_ITEMS),
+// merged into buildPlayerCharacter() the same way getEquipmentStatBonuses()
+// is. Active/sustained nodes are shaped exactly like the 2 base subclass
+// spells (classes.js skills[]) and join that same list via
+// getUnlockedActiveTalents()/playerSkills() below, so they run through the
+// unmodified castSkill()/applySkillEffect() combat engine.
 function getTalentStatBonuses() {
   const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
   unlockedTalentIds.forEach((id) => {
     const node = findTalentNode(id);
-    if (!node) return;
+    if (!node || node.kind !== "passive") return;
     Object.entries(node.bonus).forEach(([key, value]) => {
       totals[key] += value;
     });
   });
   return totals;
+}
+
+function getUnlockedActiveTalents() {
+  return unlockedTalentIds
+    .map((id) => findTalentNode(id))
+    .filter((node) => node && node.kind !== "passive");
 }
 
 function getPlayerTalentTree() {
@@ -1017,14 +1025,17 @@ function isTalentUnlocked(nodeId) {
   return unlockedTalentIds.includes(nodeId);
 }
 
+// DAO-style per-branch chain: rank N in a branch requires rank N-1 already
+// unlocked IN THAT SAME BRANCH (rank 1 only needs a spendable point).
 function canUnlockTalent(nodeId) {
   const tree = getPlayerTalentTree();
   if (!tree || talentPointsAvailable <= 0 || isTalentUnlocked(nodeId)) return false;
-  const tierIndex = tree.tiers.findIndex((tier) => tier.some((n) => n.id === nodeId));
-  if (tierIndex === -1) return false;
+  const position = findTalentNodePosition(nodeId);
+  if (!position) return false;
+  const { branchIndex, tierIndex } = position;
   if (tierIndex === 0) return true;
-  const priorTiers = tree.tiers.slice(0, tierIndex).flat();
-  return priorTiers.every((n) => isTalentUnlocked(n.id));
+  const priorNode = tree.branches[branchIndex].nodes[tierIndex - 1];
+  return isTalentUnlocked(priorNode.id);
 }
 
 function unlockTalent(nodeId) {
@@ -1039,6 +1050,7 @@ function unlockTalent(nodeId) {
 }
 
 function openTalentTree() {
+  talentTreeSelectedNodeId = null;
   document.getElementById("talent-tree-overlay").classList.remove("hidden");
   refreshTalentTreeIfOpen();
 }
@@ -1047,10 +1059,18 @@ function closeTalentTree() {
   document.getElementById("talent-tree-overlay").classList.add("hidden");
 }
 
+function selectTalentNode(nodeId) {
+  talentTreeSelectedNodeId = nodeId;
+  refreshTalentTreeIfOpen();
+}
+
 function refreshTalentTreeIfOpen() {
   const overlay = document.getElementById("talent-tree-overlay");
   if (overlay.classList.contains("hidden")) return;
-  renderTalentTree(getPlayerTalentTree(), unlockedTalentIds, talentPointsAvailable, { onUnlock: unlockTalent });
+  renderTalentTree(getPlayerTalentTree(), unlockedTalentIds, talentPointsAvailable, talentTreeSelectedNodeId, {
+    onSelect: selectTalentNode,
+    onUnlock: unlockTalent,
+  });
 }
 
 function getEquippedWeaponItemsFor(equippedObj) {
@@ -1353,6 +1373,13 @@ function applyActiveRunData(data) {
   statPointsAvailable = data.statPointsAvailable || 10;
   unlockedTalentIds = data.unlockedTalentIds || [];
   talentPointsAvailable = data.talentPointsAvailable || 0;
+  // Migration: the talent tree content was rebuilt (DAO-style branches),
+  // so ids from the previous tree structure no longer resolve. Drop them
+  // and refund their points rather than silently losing progress.
+  const validTalentIds = unlockedTalentIds.filter((id) => findTalentNode(id));
+  talentPointsAvailable += unlockedTalentIds.length - validTalentIds.length;
+  unlockedTalentIds = validTalentIds;
+  if (!player.skillCooldowns || Array.isArray(player.skillCooldowns)) player.skillCooldowns = {};
   corruption = data.corruption || 0;
   devouredCount = data.devouredCount || 0;
   prologueStep = data.prologueStep || 0;
@@ -1811,6 +1838,15 @@ function triggerAttackFx(result, defenderPos) {
 
 function openPlayerActionMenu() {
   radialMenuOpen = true;
+  const skillOptions = playerSkills().map((skill) => ({
+    icon: skill.icon,
+    label: skillButtonLabel(skill.id),
+    disabled: playerActionsRemaining <= 0 || skillCooldownFor(skill.id) > 0,
+    onClick: () => {
+      radialMenuOpen = false;
+      castSkill(skill.id);
+    },
+  }));
   showRadialMenu(player.pos, [
     {
       icon: "🔁",
@@ -1833,24 +1869,7 @@ function openPlayerActionMenu() {
         }
       },
     },
-    {
-      icon: playerSkills()[0] ? playerSkills()[0].icon : "✨",
-      label: skillButtonLabel(0),
-      disabled: playerActionsRemaining <= 0 || (playerSkills()[0] && skillCooldownFor(0) > 0),
-      onClick: () => {
-        radialMenuOpen = false;
-        castSkill(0);
-      },
-    },
-    {
-      icon: playerSkills()[1] ? playerSkills()[1].icon : "✨",
-      label: skillButtonLabel(1),
-      disabled: playerActionsRemaining <= 0 || (playerSkills()[1] && skillCooldownFor(1) > 0),
-      onClick: () => {
-        radialMenuOpen = false;
-        castSkill(1);
-      },
-    },
+    ...skillOptions,
     {
       icon: "🧪",
       label: potionButtonLabel(),
@@ -1886,19 +1905,24 @@ function potionButtonLabel() {
   return totalCount > 0 ? `Mikstury (${totalCount})` : "Mikstury (brak)";
 }
 
+// Combines the 2 innate subclass spells with any active/sustained talent
+// nodes the player has unlocked — all skill-shaped objects resolved by the
+// same castSkill()/applySkillEffect() engine, keyed by stable `id` (not
+// array index, since the talent-granted portion of this list changes size).
 function playerSkills() {
   const subclassData = findSubclassData(player.class, player.subclass);
-  return (subclassData && subclassData.skills) || [];
+  const baseSkills = (subclassData && subclassData.skills) || [];
+  return [...baseSkills, ...getUnlockedActiveTalents()];
 }
 
-function skillCooldownFor(index) {
-  return (player.skillCooldowns && player.skillCooldowns[index]) || 0;
+function skillCooldownFor(id) {
+  return (player.skillCooldowns && player.skillCooldowns[id]) || 0;
 }
 
-function skillButtonLabel(index) {
-  const skill = playerSkills()[index];
+function skillButtonLabel(id) {
+  const skill = playerSkills().find((s) => s.id === id);
   if (!skill) return "Umiejętności (wybierz klasę)";
-  const cd = skillCooldownFor(index);
+  const cd = skillCooldownFor(id);
   if (cd > 0) return `${skill.name} (odnowienie: ${cd})`;
   return skill.name;
 }
@@ -2399,12 +2423,37 @@ function applySkillEffect(skill, target, result, context) {
       break;
     }
 
+    case "stun":
+      target.stunned = true;
+      appendLog(`💫 ${target.name} zostaje ogłuszony i straci następną turę.`, "system");
+      break;
+
+    case "debuff_enemy_stat":
+      applyTimedEffect(target, skill.stat, -skill.effectValue, skill.effectTurns, skill.label);
+      appendLog(`${target.name}: ${skill.stat.toUpperCase()} osłabione o ${skill.effectValue} na ${turnsLabel(skill.effectTurns)}.`, "system");
+      break;
+
+    case "party_heal": {
+      const healAmount = Math.round(player.maxHP * skill.effectValue);
+      livingAllies().forEach((u) => {
+        u.currentHP = Math.min(u.maxHP, u.currentHP + healAmount);
+      });
+      appendLog(`💞 Drużyna odzyskuje ${healAmount} PD.`, "system");
+      break;
+    }
+
+    case "cleanse_self":
+      player.poison = null;
+      player.activeEffects = (player.activeEffects || []).filter((eff) => eff.amount > 0);
+      appendLog(`✨ Oczyszczasz się z trucizn i osłabień.`, "system");
+      break;
+
     default:
       break;
   }
 }
 
-function castSkill(index) {
+function castSkill(id) {
   if (battleOver || playerActionsRemaining <= 0) return;
   closeRadialMenu();
   radialMenuOpen = false;
@@ -2413,15 +2462,15 @@ function castSkill(index) {
     return;
   }
 
-  const skill = playerSkills()[index];
+  const skill = playerSkills().find((s) => s.id === id);
   if (!skill) {
     appendLog("Wybierz najpierw klasę i specjalizację, żeby odblokować czar.", "system");
     render();
     return;
   }
 
-  if (skillCooldownFor(index) > 0) {
-    appendLog(`${skill.name} jeszcze się odnawia (pozostało ${turnsLabel(skillCooldownFor(index))}).`, "system");
+  if (skillCooldownFor(id) > 0) {
+    appendLog(`${skill.name} jeszcze się odnawia (pozostało ${turnsLabel(skillCooldownFor(id))}).`, "system");
     render();
     return;
   }
@@ -2445,8 +2494,8 @@ function castSkill(index) {
   if (skill.effectType === "ignore_armor") virtualAttacker.przebicie = 1;
 
   playerActionsRemaining--;
-  player.skillCooldowns = player.skillCooldowns || [];
-  player.skillCooldowns[index] = skill.cooldown;
+  player.skillCooldowns = player.skillCooldowns || {};
+  player.skillCooldowns[id] = skill.cooldown;
   playSpellCastSound();
   render();
 
@@ -2606,6 +2655,12 @@ function enemyPhase() {
   for (const enemy of enemies) {
     if (enemy.currentHP <= 0 || battleOver) continue;
 
+    if (enemy.stunned) {
+      appendLog(`💫 ${enemy.name} jest ogłuszony i traci turę.`, "system");
+      enemy.stunned = false;
+      continue;
+    }
+
     const target = nearestLiving(enemy.pos, livingAllies());
     if (!target) continue;
 
@@ -2662,8 +2717,8 @@ function enemyPhase() {
   }
 
   if (!battleOver) {
-    (player.skillCooldowns || []).forEach((cd, i) => {
-      if (cd > 0) player.skillCooldowns[i]--;
+    Object.keys(player.skillCooldowns || {}).forEach((id) => {
+      if (player.skillCooldowns[id] > 0) player.skillCooldowns[id]--;
     });
     if (player.mutateCooldown > 0) player.mutateCooldown--;
     tickTimedEffectsFor(player);

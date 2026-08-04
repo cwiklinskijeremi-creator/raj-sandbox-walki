@@ -14,11 +14,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "arcymag_kula_ognia",
             name: "Kula Ognia", icon: "🔥", colorClass: "spell-fire",
             minDmg: 12, maxDmg: 18, range: 6, cooldown: 3,
             effectType: "aoe_damage", effectValue: 0.6, effectRadius: 1,
           },
           {
+            id: "arcymag_tarcza_many",
             name: "Tarcza Many", icon: "🔷", colorClass: "spell-elixir",
             minDmg: 10, maxDmg: 15, range: 5, cooldown: 4,
             effectType: "self_buff", stat: "pancerz", effectValue: 0.15, effectTurns: 3,
@@ -37,11 +39,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "apostata_mroczny_pocisk",
             name: "Mroczny Pocisk", icon: "🌀", colorClass: "spell-dark",
             minDmg: 13, maxDmg: 19, range: 6, cooldown: 3,
             effectType: "armor_shred", effectValue: 0.15, effectTurns: 2,
           },
           {
+            id: "apostata_wysysanie_zycia",
             name: "Wysysanie Życia", icon: "🧛", colorClass: "spell-dark",
             minDmg: 12, maxDmg: 17, range: 5, cooldown: 3,
             effectType: "lifesteal", effectValue: 0.45,
@@ -65,11 +69,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "swietlisty_promien_osadu",
             name: "Promień Osądu", icon: "✨", colorClass: "spell-holy",
             minDmg: 10, maxDmg: 15, range: 5, cooldown: 4,
             effectType: "heal_self", effectValue: 0.2,
           },
           {
+            id: "swietlisty_tarcza_swiatla",
             name: "Tarcza Światła", icon: "🌟", colorClass: "spell-holy",
             minDmg: 9, maxDmg: 14, range: 5, cooldown: 4,
             effectType: "self_buff", stat: "pancerz", effectValue: 0.18, effectTurns: 3,
@@ -88,11 +94,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "mroczny_klatwa_krwi",
             name: "Klątwa Krwi", icon: "🩸", colorClass: "spell-dark",
             minDmg: 12, maxDmg: 17, range: 5, cooldown: 3,
             effectType: "lifesteal", effectValue: 0.5,
           },
           {
+            id: "mroczny_mroczna_aura",
             name: "Mroczna Aura", icon: "💀", colorClass: "spell-dark",
             minDmg: 11, maxDmg: 16, range: 5, cooldown: 4,
             effectType: "self_buff", stat: "str", effectValue: 5, effectTurns: 3,
@@ -117,11 +125,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "najemnik_celny_rzut",
             name: "Celny Rzut", icon: "🔪", colorClass: "spell-physical",
             minDmg: 10, maxDmg: 14, range: 5, cooldown: 3,
             effectType: "ignore_armor",
           },
           {
+            id: "najemnik_bojowy_okrzyk",
             name: "Bojowy Okrzyk", icon: "📯", colorClass: "spell-physical",
             minDmg: 9, maxDmg: 13, range: 5, cooldown: 4,
             effectType: "self_buff", stat: "str", effectValue: 5, effectTurns: 3,
@@ -140,12 +150,14 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "berserk_rzucony_topor",
             name: "Rzucony Topór", icon: "🪓", colorClass: "spell-physical",
             minDmg: 14, maxDmg: 20, range: 4, cooldown: 4,
             effectType: "self_buff", stat: "str", effectValue: 6, effectTurns: 2,
             label: "wściekłość",
           },
           {
+            id: "berserk_krwawy_szal",
             name: "Krwawy Szał", icon: "🩸", colorClass: "spell-physical",
             minDmg: 13, maxDmg: 19, range: 4, cooldown: 3,
             effectType: "lifesteal", effectValue: 0.4,
@@ -169,11 +181,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "lowca_precyzyjny_strzal",
             name: "Precyzyjny Strzał", icon: "🏹", colorClass: "spell-physical",
             minDmg: 11, maxDmg: 16, range: 7, cooldown: 3,
             effectType: "guaranteed_crit",
           },
           {
+            id: "lowca_usidlajaca_strzala",
             name: "Usidlająca Strzała", icon: "🪤", colorClass: "spell-physical",
             minDmg: 10, maxDmg: 15, range: 7, cooldown: 3,
             effectType: "armor_shred", effectValue: 0.15, effectTurns: 2,
@@ -191,11 +205,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "skrytobojca_zatruty_sztylet",
             name: "Zatruty Sztylet", icon: "☠️", colorClass: "spell-poison",
             minDmg: 10, maxDmg: 15, range: 4, cooldown: 3,
             effectType: "poison_dot", effectValue: 6, effectTurns: 2,
           },
           {
+            id: "skrytobojca_cios_w_plecy",
             name: "Cios w Plecy", icon: "🗡️", colorClass: "spell-physical",
             minDmg: 9, maxDmg: 14, range: 4, cooldown: 4,
             effectType: "guaranteed_crit",
@@ -219,11 +235,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "truciciel_kwasowa_fiolka",
             name: "Kwasowa Fiolka", icon: "🧪", colorClass: "spell-poison",
             minDmg: 11, maxDmg: 16, range: 5, cooldown: 4,
             effectType: "aoe_poison", effectValue: 5, effectTurns: 2, effectRadius: 1,
           },
           {
+            id: "truciciel_eliksir_odpornosci",
             name: "Eliksir Odporności", icon: "🧫", colorClass: "spell-elixir",
             minDmg: 10, maxDmg: 15, range: 5, cooldown: 4,
             effectType: "self_buff", stat: "wyt", effectValue: 5, effectTurns: 3,
@@ -242,11 +260,13 @@ const CLASS_DATA = [
         ],
         skills: [
           {
+            id: "medyk_wybuchowy_eliksir",
             name: "Wybuchowy Eliksir", icon: "💥", colorClass: "spell-elixir",
             minDmg: 9, maxDmg: 14, range: 5, cooldown: 4,
             effectType: "heal_self", effectValue: 0.25,
           },
           {
+            id: "medyk_kwas_zracy",
             name: "Kwas Żrący", icon: "🧪", colorClass: "spell-poison",
             minDmg: 8, maxDmg: 13, range: 5, cooldown: 3,
             effectType: "armor_shred", effectValue: 0.12, effectTurns: 2,
