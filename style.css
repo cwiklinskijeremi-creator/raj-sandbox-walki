@@ -450,6 +450,26 @@ body {
   transition: width 0.3s var(--ease);
 }
 
+.talent-tier {
+  border-left: 2px solid var(--border-strong);
+  padding-left: 0.9rem;
+  margin: 1rem 0 1.3rem;
+}
+
+.talent-tier-label {
+  font-family: var(--font-display);
+  color: var(--accent);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.talent-node-unlocked {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
 .hp-bar-preview {
   position: absolute;
   top: 0;

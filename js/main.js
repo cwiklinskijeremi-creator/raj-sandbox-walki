@@ -15,6 +15,8 @@ let bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
 let level = 1;
 let xp = 0;
 let statPointsAvailable = 10;
+let unlockedTalentIds = [];
+let talentPointsAvailable = 0;
 let corruption = 0;
 let devouredCount = 0;
 let dungeonMapState = null;
@@ -290,7 +292,8 @@ function awardXp(amount) {
     xp -= xpToNextLevel(level);
     level++;
     statPointsAvailable += 3;
-    appendLog(`Awans! Osiągasz poziom ${level} (+3 punkty statystyk do rozdania w obozie).`, "system");
+    talentPointsAvailable += 1;
+    appendLog(`Awans! Osiągasz poziom ${level} (+3 punkty statystyk i +1 punkt umiejętności do rozdania w obozie).`, "system");
   }
 }
 
@@ -988,6 +991,68 @@ function getEquipmentStatBonuses() {
   return getEquipmentStatBonusesFor(equipped);
 }
 
+// Talent bonuses use the exact same {str,wyt,zre,int,cha,pancerz,przebicie}
+// shape as equipment bonuses (see equipment.js EQUIPMENT_ITEMS), so they can
+// be merged into buildPlayerCharacter() the same way, with zero new combat
+// resolution logic — every talent node is a passive stat/combat bonus, never
+// a new active skill (that would need reworking the fixed 2-slot radial
+// skill menu — see js/talents.js header comment for the reasoning).
+function getTalentStatBonuses() {
+  const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
+  unlockedTalentIds.forEach((id) => {
+    const node = findTalentNode(id);
+    if (!node) return;
+    Object.entries(node.bonus).forEach(([key, value]) => {
+      totals[key] += value;
+    });
+  });
+  return totals;
+}
+
+function getPlayerTalentTree() {
+  return selectedSubclassName ? TALENT_TREES[selectedSubclassName] : null;
+}
+
+function isTalentUnlocked(nodeId) {
+  return unlockedTalentIds.includes(nodeId);
+}
+
+function canUnlockTalent(nodeId) {
+  const tree = getPlayerTalentTree();
+  if (!tree || talentPointsAvailable <= 0 || isTalentUnlocked(nodeId)) return false;
+  const tierIndex = tree.tiers.findIndex((tier) => tier.some((n) => n.id === nodeId));
+  if (tierIndex === -1) return false;
+  if (tierIndex === 0) return true;
+  const priorTiers = tree.tiers.slice(0, tierIndex).flat();
+  return priorTiers.every((n) => isTalentUnlocked(n.id));
+}
+
+function unlockTalent(nodeId) {
+  if (!canUnlockTalent(nodeId)) return;
+  unlockedTalentIds.push(nodeId);
+  talentPointsAvailable -= 1;
+  saveActiveRun();
+  if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
+  refreshTalentTreeIfOpen();
+  refreshCharacterSheetIfOpen();
+  render();
+}
+
+function openTalentTree() {
+  document.getElementById("talent-tree-overlay").classList.remove("hidden");
+  refreshTalentTreeIfOpen();
+}
+
+function closeTalentTree() {
+  document.getElementById("talent-tree-overlay").classList.add("hidden");
+}
+
+function refreshTalentTreeIfOpen() {
+  const overlay = document.getElementById("talent-tree-overlay");
+  if (overlay.classList.contains("hidden")) return;
+  renderTalentTree(getPlayerTalentTree(), unlockedTalentIds, talentPointsAvailable, { onUnlock: unlockTalent });
+}
+
 function getEquippedWeaponItemsFor(equippedObj) {
   const weapons = [];
   Object.values(equippedObj).forEach((itemId) => {
@@ -1024,16 +1089,17 @@ function buildPlayerCharacter() {
   const sub = findSubclassData(selectedClassName, selectedSubclassName);
   if (sub) {
     const equipBonus = getEquipmentStatBonuses();
+    const talentBonus = getTalentStatBonuses();
     const totalBonus = {
-      str: bonusStats.str + equipBonus.str,
-      wyt: bonusStats.wyt + equipBonus.wyt,
-      zre: bonusStats.zre + equipBonus.zre,
-      int: bonusStats.int + equipBonus.int,
-      cha: bonusStats.cha + equipBonus.cha,
+      str: bonusStats.str + equipBonus.str + talentBonus.str,
+      wyt: bonusStats.wyt + equipBonus.wyt + talentBonus.wyt,
+      zre: bonusStats.zre + equipBonus.zre + talentBonus.zre,
+      int: bonusStats.int + equipBonus.int + talentBonus.int,
+      cha: bonusStats.cha + equipBonus.cha + talentBonus.cha,
     };
     applyClassProfile(p, sub, totalBonus);
-    p.pancerz += equipBonus.pancerz;
-    p.przebicie += equipBonus.przebicie;
+    p.pancerz += equipBonus.pancerz + talentBonus.pancerz;
+    p.przebicie += equipBonus.przebicie + talentBonus.przebicie;
     p.weapons = [...p.weapons, ...getEquippedWeaponItems()];
   }
   p.class = selectedClassName;
@@ -1086,7 +1152,7 @@ function refreshCharacterSheetIfOpen() {
   if (overlay.classList.contains("hidden")) return;
   renderCharacterSheet(
     player, inventory, equipped, resources, potionInventory, equipmentUpgrades,
-    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable, corruption, devouredCount, mutationTier: mutationTier() },
+    { level, xp, xpToNext: xpToNextLevel(level), bonusStats, statPointsAvailable, talentPointsAvailable, corruption, devouredCount, mutationTier: mutationTier() },
     { onBuy: buyEquipment, onEquip: equipItem, onUnequip: unequipSlot, onAdjustStat: adjustBonusStat, onBuyPotion: buyPotion },
   );
 }
@@ -1229,6 +1295,8 @@ function saveActiveRun() {
     level,
     xp,
     statPointsAvailable,
+    unlockedTalentIds,
+    talentPointsAvailable,
     corruption,
     devouredCount,
     prologueStep,
@@ -1283,6 +1351,8 @@ function applyActiveRunData(data) {
   level = data.level || 1;
   xp = data.xp || 0;
   statPointsAvailable = data.statPointsAvailable || 10;
+  unlockedTalentIds = data.unlockedTalentIds || [];
+  talentPointsAvailable = data.talentPointsAvailable || 0;
   corruption = data.corruption || 0;
   devouredCount = data.devouredCount || 0;
   prologueStep = data.prologueStep || 0;
@@ -1415,6 +1485,8 @@ function startNewGame() {
   level = 1;
   xp = 0;
   statPointsAvailable = 10;
+  unlockedTalentIds = [];
+  talentPointsAvailable = 0;
   corruption = 0;
   devouredCount = 0;
   dungeonMapState = null;
@@ -1472,14 +1544,18 @@ function adjustBonusStat(key, delta) {
 const RESPEC_COST = { currency: "Kryształy Esencji", amount: 15 };
 
 function respecStats() {
-  const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
-  if (spent <= 0 || !canAffordItem({ cost: RESPEC_COST })) return;
+  const spentStats = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+  const spentTalents = unlockedTalentIds.length;
+  if (spentStats + spentTalents <= 0 || !canAffordItem({ cost: RESPEC_COST })) return;
   resources[RESPEC_COST.currency].amount -= RESPEC_COST.amount;
   saveResources();
   bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  talentPointsAvailable += spentTalents;
+  unlockedTalentIds = [];
   if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
   render();
   refreshCharacterSheetIfOpen();
+  refreshTalentTreeIfOpen();
 }
 
 const CORRUPTION_CLEANSE_COST = { currency: "Kryształy Esencji", amount: 25 };
@@ -1593,6 +1669,8 @@ function clearAllProgress() {
   level = 1;
   xp = 0;
   statPointsAvailable = 10;
+  unlockedTalentIds = [];
+  talentPointsAvailable = 0;
   closeSettingsModal();
   phase = "main-menu";
   render();
@@ -2638,6 +2716,8 @@ document.getElementById("camp-main-menu-btn").addEventListener("click", goToMain
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
 document.getElementById("camp-quests-btn").addEventListener("click", openQuestBoard);
 document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
+document.getElementById("camp-talents-btn").addEventListener("click", openTalentTree);
+document.getElementById("talent-tree-close").addEventListener("click", closeTalentTree);
 document.getElementById("camp-campaign-btn").addEventListener("click", openCampaignBoard);
 document.getElementById("campaign-close").addEventListener("click", closeCampaignBoard);
 document.getElementById("camp-party-btn").addEventListener("click", openPartyOverlay);

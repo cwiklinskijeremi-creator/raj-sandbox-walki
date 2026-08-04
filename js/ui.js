@@ -687,7 +687,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
     return;
   }
 
-  const { level, xp, xpToNext, bonusStats, statPointsAvailable, corruption, devouredCount, mutationTier } = progress;
+  const { level, xp, xpToNext, bonusStats, statPointsAvailable, talentPointsAvailable, corruption, devouredCount, mutationTier } = progress;
   const spentPoints = Object.values(bonusStats).reduce((a, b) => a + b, 0);
   const unspentPoints = statPointsAvailable - spentPoints;
 
@@ -713,6 +713,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
         <div>INT: ${player.int}</div>
         <div>CHA: ${player.cha}</div>
       </div>
+      ${talentPointsAvailable > 0 ? `<div class="corruption-line">🌟 Niewydane punkty umiejętności: ${talentPointsAvailable} — otwórz „🌟 Umiejętności” w obozie.</div>` : ""}
       <div class="corruption-line">🧬 Spaczenie: ${corruption || 0}%${corruption > 20 ? " — ryzyko obłędu w walce!" : ""}</div>
       <div class="corruption-line">🍖 Pożarte szczątki: ${devouredCount || 0} (mutacja tier ${mutationTier || 0}, +${MUTATE_STAT_BONUS + (mutationTier || 0)} STR/WYT przy "Mutuj się")</div>
     </div>
@@ -1339,7 +1340,8 @@ function renderCityPlace(place, state, handlers) {
       btn.addEventListener("click", () => handlers.onCraft(btn.dataset.recipe));
     });
   } else if (place.key === "swiatynia") {
-    const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+    const spentStats = Object.values(bonusStats).reduce((a, b) => a + b, 0);
+    const spentTalents = unlockedTalentIds.length;
     const owned = resources[RESPEC_COST.currency] ? resources[RESPEC_COST.currency].amount : 0;
     const affordable = owned >= RESPEC_COST.amount;
     const corruptionOwned = resources[CORRUPTION_CLEANSE_COST.currency] ? resources[CORRUPTION_CLEANSE_COST.currency].amount : 0;
@@ -1348,10 +1350,10 @@ function renderCityPlace(place, state, handlers) {
       <h4>🕯️ Oczyszczenie Wspomnień</h4>
       <div class="sheet-item-row">
         <div class="sheet-item-info">
-          <div class="sheet-item-desc">Zakon zetrze z Twojego ciała ślad dotychczasowego treningu, zwracając wszystkie wydane punkty statystyk do ponownego rozdania w obozie (${spent} pkt obecnie wydanych).</div>
+          <div class="sheet-item-desc">Zakon zetrze z Twojego ciała ślad dotychczasowego treningu, zwracając wszystkie wydane punkty statystyk i umiejętności do ponownego rozdania w obozie (${spentStats} pkt statystyk, ${spentTalents} pkt umiejętności obecnie wydanych).</div>
           <div class="sheet-item-cost">Koszt: ${RESPEC_COST.amount} × ${RESPEC_COST.currency} (masz: ${owned})</div>
         </div>
-        <button type="button" class="sheet-action-btn respec-btn" ${spent > 0 && affordable ? "" : "disabled"}>Oczyść</button>
+        <button type="button" class="sheet-action-btn respec-btn" ${(spentStats + spentTalents) > 0 && affordable ? "" : "disabled"}>Oczyść</button>
       </div>
       <h4>🧬 Oczyszczenie Spaczenia</h4>
       <div class="sheet-item-row">
@@ -1493,6 +1495,58 @@ function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
 
   body.querySelectorAll(".claim-quest-btn").forEach((btn) => {
     btn.addEventListener("click", () => onClaim(btn.dataset.quest));
+  });
+}
+
+const TALENT_TIER_LABELS = ["Poziom I", "Poziom II", "Mistrzostwo"];
+
+function renderTalentTree(tree, unlockedIds, pointsAvailable, handlers) {
+  const body = document.getElementById("talent-tree-body");
+  if (!tree) {
+    body.innerHTML = `<p class="sheet-empty-note">Stwórz postać, aby odblokować własne drzewko umiejętności.</p>`;
+    return;
+  }
+
+  const header = `
+    <h4>${tree.icon} ${tree.name}</h4>
+    <p class="camp-flavor">Dostępne punkty umiejętności: <strong>${pointsAvailable}</strong> — kolejny punkt zdobywasz co każdy poziom postaci.</p>
+  `;
+
+  const tiersHtml = tree.tiers.map((tier, tierIndex) => {
+    const nodesHtml = tier.map((node) => {
+      const unlocked = unlockedIds.includes(node.id);
+      const canUnlock = !unlocked && canUnlockTalent(node.id);
+      let stateHtml;
+      if (unlocked) {
+        stateHtml = `<span class="potion-count">Odblokowano ✅</span>`;
+      } else if (canUnlock) {
+        stateHtml = `<button type="button" class="sheet-action-btn talent-unlock-btn" data-node="${node.id}">Odblokuj (1 pkt)</button>`;
+      } else {
+        stateHtml = `<span class="sheet-empty-note">Zablokowane</span>`;
+      }
+      return `
+        <div class="sheet-item-row talent-node${unlocked ? " talent-node-unlocked" : ""}">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name">${node.icon} ${node.name}</div>
+            <div class="sheet-item-desc">${node.description}</div>
+            <div class="sheet-item-bonus">${formatItemBonus({ bonus: node.bonus })}</div>
+          </div>
+          ${stateHtml}
+        </div>
+      `;
+    }).join("");
+    return `
+      <div class="talent-tier">
+        <div class="talent-tier-label">${TALENT_TIER_LABELS[tierIndex] || `Poziom ${tierIndex + 1}`}</div>
+        ${nodesHtml}
+      </div>
+    `;
+  }).join("");
+
+  body.innerHTML = header + tiersHtml;
+
+  body.querySelectorAll(".talent-unlock-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.onUnlock(btn.dataset.node));
   });
 }
 
