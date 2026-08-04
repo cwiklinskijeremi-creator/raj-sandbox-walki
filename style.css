@@ -1798,6 +1798,10 @@ button:disabled {
   color: #a89c8f;
 }
 
+.craft-ingredient-missing {
+  color: var(--danger-bright);
+}
+
 .sheet-empty-note {
   color: #6a6470;
   font-style: italic;

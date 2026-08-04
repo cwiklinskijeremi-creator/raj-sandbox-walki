@@ -764,6 +764,25 @@ function upgradeEquipment(itemId) {
   refreshCharacterSheetIfOpen();
 }
 
+function canCraftItem(recipe) {
+  return recipe.ingredients.every((ing) => (resources[ing.currency] ? resources[ing.currency].amount : 0) >= ing.amount);
+}
+
+function craftItem(recipeId) {
+  const recipe = CRAFTING_RECIPES.find((r) => r.id === recipeId);
+  if (!recipe || inventory.includes(recipe.resultItemId) || !canCraftItem(recipe)) return;
+  recipe.ingredients.forEach((ing) => {
+    resources[ing.currency].amount -= ing.amount;
+  });
+  saveResources();
+  inventory.push(recipe.resultItemId);
+  saveEquipmentState();
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === recipe.resultItemId);
+  appendLog(`⚒️ Wytworzono: ${item.icon} ${item.name}!`, "system");
+  render();
+  refreshCharacterSheetIfOpen();
+}
+
 const POTION_STORAGE_KEY = "raj-sandbox-potions";
 
 function loadPotionInventory() {
@@ -1450,7 +1469,7 @@ function adjustBonusStat(key, delta) {
   refreshCharacterSheetIfOpen();
 }
 
-const RESPEC_COST = { currency: "Fiolki Światła", amount: 15 };
+const RESPEC_COST = { currency: "Kryształy Esencji", amount: 15 };
 
 function respecStats() {
   const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
@@ -1463,7 +1482,7 @@ function respecStats() {
   refreshCharacterSheetIfOpen();
 }
 
-const CORRUPTION_CLEANSE_COST = { currency: "Fiolki Światła", amount: 25 };
+const CORRUPTION_CLEANSE_COST = { currency: "Kryształy Esencji", amount: 25 };
 
 function cleanseCorruption() {
   if (corruption <= 0 || !canAffordItem({ cost: CORRUPTION_CLEANSE_COST })) return;
@@ -1479,7 +1498,7 @@ function cleanseCorruption() {
 // Mutuj się/Pożryj szczątki (battle-only), reuses the exact same
 // devouredCount/mutationTier system to grant a permanent mutation step
 // outside of combat.
-const EMBRACE_RITUAL_COST = { currency: "Spaczone Zioła", amount: 20 };
+const EMBRACE_RITUAL_COST = { currency: "Kryształy Esencji", amount: 20 };
 const EMBRACE_RITUAL_CORRUPTION_GAIN = 8;
 
 function performEmbraceRitual() {
@@ -1965,7 +1984,7 @@ function render() {
       currentCityPlace,
       { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, devouredCount, mutationTier: mutationTier(), claimedNpcQuests, reputation },
       {
-        onBuy: buyEquipment, onUpgrade: upgradeEquipment, onRespec: respecStats,
+        onBuy: buyEquipment, onUpgrade: upgradeEquipment, onCraft: craftItem, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
         onRecruit: openRecruitScene, onCleanseCorruption: cleanseCorruption, onEmbraceRitual: performEmbraceRitual,
         onTalkToNpc: talkToNpc, onClaimNpcQuest: claimNpcQuestReward,

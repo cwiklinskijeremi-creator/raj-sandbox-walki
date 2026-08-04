@@ -8,7 +8,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Lekki pancerz łowców Gildii, zszywany ze skóry aberracji.",
     bonus: { pancerz: 0.04 },
-    cost: { currency: "Nagroda Gildii", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
   {
     id: "kolczuga_kopalniana",
@@ -39,7 +39,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Zaklęty przez Zakon Światła talizman wzmacniający ciało.",
     bonus: { str: 3 },
-    cost: { currency: "Fiolki Światła", amount: 8 },
+    cost: { currency: "Kryształy Esencji", amount: 8 },
   },
   {
     id: "amulet_zrecznosci",
@@ -49,7 +49,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Wykonany ze spaczonych ziół, przyspiesza ruchy nosiciela.",
     bonus: { zre: 3 },
-    cost: { currency: "Spaczone Zioła", amount: 8 },
+    cost: { currency: "Kryształy Esencji", amount: 8 },
   },
   {
     id: "amulet_umyslu",
@@ -69,7 +69,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Nagroda za polowania dla Gildii — osłabia pancerz przeciwnika.",
     bonus: { przebicie: 0.06 },
-    cost: { currency: "Nagroda Gildii", amount: 14 },
+    cost: { currency: "Kryształy Esencji", amount: 14 },
   },
   // Nowe sloty (obóz)
   {
@@ -80,7 +80,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Prosty kaptur noszony przez każdego, kto wyrusza poza mury.",
     bonus: { pancerz: 0.03 },
-    cost: { currency: "Nagroda Gildii", amount: 8 },
+    cost: { currency: "Kryształy Esencji", amount: 8 },
   },
   {
     id: "rekawice_skorzane",
@@ -90,7 +90,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Wzmacniają chwyt i pewność ciosu.",
     bonus: { str: 2 },
-    cost: { currency: "Spaczone Zioła", amount: 8 },
+    cost: { currency: "Kryształy Esencji", amount: 8 },
   },
   {
     id: "spodnie_wedrowca",
@@ -110,7 +110,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Lekkie podeszwy, które nie zdradzają kroku.",
     bonus: { zre: 2 },
-    cost: { currency: "Nagroda Gildii", amount: 8 },
+    cost: { currency: "Kryształy Esencji", amount: 8 },
   },
   {
     id: "pierscien_mocy",
@@ -130,7 +130,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "camp",
     description: "Lekki jak piórko — prawie nie czuć go na palcu.",
     bonus: { zre: 2 },
-    cost: { currency: "Spaczone Zioła", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
   {
     id: "podreczny_sztylet",
@@ -141,7 +141,7 @@ const EQUIPMENT_ITEMS = [
     description: "Prosty, dobrze wyważony sztylet — podstawowa broń każdego najemnika.",
     weapon: { name: "Podręczny Sztylet", minDmg: 6, maxDmg: 10, range: 1 },
     bonus: { przebicie: 0.03 },
-    cost: { currency: "Nagroda Gildii", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
   {
     id: "noz_do_rzucania",
@@ -152,7 +152,7 @@ const EQUIPMENT_ITEMS = [
     description: "Lekki, wyważony do rzutu — trzymany w wolnej dłoni na wszelki wypadek.",
     weapon: { name: "Nóż do Rzucania", minDmg: 5, maxDmg: 8, range: 3 },
     bonus: { zre: 2 },
-    cost: { currency: "Spaczone Zioła", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
 
   // Kuźnia Gildii Rzemieślników
@@ -174,7 +174,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "kuznia",
     description: "Zaklęta przez kowali Gildii obręcz — hartuje ciało nosiciela jak stal w kuźni.",
     bonus: { wyt: 3 },
-    cost: { currency: "Nagroda Gildii", amount: 16 },
+    cost: { currency: "Kryształy Esencji", amount: 16 },
   },
   {
     id: "helm_bojowy",
@@ -194,7 +194,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "kuznia",
     description: "Kolce wzmacniające każde uderzenie w słaby punkt pancerza.",
     bonus: { przebicie: 0.05 },
-    cost: { currency: "Nagroda Gildii", amount: 14 },
+    cost: { currency: "Kryształy Esencji", amount: 14 },
   },
   {
     id: "nogawice_plytowe",
@@ -214,7 +214,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "kuznia",
     description: "Osłania przedramię przed ciosami, które nie trafiły w korpus.",
     bonus: { pancerz: 0.05 },
-    cost: { currency: "Nagroda Gildii", amount: 16 },
+    cost: { currency: "Kryształy Esencji", amount: 16 },
   },
   {
     id: "naramiennik_uderzeniowy",
@@ -234,7 +234,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "kuznia",
     description: "Kuty w ogniu esencji — hartuje ciało tak jak stal.",
     bonus: { wyt: 2 },
-    cost: { currency: "Nagroda Gildii", amount: 12 },
+    cost: { currency: "Kryształy Esencji", amount: 12 },
   },
   {
     id: "kuty_topor_boczny",
@@ -256,7 +256,7 @@ const EQUIPMENT_ITEMS = [
     description: "Krótkie ostrze trzymane w wolnej dłoni, wyważone tak, by odbijać ciosy.",
     weapon: { name: "Parujący Sztylet", minDmg: 7, maxDmg: 11, range: 1 },
     bonus: { pancerz: 0.03 },
-    cost: { currency: "Nagroda Gildii", amount: 16 },
+    cost: { currency: "Kryształy Esencji", amount: 16 },
   },
 
   // Świątynia Zakonu Światła
@@ -268,7 +268,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "swiatynia",
     description: "Tkanina nasączona światłem — chroni duszę niemal tak samo mocno jak ciało.",
     bonus: { pancerz: 0.05, cha: 2 },
-    cost: { currency: "Fiolki Światła", amount: 12 },
+    cost: { currency: "Kryształy Esencji", amount: 12 },
   },
   {
     id: "relikwiarz",
@@ -288,7 +288,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "swiatynia",
     description: "Noszone przez wędrownych kapłanów Zakonu — niewygodne, ale budzą zaufanie.",
     bonus: { cha: 2 },
-    cost: { currency: "Fiolki Światła", amount: 8 },
+    cost: { currency: "Kryształy Esencji", amount: 8 },
   },
   {
     id: "bransoleta_wiary",
@@ -298,7 +298,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "swiatynia",
     description: "Sznur paciorków otulony słabym, ciepłym światłem.",
     bonus: { int: 2 },
-    cost: { currency: "Fiolki Światła", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
   {
     id: "bransoleta_swiatla",
@@ -308,7 +308,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "swiatynia",
     description: "Emanuje słabym blaskiem, który dodaje otuchy w walce.",
     bonus: { cha: 2 },
-    cost: { currency: "Fiolki Światła", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
   {
     id: "pierscien_wiedzy",
@@ -318,7 +318,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "swiatynia",
     description: "Noszony niegdyś przez uczonego Zakonu — wciąż pulsuje słabą mądrością.",
     bonus: { int: 2 },
-    cost: { currency: "Fiolki Światła", amount: 12 },
+    cost: { currency: "Kryształy Esencji", amount: 12 },
   },
   {
     id: "swiety_sztylet_osadu",
@@ -329,7 +329,7 @@ const EQUIPMENT_ITEMS = [
     description: "Poświęcone ostrze noszone przez egzekutorów wiary — osądza, zanim wysłucha.",
     weapon: { name: "Święty Sztylet Osądu", minDmg: 8, maxDmg: 12, range: 1 },
     bonus: { cha: 2 },
-    cost: { currency: "Fiolki Światła", amount: 14 },
+    cost: { currency: "Kryształy Esencji", amount: 14 },
   },
   {
     id: "kadzielnica_bojowa",
@@ -340,7 +340,7 @@ const EQUIPMENT_ITEMS = [
     description: "Rozżarzone kadzidło rzucane w twarz przeciwnika — bardziej broń niż ozdoba.",
     weapon: { name: "Kadzielnica Bojowa", minDmg: 6, maxDmg: 10, range: 3 },
     bonus: { int: 2 },
-    cost: { currency: "Fiolki Światła", amount: 14 },
+    cost: { currency: "Kryształy Esencji", amount: 14 },
   },
 
   // Czarny Rynek
@@ -352,7 +352,7 @@ const EQUIPMENT_ITEMS = [
     vendor: "czarny_rynek",
     description: "Zszyty ze skóry aberracji, sprzedany przez kogoś, kto nie miał prawa go posiadać.",
     bonus: { pancerz: 0.09, przebicie: 0.05 },
-    cost: { currency: "Nagroda Gildii", amount: 22 },
+    cost: { currency: "Kryształy Esencji", amount: 22 },
   },
   {
     id: "sygnet_rady",
@@ -384,7 +384,63 @@ const EQUIPMENT_ITEMS = [
     description: "Chowany w rękawie, niewidoczny dla oka strażnika — dopóki nie jest za późno.",
     weapon: { name: "Ukryty Nóż", minDmg: 6, maxDmg: 9, range: 4 },
     bonus: { zre: 2 },
-    cost: { currency: "Nagroda Gildii", amount: 20 },
+    cost: { currency: "Kryształy Esencji", amount: 20 },
+  },
+  // Wytwory Kuźni — bez pola vendor (nigdy nie trafiają do zwykłych sklepów),
+  // powstają wyłącznie przez wytwarzanie (main.js: craftItem) z surowców kilku
+  // różnych lokacji naraz (patrz js/crafting.js). Pole cost tu nie jest ceną
+  // zakupu — służy tylko jako wartość odsprzedaży/ulepszenia, takiej samej
+  // jak przy zwykłym ekwipunku.
+  {
+    id: "medalion_dwoch_drog",
+    name: "Medalion Dwóch Dróg",
+    slot: "naszyjnik",
+    icon: "💫",
+    crafted: true,
+    description: "Kryształ esencji oprawiony w spaczone zioła — dwie sprzeczne moce splecione w jeden amulet.",
+    bonus: { int: 3, zre: 3 },
+    cost: { currency: "Kryształy Esencji", amount: 20 },
+  },
+  {
+    id: "plaszcz_switu_i_cienia",
+    name: "Płaszcz Świtu i Cienia",
+    slot: "napiersnik",
+    icon: "🌗",
+    crafted: true,
+    description: "Tkanina błogosławiona przez Zakon Światła, podszyta łupem Gildii — chroni ciało i podnosi ducha.",
+    bonus: { pancerz: 0.10, cha: 3 },
+    cost: { currency: "Kryształy Esencji", amount: 22 },
+  },
+  {
+    id: "ostrze_utopionego_lowcy",
+    name: "Ostrze Utopionego Łowcy",
+    slot: "prawa_reka",
+    icon: "🔱",
+    crafted: true,
+    description: "Trójząb łowcy Gildii przekuty na nowo w zatopionej kryszcie — nigdy nie wypuszcza zdobyczy.",
+    weapon: { name: "Ostrze Utopionego Łowcy", minDmg: 11, maxDmg: 16, range: 1 },
+    bonus: { przebicie: 0.06 },
+    cost: { currency: "Kryształy Esencji", amount: 24 },
+  },
+  {
+    id: "peleryna_pielgrzyma_glebin",
+    name: "Peleryna Pielgrzyma Głębin",
+    slot: "lewa_reka",
+    icon: "🧣",
+    crafted: true,
+    description: "Uszyta z relikwii zatopionej krypty i poświęcona w Świątyni — nosi ją tylko ten, kto przeżył obie te głębie.",
+    bonus: { pancerz: 0.06, wyt: 3 },
+    cost: { currency: "Kryształy Esencji", amount: 20 },
+  },
+  {
+    id: "pierscien_piatej_drogi",
+    name: "Pierścień Piątej Drogi",
+    slot: "pierscien",
+    icon: "💍",
+    crafted: true,
+    description: "Stopiony z surowców wszystkich pięciu zakątków wokół Aetherionu — nosi ślad każdej drogi, jaką przeszedłeś.",
+    bonus: { str: 2, wyt: 2, zre: 2, int: 2, cha: 2 },
+    cost: { currency: "Kryształy Esencji", amount: 30 },
   },
   // Unikalne łupy bossów — bez pola vendor (nigdy nie trafiają do sklepów),
   // zdobywane wyłącznie za pierwsze pokonanie danego bossa (main.js: grantBossLoot).

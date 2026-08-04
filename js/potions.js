@@ -6,7 +6,7 @@ const POTION_ITEMS = [
     description: "Podstawowy wywar Alchemików Gildii — szybko zasklepia rany.",
     effectType: "heal_self",
     effectValue: 0.25,
-    cost: { currency: "Spaczone Zioła", amount: 6 },
+    cost: { currency: "Kryształy Esencji", amount: 6 },
   },
   {
     id: "mikstura_odrodzenia",
@@ -39,7 +39,7 @@ const POTION_ITEMS = [
     effectValue: 0.15,
     effectTurns: 3,
     label: "żelazna skóra",
-    cost: { currency: "Nagroda Gildii", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
   {
     id: "eliksir_hartu",
@@ -51,7 +51,7 @@ const POTION_ITEMS = [
     effectValue: 5,
     effectTurns: 3,
     label: "hart ciała",
-    cost: { currency: "Fiolki Światła", amount: 10 },
+    cost: { currency: "Kryształy Esencji", amount: 10 },
   },
 ];
 

@@ -1308,8 +1308,35 @@ function renderCityPlace(place, state, handlers) {
             `;
           }).join(""));
 
+    activityEl.innerHTML += `<h4>🛠️ Wytwarzanie</h4>` + CRAFTING_RECIPES.map((recipe) => {
+      const item = EQUIPMENT_ITEMS.find((i) => i.id === recipe.resultItemId);
+      const already = inventory.includes(recipe.resultItemId);
+      const affordable = canCraftItem(recipe);
+      const ingredientsHtml = recipe.ingredients.map((ing) => {
+        const owned = resources[ing.currency] ? resources[ing.currency].amount : 0;
+        const ok = owned >= ing.amount;
+        return `<span class="${ok ? "" : "craft-ingredient-missing"}">${ing.amount} × ${ing.currency} (masz: ${owned})</span>`;
+      }).join(", ");
+      return `
+        <div class="sheet-item-row">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name">${item.icon} ${item.name}${already ? ` <span class="potion-count">wytworzono</span>` : ""}</div>
+            ${formatItemWeapon(item)}
+            <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+            ${already ? "" : `<div class="sheet-item-cost">Wymaga: ${ingredientsHtml}</div>`}
+          </div>
+          ${already
+            ? `<span class="sheet-empty-note">Posiadane</span>`
+            : `<button type="button" class="sheet-action-btn craft-btn" data-recipe="${recipe.id}" ${affordable ? "" : "disabled"}>Wytwórz</button>`}
+        </div>
+      `;
+    }).join("");
+
     activityEl.querySelectorAll(".upgrade-btn").forEach((btn) => {
       btn.addEventListener("click", () => handlers.onUpgrade(btn.dataset.item));
+    });
+    activityEl.querySelectorAll(".craft-btn").forEach((btn) => {
+      btn.addEventListener("click", () => handlers.onCraft(btn.dataset.recipe));
     });
   } else if (place.key === "swiatynia") {
     const spent = Object.values(bonusStats).reduce((a, b) => a + b, 0);
