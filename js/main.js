@@ -2046,6 +2046,7 @@ function render() {
     reachableHexes: phase === "battle" && !battleOver && playerActionsRemaining > 0 ? reachableFor(player) : [],
     deployHexes,
     onHexClick: handleHexClick,
+    location: currentLocation,
   };
 
   const battleMapSvg = document.getElementById("battle-map");

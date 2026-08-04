@@ -165,6 +165,29 @@ function svgEl(tag, attrs) {
   return el;
 }
 
+// Bespoke palettes for the world locations; anything else (campaign-only
+// locations like Wieża Rady/Cień Rady/Zapomniane Laboratorium) falls back to
+// the closest bespoke theme by obstacleBias, so every battle/dungeon map
+// always gets a fitting look without needing its own CSS block.
+const LOCATION_THEME_KEYS = new Set(["kopalnie", "las", "szlak", "placowka", "krypty", "arena"]);
+
+function locationThemeKey(location) {
+  if (!location) return "las";
+  if (LOCATION_THEME_KEYS.has(location.key)) return location.key;
+  if (location.obstacleBias === "rock") return "placowka";
+  if (location.obstacleBias === "lake") return "krypty";
+  if (location.obstacleBias === "tree") return "las";
+  return "las";
+}
+
+function applyLocationTheme(svg, location) {
+  if (!svg) return;
+  Array.from(svg.classList).forEach((c) => {
+    if (c.startsWith("location-theme-")) svg.classList.remove(c);
+  });
+  svg.classList.add(`location-theme-${locationThemeKey(location)}`);
+}
+
 let tokenElements = new Map();
 
 function resetTokenLayer() {
@@ -174,7 +197,9 @@ function resetTokenLayer() {
   if (layer) layer.innerHTML = "";
 }
 
-function renderGrid({ svg, player, companions = [], enemies, obstacles, reachableHexes = [], deployHexes = [], onHexClick }) {
+function renderGrid({ svg, player, companions = [], enemies, obstacles, reachableHexes = [], deployHexes = [], onHexClick, location = null }) {
+  applyLocationTheme(svg, location);
+
   const positions = ALL_HEXES.map((h) => axialToPixel(h));
   const minX = Math.min(...positions.map((p) => p.x)) - HEX_SIZE;
   const minY = Math.min(...positions.map((p) => p.y)) - HEX_SIZE;
@@ -1463,6 +1488,7 @@ function renderDungeonMap({ mapData, playerHex, revealedKeys, activeInteraction,
   const svg = document.getElementById("dungeon-map-svg");
   const title = document.getElementById("dungeon-title");
   title.textContent = location ? `${location.icon} ${location.name} — wnętrze` : "🗺️ Wnętrze lokacji";
+  applyLocationTheme(svg, location);
 
   if (!svg || !mapData) {
     renderDungeonInteractionOverlay(null, location, onChooseA, onChooseB, onDismiss);

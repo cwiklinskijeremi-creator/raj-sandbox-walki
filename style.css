@@ -75,12 +75,69 @@ body {
   80% { transform: translate(5px, 5px) scale(1.01); }
 }
 
+#battle-map, #dungeon-map-svg {
+  --theme-bg-1: #4a6b32;
+  --theme-bg-2: #2e4a20;
+  --theme-bg-3: #24391a;
+  --theme-hex-stroke: #c8dd6b;
+  --theme-room-fill: rgba(200, 221, 107, 0.14);
+}
+
+#battle-map.location-theme-kopalnie, #dungeon-map-svg.location-theme-kopalnie {
+  --theme-bg-1: #3a4a52;
+  --theme-bg-2: #2a3238;
+  --theme-bg-3: #1c2226;
+  --theme-hex-stroke: #6bc8d4;
+  --theme-room-fill: rgba(107, 200, 212, 0.16);
+}
+
+#battle-map.location-theme-las, #dungeon-map-svg.location-theme-las {
+  --theme-bg-1: #4a6b32;
+  --theme-bg-2: #2e4a20;
+  --theme-bg-3: #24391a;
+  --theme-hex-stroke: #c8dd6b;
+  --theme-room-fill: rgba(200, 221, 107, 0.14);
+}
+
+#battle-map.location-theme-szlak, #dungeon-map-svg.location-theme-szlak {
+  --theme-bg-1: #6b5a32;
+  --theme-bg-2: #4a3d20;
+  --theme-bg-3: #362c18;
+  --theme-hex-stroke: #e0c068;
+  --theme-room-fill: rgba(224, 192, 104, 0.14);
+}
+
+#battle-map.location-theme-placowka, #dungeon-map-svg.location-theme-placowka {
+  --theme-bg-1: #5a5248;
+  --theme-bg-2: #3a352e;
+  --theme-bg-3: #26221d;
+  --theme-hex-stroke: #e8d9a8;
+  --theme-room-fill: rgba(232, 217, 168, 0.15);
+}
+
+#battle-map.location-theme-krypty, #dungeon-map-svg.location-theme-krypty {
+  --theme-bg-1: #2e4a48;
+  --theme-bg-2: #1e3230;
+  --theme-bg-3: #141f1e;
+  --theme-hex-stroke: #5ba8a0;
+  --theme-room-fill: rgba(91, 168, 160, 0.16);
+}
+
+#battle-map.location-theme-arena, #dungeon-map-svg.location-theme-arena {
+  --theme-bg-1: #6b3232;
+  --theme-bg-2: #4a2020;
+  --theme-bg-3: #341616;
+  --theme-hex-stroke: #d46b6b;
+  --theme-room-fill: rgba(212, 107, 107, 0.14);
+}
+
 #battle-map {
   width: 100%;
   height: 560px;
   display: block;
-  background: radial-gradient(ellipse at center, #4a6b32 0%, #2e4a20 55%, #24391a 100%);
+  background: radial-gradient(ellipse at center, var(--theme-bg-1) 0%, var(--theme-bg-2) 55%, var(--theme-bg-3) 100%);
   border-radius: 4px;
+  transition: background 0.4s ease;
 }
 
 #battle-map-3d {
@@ -188,13 +245,14 @@ body {
 
 .hex-tile {
   fill: rgba(0, 0, 0, 0.05);
-  stroke: #c8dd6b;
+  stroke: var(--theme-hex-stroke, #c8dd6b);
   stroke-opacity: 0.55;
   stroke-width: 1.25;
+  transition: stroke 0.4s ease;
 }
 
 .hex-obstacle {
-  stroke: #c8dd6b;
+  stroke: var(--theme-hex-stroke, #c8dd6b);
   stroke-opacity: 0.55;
 }
 
@@ -1819,12 +1877,13 @@ button:disabled {
   width: 100%;
   height: 780px;
   display: block;
-  background: radial-gradient(ellipse at center, #3a3040 0%, #221d28 55%, #18141c 100%);
+  background: radial-gradient(ellipse at center, var(--theme-bg-1) 0%, var(--theme-bg-2) 55%, var(--theme-bg-3) 100%);
   border-radius: 4px;
+  transition: background 0.4s ease;
 }
 
 .hex-room {
-  fill: rgba(200, 221, 107, 0.14);
+  fill: var(--theme-room-fill, rgba(200, 221, 107, 0.14));
 }
 
 .hex-corridor {
