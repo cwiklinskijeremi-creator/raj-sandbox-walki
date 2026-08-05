@@ -18,6 +18,7 @@ let statPointsAvailable = 10;
 let unlockedTalentIds = [];
 let talentPointsAvailable = 0;
 let talentTreeSelectedNodeId = null;
+let talentTreeActiveTab = "subclass";
 let corruption = 0;
 let devouredCount = 0;
 let dungeonMapState = null;
@@ -1021,15 +1022,34 @@ function getPlayerTalentTree() {
   return selectedSubclassName ? TALENT_TREES[selectedSubclassName] : null;
 }
 
+// The tree currently shown in the talent tree modal — the player's own
+// subclass tree, or the cross-class MUTATION_TALENT_TREE (see talents.js)
+// when the "🧬 Mutacja" tab is active.
+function getActiveTalentTree() {
+  return talentTreeActiveTab === "mutation" ? MUTATION_TALENT_TREE : getPlayerTalentTree();
+}
+
 function isTalentUnlocked(nodeId) {
   return unlockedTalentIds.includes(nodeId);
 }
 
 // DAO-style per-branch chain: rank N in a branch requires rank N-1 already
-// unlocked IN THAT SAME BRANCH (rank 1 only needs a spendable point).
+// unlocked IN THAT SAME BRANCH (rank 1 only needs a spendable point). The
+// mutation tree is checked separately since it's not keyed by subclass name
+// and spends from the exact same talentPointsAvailable pool.
 function canUnlockTalent(nodeId) {
+  if (talentPointsAvailable <= 0 || isTalentUnlocked(nodeId)) return false;
+
+  const mutationPosition = findMutationNodePosition(nodeId);
+  if (mutationPosition) {
+    const { branchIndex, tierIndex } = mutationPosition;
+    if (tierIndex === 0) return true;
+    const priorNode = MUTATION_TALENT_TREE.branches[branchIndex].nodes[tierIndex - 1];
+    return isTalentUnlocked(priorNode.id);
+  }
+
   const tree = getPlayerTalentTree();
-  if (!tree || talentPointsAvailable <= 0 || isTalentUnlocked(nodeId)) return false;
+  if (!tree) return false;
   const position = findTalentNodePosition(nodeId);
   if (!position) return false;
   const { branchIndex, tierIndex } = position;
@@ -1050,6 +1070,7 @@ function unlockTalent(nodeId) {
 }
 
 function openTalentTree() {
+  talentTreeActiveTab = "subclass";
   talentTreeSelectedNodeId = null;
   document.getElementById("talent-tree-overlay").classList.remove("hidden");
   refreshTalentTreeIfOpen();
@@ -1064,12 +1085,19 @@ function selectTalentNode(nodeId) {
   refreshTalentTreeIfOpen();
 }
 
+function selectTalentTreeTab(tab) {
+  talentTreeActiveTab = tab;
+  talentTreeSelectedNodeId = null;
+  refreshTalentTreeIfOpen();
+}
+
 function refreshTalentTreeIfOpen() {
   const overlay = document.getElementById("talent-tree-overlay");
   if (overlay.classList.contains("hidden")) return;
-  renderTalentTree(getPlayerTalentTree(), unlockedTalentIds, talentPointsAvailable, talentTreeSelectedNodeId, {
+  renderTalentTree(getActiveTalentTree(), unlockedTalentIds, talentPointsAvailable, talentTreeSelectedNodeId, talentTreeActiveTab, {
     onSelect: selectTalentNode,
     onUnlock: unlockTalent,
+    onTabChange: selectTalentTreeTab,
   });
 }
 

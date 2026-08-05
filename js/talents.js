@@ -345,12 +345,40 @@ const TALENT_TREES = {
   },
 };
 
+// Cross-class tree, available to every subclass regardless of specialization
+// — shares the same shape as TALENT_TREES entries (branches/nodes) so it
+// renders through the exact same renderTalentTree() UI, just surfaced as a
+// second tab. Unlocked with the same talentPointsAvailable pool as the
+// subclass tree (it competes for points, doesn't add a separate currency),
+// and gated the same per-branch-chain way. Thematically ties into the
+// existing corruption/devour mechanic (mutateSelf()/devourCorpse() in
+// main.js) — a single escalating branch of 4 ranks mixing passive toughness
+// bonuses with monstrous active attacks.
+const MUTATION_TALENT_TREE = {
+  icon: "🧬", name: "Ścieżka Mutacji",
+  branches: [
+    {
+      name: "Spaczone Ciało",
+      nodes: [
+        { id: "mutacja_r1", name: "Zgrubiała Skóra", icon: "🧟", kind: "passive", description: "Spaczona skóra twardnieje, chroniąc cię przed ciosami.", bonus: { pancerz: 0.05 } },
+        { id: "mutacja_r2", name: "Mutowane Szpony", icon: "🦴", kind: "active", colorClass: "spell-dark", description: "Twoje dłonie wykrzywiają się w ostre, spaczone szpony, rozdzierające pancerz wroga.", minDmg: 13, maxDmg: 19, range: 1, cooldown: 3, effectType: "armor_shred", effectValue: 0.12, effectTurns: 2 },
+        { id: "mutacja_r3", name: "Nienasycony Głód", icon: "🍖", kind: "passive", description: "Głód spaczenia napędza twoje ciało do nadludzkiej siły.", bonus: { str: 3, wyt: 2 } },
+        { id: "mutacja_r4", name: "Przebudzenie Bestii", icon: "👹", kind: "active", colorClass: "spell-dark", description: "Bestia w tobie budzi się w pełni, wysysając życie z każdego trafienia.", minDmg: 18, maxDmg: 25, range: 1, cooldown: 6, effectType: "lifesteal", effectValue: 0.5 },
+      ],
+    },
+  ],
+};
+
 function findTalentNode(nodeId) {
   for (const tree of Object.values(TALENT_TREES)) {
     for (const branch of tree.branches) {
       const node = branch.nodes.find((n) => n.id === nodeId);
       if (node) return node;
     }
+  }
+  for (const branch of MUTATION_TALENT_TREE.branches) {
+    const node = branch.nodes.find((n) => n.id === nodeId);
+    if (node) return node;
   }
   return null;
 }
@@ -361,6 +389,14 @@ function findTalentNodePosition(nodeId) {
       const tierIndex = tree.branches[branchIndex].nodes.findIndex((n) => n.id === nodeId);
       if (tierIndex !== -1) return { branchIndex, tierIndex };
     }
+  }
+  return null;
+}
+
+function findMutationNodePosition(nodeId) {
+  for (let branchIndex = 0; branchIndex < MUTATION_TALENT_TREE.branches.length; branchIndex++) {
+    const tierIndex = MUTATION_TALENT_TREE.branches[branchIndex].nodes.findIndex((n) => n.id === nodeId);
+    if (tierIndex !== -1) return { branchIndex, tierIndex };
   }
   return null;
 }

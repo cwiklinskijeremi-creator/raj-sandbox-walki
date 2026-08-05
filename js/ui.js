@@ -1500,6 +1500,10 @@ function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
 
 const TALENT_KIND_BADGE = { passive: "💠", active: "⚡", sustained: "🛡️" };
 const TALENT_KIND_LABEL = { passive: "Bierna", active: "Aktywowana", sustained: "Podtrzymywana" };
+const TALENT_TREE_TABS = [
+  { key: "subclass", label: "🌟 Specjalizacja" },
+  { key: "mutation", label: "🧬 Mutacja" },
+];
 
 // Human-readable effect line for active/sustained nodes — mirrors the combat
 // log phrasing in main.js applySkillEffect(), but as a static description
@@ -1539,7 +1543,18 @@ function describeTalentEffect(node) {
   }
 }
 
-function renderTalentTree(tree, unlockedIds, pointsAvailable, selectedNodeId, handlers) {
+function renderTalentTree(tree, unlockedIds, pointsAvailable, selectedNodeId, activeTab, handlers) {
+  const tabsEl = document.getElementById("talent-tree-tabs");
+  tabsEl.innerHTML = "";
+  TALENT_TREE_TABS.forEach((tab) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `codex-tab-btn${tab.key === activeTab ? " selected" : ""}`;
+    btn.textContent = tab.label;
+    btn.addEventListener("click", () => handlers.onTabChange(tab.key));
+    tabsEl.appendChild(btn);
+  });
+
   const body = document.getElementById("talent-tree-body");
   if (!tree) {
     body.innerHTML = `<p class="sheet-empty-note">Stwórz postać, aby odblokować własne drzewko umiejętności.</p>`;
