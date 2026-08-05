@@ -398,17 +398,18 @@ function loadQuestState() {
       totalKills: (data && data.totalKills) || 0,
       claimedQuests: (data && data.claimedQuests) || [],
       claimedNpcQuests: (data && data.claimedNpcQuests) || [],
+      sideQuestProgress: (data && data.sideQuestProgress) || {},
     };
   } catch {
-    return { totalKills: 0, claimedQuests: [], claimedNpcQuests: [] };
+    return { totalKills: 0, claimedQuests: [], claimedNpcQuests: [], sideQuestProgress: {} };
   }
 }
 
 function saveQuestState() {
-  localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify({ totalKills, claimedQuests, claimedNpcQuests }));
+  localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify({ totalKills, claimedQuests, claimedNpcQuests, sideQuestProgress }));
 }
 
-let { totalKills, claimedQuests, claimedNpcQuests } = loadQuestState();
+let { totalKills, claimedQuests, claimedNpcQuests, sideQuestProgress } = loadQuestState();
 
 function registerKill() {
   totalKills++;
@@ -431,6 +432,168 @@ function getRecruitProgress(recruit) {
 
 function getQuestProgressState() {
   return { totalKills, level, discoveredCount: discoveredEnemies.length };
+}
+
+// Shared metric reader for js/sideQuests.js — the exact same 5 progress
+// types the rest of the game already tracks (getRecruitProgress()/
+// getQuestProgressState() above read the same underlying state, just
+// shaped differently for their own callers).
+function getTrackableMetric(type, currency) {
+  if (type === "kills") return totalKills;
+  if (type === "level") return level;
+  if (type === "bestiary") return discoveredEnemies.length;
+  if (type === "resource") return resources[currency] ? resources[currency].amount : 0;
+  if (type === "corruption") return corruption;
+  return 0;
+}
+
+// "level"/"corruption"/"bestiary" read in quest text as thresholds to reach
+// ("osiągnij 25% spaczenia") — checked against their absolute value.
+// "kills"/"resource" read as counters to rack up during the quest ("pokonaj
+// kolejnych 3 przeciwników") — checked as a delta since the objective began.
+function isAbsoluteSideQuestMetric(type) {
+  return type === "level" || type === "corruption" || type === "bestiary";
+}
+
+function getSideQuestObjectiveProgress(stageDef, objectiveStartValue) {
+  const value = getTrackableMetric(stageDef.progressType, stageDef.currency);
+  return isAbsoluteSideQuestMetric(stageDef.progressType) ? value : value - (objectiveStartValue || 0);
+}
+
+// Wieloetapowe misje fabularne (js/sideQuests.js) — w przeciwieństwie do
+// płaskich CITY_NPCS[].quest, mają dialog -> prawdziwy cel w świecie ->
+// wybór z konsekwencją -> zakończenie z unikalnym przedmiotem. Stan trzyma
+// tylko nazwę bieżącego stage'u + wartość metryki zanotowaną przy wejściu w
+// stage typu objective (cel liczony jako przyrost od tego momentu).
+function canStartSideQuest(questId) {
+  const quest = SIDE_QUESTS[questId];
+  if (!quest || sideQuestProgress[questId]) return false;
+  const pre = quest.prerequisite;
+  if (!pre) return true;
+  return getTrackableMetric(pre.type, pre.currency) >= pre.goal;
+}
+
+let activeSideQuestScene = null; // { questId, stage, beatIndex, prefixBeats }
+
+function currentSideQuestBeats() {
+  const quest = SIDE_QUESTS[activeSideQuestScene.questId];
+  const stageDef = quest.stages[activeSideQuestScene.stage];
+  const prefix = activeSideQuestScene.prefixBeats || [];
+  const own = Array.isArray(stageDef.text) ? stageDef.text : [];
+  return [...prefix, ...own];
+}
+
+function moveSideQuestToStage(questId, stageKey, prefixBeats = []) {
+  const quest = SIDE_QUESTS[questId];
+  const stageDef = quest.stages[stageKey];
+  const progress = sideQuestProgress[questId] || {};
+  progress.stage = stageKey;
+  if (stageDef.progressType) {
+    progress.objectiveStartValue = getTrackableMetric(stageDef.progressType, stageDef.currency);
+  }
+  if (stageDef.final) progress.completed = true;
+  sideQuestProgress[questId] = progress;
+  saveQuestState();
+  activeSideQuestScene = { questId, stage: stageKey, beatIndex: 0, prefixBeats };
+  refreshSideQuestSceneIfOpen();
+  if (stageDef.final && stageDef.reward) {
+    grantSideQuestReward(questId, stageDef.reward.itemId);
+  }
+  render();
+}
+
+function advanceSideQuestScene() {
+  if (!activeSideQuestScene) return;
+  const quest = SIDE_QUESTS[activeSideQuestScene.questId];
+  const stageDef = quest.stages[activeSideQuestScene.stage];
+  const beats = currentSideQuestBeats();
+  if (activeSideQuestScene.beatIndex < beats.length - 1) {
+    activeSideQuestScene.beatIndex++;
+    refreshSideQuestSceneIfOpen();
+    return;
+  }
+  if (stageDef.final) { closeSideQuestScene(); return; }
+  if (stageDef.next) moveSideQuestToStage(activeSideQuestScene.questId, stageDef.next);
+}
+
+function chooseSideQuestOption(optionIndex) {
+  if (!activeSideQuestScene) return;
+  const questId = activeSideQuestScene.questId;
+  const quest = SIDE_QUESTS[questId];
+  const stageDef = quest.stages[activeSideQuestScene.stage];
+  const option = stageDef.options && stageDef.options[optionIndex];
+  if (!option) return;
+  if (option.reputation) gainReputation(quest.npcKey, option.reputation);
+  if (option.corruption) {
+    corruption = Math.min(100, corruption + option.corruption);
+    saveActiveRun();
+  }
+  moveSideQuestToStage(questId, option.next, [option.resultText]);
+}
+
+function grantSideQuestReward(questId, itemId) {
+  const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+  if (!item) return;
+  inventory.push(itemId);
+  saveEquipmentState();
+  appendLog(`📖 Ukończono misję poboczną — zdobywasz unikalny przedmiot: ${item.icon} ${item.name}!`, "system");
+}
+
+function closeSideQuestScene() {
+  activeSideQuestScene = null;
+  document.getElementById("side-quest-overlay").classList.add("hidden");
+  render();
+}
+
+function refreshSideQuestSceneIfOpen() {
+  const overlay = document.getElementById("side-quest-overlay");
+  if (overlay.classList.contains("hidden") || !activeSideQuestScene) return;
+  const quest = SIDE_QUESTS[activeSideQuestScene.questId];
+  if (!quest) { closeSideQuestScene(); return; }
+  const stageDef = quest.stages[activeSideQuestScene.stage];
+  const progress = sideQuestProgress[activeSideQuestScene.questId] || {};
+  let objectiveCurrent = null;
+  if (stageDef.progressType) {
+    objectiveCurrent = getSideQuestObjectiveProgress(stageDef, progress.objectiveStartValue);
+  }
+  renderSideQuestScene(quest, activeSideQuestScene, stageDef, objectiveCurrent, {
+    onAdvance: advanceSideQuestScene,
+    onChoose: chooseSideQuestOption,
+    onClose: closeSideQuestScene,
+  });
+}
+
+// Called from the city NPC dialogue panel — starts the quest if the
+// prerequisite is met, jumps straight to the "choice" stage if the
+// objective goal was reached while away, or just resumes wherever the
+// player left off (including a not-yet-complete objective, shown as a
+// progress bar with no way to advance until the goal is met).
+function continueSideQuestAtNpc(npcKey) {
+  const entry = Object.entries(SIDE_QUESTS).find(([, q]) => q.npcKey === npcKey);
+  if (!entry) return;
+  const [questId, quest] = entry;
+  const progress = sideQuestProgress[questId];
+
+  if (!progress && !canStartSideQuest(questId)) return;
+
+  document.getElementById("side-quest-overlay").classList.remove("hidden");
+
+  if (!progress) {
+    moveSideQuestToStage(questId, "start");
+    return;
+  }
+
+  if (progress.stage === "objective") {
+    const stageDef = quest.stages.objective;
+    const current = getSideQuestObjectiveProgress(stageDef, progress.objectiveStartValue);
+    if (current >= stageDef.goal) {
+      moveSideQuestToStage(questId, stageDef.next);
+      return;
+    }
+  }
+
+  activeSideQuestScene = { questId, stage: progress.stage, beatIndex: 0, prefixBeats: [] };
+  refreshSideQuestSceneIfOpen();
 }
 
 let activeRecruitScene = null;
@@ -2222,12 +2385,13 @@ function render() {
     hideAllExcept(cityPlaceScreen);
     renderCityPlace(
       currentCityPlace,
-      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, devouredCount, mutationTier: mutationTier(), claimedNpcQuests, reputation },
+      { inventory, equipped, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, recruitPool, companions, corruption, devouredCount, mutationTier: mutationTier(), claimedNpcQuests, reputation, sideQuestProgress },
       {
         onBuy: buyEquipment, onUpgrade: upgradeEquipment, onCraft: craftItem, onRespec: respecStats,
         onEnterArena: enterArena, onSellEquipment: sellEquipment, onSellPotion: sellPotion, onGamble: gambleAtTavern,
         onRecruit: openRecruitScene, onCleanseCorruption: cleanseCorruption, onEmbraceRitual: performEmbraceRitual,
         onTalkToNpc: talkToNpc, onClaimNpcQuest: claimNpcQuestReward,
+        onOpenSideQuest: continueSideQuestAtNpc,
       },
     );
     saveActiveRun();
@@ -2974,6 +3138,9 @@ document.getElementById("party-close").addEventListener("click", closePartyOverl
 document.getElementById("recruit-scene-next-btn").addEventListener("click", advanceRecruitScene);
 document.getElementById("recruit-scene-confirm-btn").addEventListener("click", confirmRecruitScene);
 document.getElementById("recruit-scene-close").addEventListener("click", closeRecruitScene);
+document.getElementById("side-quest-close").addEventListener("click", closeSideQuestScene);
+document.getElementById("side-quest-dismiss-btn").addEventListener("click", closeSideQuestScene);
+document.getElementById("side-quest-advance-btn").addEventListener("click", advanceSideQuestScene);
 document.getElementById("character-sheet-close").addEventListener("click", closeCharacterSheet);
 document.getElementById("character-sheet-overlay").addEventListener("click", (e) => {
   if (e.target.id === "character-sheet-overlay") closeCharacterSheet();

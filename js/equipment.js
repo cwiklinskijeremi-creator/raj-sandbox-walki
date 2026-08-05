@@ -516,6 +516,50 @@ const EQUIPMENT_ITEMS = [
     bonus: { str: 4, przebicie: 0.06 },
     cost: { currency: "Kryształy Esencji", amount: 45 },
   },
+  // Unikalne nagrody z misji pobocznych — bez pola vendor, zdobywane wyłącznie
+  // po ukończeniu danej misji (main.js: grantSideQuestReward), niezależnie od
+  // wyboru dokonanego w jej finale (patrz js/sideQuests.js).
+  {
+    id: "quest_brenna_mlot",
+    name: "Młot Prawdy",
+    slot: "prawa_reka",
+    icon: "🔨",
+    sideQuestDrop: "brenna_krew_w_stali",
+    description: "Wykuty przez Brennę z rudy, która ujawniła prawdę o Kopalniach — cięższy niż wygląda, jakby niósł ciężar tego, co odkryłeś.",
+    weapon: { name: "Młot Prawdy", minDmg: 16, maxDmg: 24, range: 1 },
+    bonus: { str: 3, pancerz: 0.05 },
+    cost: { currency: "Kryształy Esencji", amount: 40 },
+  },
+  {
+    id: "quest_aldric_amulet",
+    name: "Amulet Wyciszonej Wiary",
+    slot: "naszyjnik",
+    icon: "🕊️",
+    sideQuestDrop: "aldric_zaginiona_owieczka",
+    description: "Należał niegdyś do brata Tomasza — wciąż ciepły, jakby wciąż się modlił, choć jego wiara zaprowadziła go gdzie indziej.",
+    bonus: { wyt: 3, pancerz: 0.06 },
+    cost: { currency: "Fiolki Światła", amount: 40 },
+  },
+  {
+    id: "quest_grom_rekawice",
+    name: "Rękawice Niezłomnego Mistrza",
+    slot: "rekawice",
+    icon: "🥊",
+    sideQuestDrop: "grom_ostatni_przeciwnik",
+    description: "Zdjęte z rąk dawnego mistrza Areny na twoją cześć — wciąż pamiętają setki wygranych starć.",
+    bonus: { str: 3, wyt: 2 },
+    cost: { currency: "Nagroda Gildii", amount: 40 },
+  },
+  {
+    id: "quest_riven_buty",
+    name: "Ciche Buty Przemytnika",
+    slot: "buty",
+    icon: "🗝️",
+    sideQuestDrop: "riven_kontrabanda_rady",
+    description: "Noszone podczas dziesiątek nieudokumentowanych „spacerów” przez mur miasta — nie zostawiają śladu i nie robią hałasu.",
+    bonus: { zre: 3, przebicie: 0.05 },
+    cost: { currency: "Kryształy Esencji", amount: 40 },
+  },
 ];
 
 const EQUIPMENT_SLOTS = [

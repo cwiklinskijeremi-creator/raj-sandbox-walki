@@ -1172,7 +1172,67 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   if (respecBtn) respecBtn.addEventListener("click", handlers.onRespec);
 }
 
-function renderCityNpc(place, claimedNpcQuests, reputation, handlers) {
+// Multi-stage narrative side quest scene (js/sideQuests.js) — mirrors the
+// static button pattern of the dungeon interaction overlay (2 toggleable
+// choice buttons + a dismiss button) rather than building buttons
+// dynamically, since the set of possible actions per stage is small and
+// fixed (advance through beats / pick one of 2 options / close).
+function renderSideQuestScene(quest, sceneState, stageDef, objectiveCurrent, handlers) {
+  const titleEl = document.getElementById("side-quest-title");
+  const bodyEl = document.getElementById("side-quest-body");
+  const choiceButtons = document.getElementById("side-quest-choice-buttons");
+  const advanceBtn = document.getElementById("side-quest-advance-btn");
+  const dismissBtn = document.getElementById("side-quest-dismiss-btn");
+  const optionABtn = document.getElementById("side-quest-option-a-btn");
+  const optionBBtn = document.getElementById("side-quest-option-b-btn");
+
+  titleEl.textContent = `${quest.icon} ${quest.name}`;
+
+  if (stageDef.progressType) {
+    const goal = stageDef.goal;
+    const current = Math.max(0, objectiveCurrent || 0);
+    const pct = Math.max(0, Math.min(100, Math.round((current / goal) * 100)));
+    const unit = stageDef.progressType === "resource" ? ` × ${stageDef.currency}`
+      : stageDef.progressType === "corruption" ? "% spaczenia"
+      : "";
+    bodyEl.innerHTML = `
+      <p class="sheet-item-desc recruit-scene-text">${stageDef.text}</p>
+      <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+      <p class="sheet-item-bonus">${current}/${goal}${unit}</p>
+    `;
+    choiceButtons.classList.add("hidden");
+    advanceBtn.classList.add("hidden");
+    dismissBtn.classList.remove("hidden");
+    dismissBtn.textContent = "Zamknij";
+    return;
+  }
+
+  if (stageDef.options) {
+    bodyEl.innerHTML = `<p class="sheet-item-desc recruit-scene-text">${stageDef.text}</p>`;
+    choiceButtons.classList.remove("hidden");
+    advanceBtn.classList.add("hidden");
+    dismissBtn.classList.add("hidden");
+    optionABtn.textContent = stageDef.options[0].label;
+    optionABtn.onclick = () => handlers.onChoose(0);
+    optionBBtn.textContent = stageDef.options[1].label;
+    optionBBtn.onclick = () => handlers.onChoose(1);
+    return;
+  }
+
+  // Narrative beat stage (start / resolution_*): walk beat-by-beat through
+  // any prefix beats (a choice's resultText, see moveSideQuestToStage in
+  // main.js) followed by the stage's own text[].
+  const beats = [...(sceneState.prefixBeats || []), ...(Array.isArray(stageDef.text) ? stageDef.text : [])];
+  const beatIndex = Math.min(sceneState.beatIndex, beats.length - 1);
+  bodyEl.innerHTML = `<p class="sheet-item-desc recruit-scene-text">${beats[beatIndex]}</p>`;
+  choiceButtons.classList.add("hidden");
+  dismissBtn.classList.add("hidden");
+  advanceBtn.classList.remove("hidden");
+  const isLastBeat = beatIndex >= beats.length - 1;
+  advanceBtn.textContent = (isLastBeat && stageDef.final) ? "Zamknij" : "Dalej";
+}
+
+function renderCityNpc(place, claimedNpcQuests, reputation, sideQuestProgress, handlers) {
   const el = document.getElementById("city-place-npc");
   const npc = CITY_NPCS[place.key];
   if (!npc) {
@@ -1210,26 +1270,71 @@ function renderCityNpc(place, claimedNpcQuests, reputation, handlers) {
     questHtml = `<p class="sheet-empty-note">Zlecenie wykonane — ${npc.name} nie ma dla Ciebie nic więcej.</p>`;
   }
 
+  // Wieloetapowa misja poboczna (js/sideQuests.js) — osobna od zwykłego
+  // jednorazowego zlecenia powyżej, pokazywana tylko gdy odblokowana lub już
+  // rozpoczęta (nierozpoczęta i niedostępna misja zostaje ukryta, żeby nie
+  // spoilerować jej istnienia przed spełnieniem warunku).
+  let sideQuestHtml = "";
+  const sideQuestEntry = Object.entries(SIDE_QUESTS).find(([, q]) => q.npcKey === place.key);
+  if (sideQuestEntry) {
+    const [questId, sideQuest] = sideQuestEntry;
+    const progress = (sideQuestProgress || {})[questId];
+    let statusText = null;
+    let buttonLabel = "Kontynuuj";
+    if (progress && progress.completed) {
+      statusText = "Misja ukończona.";
+      buttonLabel = "Zobacz";
+    } else if (progress && progress.stage === "objective") {
+      const stageDef = sideQuest.stages.objective;
+      const current = Math.max(0, getTrackableMetric(stageDef.progressType, stageDef.currency) - (progress.objectiveStartValue || 0));
+      const unit = stageDef.progressType === "resource" ? ` × ${stageDef.currency}` : stageDef.progressType === "corruption" ? "% spaczenia" : "";
+      statusText = `W trakcie: ${current}/${stageDef.goal}${unit}.`;
+      buttonLabel = current >= stageDef.goal ? "Zdaj relację" : "Sprawdź postęp";
+    } else if (progress && progress.stage === "choice") {
+      statusText = "Misja czeka na Twoją decyzję.";
+      buttonLabel = "Podejmij decyzję";
+    } else if (progress) {
+      statusText = "Misja w toku.";
+    } else if (canStartSideQuest(questId)) {
+      statusText = "Nowa misja poboczna dostępna.";
+      buttonLabel = "Porozmawiaj";
+    }
+    if (statusText) {
+      sideQuestHtml = `
+        <div class="sheet-item-row">
+          <div class="sheet-item-info">
+            <div class="sheet-item-name">${sideQuest.icon} ${sideQuest.name}</div>
+            <div class="sheet-item-desc">${statusText}</div>
+          </div>
+          <button type="button" class="sheet-action-btn open-side-quest-btn">${buttonLabel}</button>
+        </div>
+      `;
+    }
+  }
+
   el.innerHTML = `
     <h4>${npc.icon} ${npc.name}</h4>
     <p class="sheet-item-desc recruit-scene-text">${line}</p>
     <button type="button" class="sheet-action-btn talk-npc-btn">💬 Zapytaj o coś</button>
     ${questHtml}
+    ${sideQuestHtml}
     <p class="reputation-line">${repLine}</p>
   `;
 
   el.querySelector(".talk-npc-btn").addEventListener("click", handlers.onTalkToNpc);
   const claimBtn = el.querySelector(".claim-npc-quest-btn");
   if (claimBtn) claimBtn.addEventListener("click", () => handlers.onClaimNpcQuest(place.key));
+  const sideQuestBtn = el.querySelector(".open-side-quest-btn");
+  if (sideQuestBtn) sideQuestBtn.addEventListener("click", () => handlers.onOpenSideQuest(place.key));
 }
 
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
-  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, devouredCount, mutationTier, claimedNpcQuests, reputation } = state;
+  const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, devouredCount, mutationTier, claimedNpcQuests, reputation, sideQuestProgress } = state;
   document.getElementById("city-place-title").textContent = `${place.icon} ${place.name}`;
   document.getElementById("city-place-description").textContent = place.description;
 
-  renderCityNpc(place, claimedNpcQuests || [], reputation || {}, handlers);
+  renderCityNpc(place, claimedNpcQuests || [], reputation || {}, sideQuestProgress || {}, handlers);
 
   const recruit = (recruitPool || []).find((r) => r.locationKey === place.key);
   renderRecruitCard(
