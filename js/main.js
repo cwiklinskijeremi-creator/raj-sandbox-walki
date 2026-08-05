@@ -295,8 +295,10 @@ function awardXp(amount) {
     level++;
     statPointsAvailable += 3;
     talentPointsAvailable += 1;
+    companions.forEach((c) => { c.talentPointsAvailable = (c.talentPointsAvailable || 0) + 1; });
     appendLog(`Awans! Osiągasz poziom ${level} (+3 punkty statystyk i +1 punkt umiejętności do rozdania w obozie).`, "system");
   }
+  companions.forEach((c) => scaleCompanionToLevel(c, level));
 }
 
 const RESOURCES_STORAGE_KEY = "raj-sandbox-resources";
@@ -510,6 +512,9 @@ function refreshCompanionSheetIfOpen() {
   renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades, companions, {
     onEquip: (itemId) => equipItemToCompanion(companionIndex, itemId),
     onUnequip: (slotKey) => unequipCompanionSlot(companionIndex, slotKey),
+    onAdjustStat: (key, delta) => adjustCompanionBonusStat(companionIndex, key, delta),
+    onOpenTalents: () => openCompanionTalentTree(companionIndex),
+    onRespec: () => respecCompanionStats(companionIndex),
   });
 }
 
@@ -690,7 +695,12 @@ function recruitCompanion(recruitId) {
   const entry = recruitPool.find((r) => r.id === recruitId);
   if (!entry || getRecruitProgress(entry) < entry.quest.goal) return;
   if (companions.length >= MAX_COMPANIONS) return;
+  // Retroactively grants a fresh recruit the talent points they'd already
+  // have earned by the player's current level — consistent with their
+  // stats already being scaled to the current level via scaleCompanionToLevel.
+  entry.companion.talentPointsAvailable = Math.max(0, level - 1);
   companions.push(entry.companion);
+  scaleCompanionToLevel(entry.companion, level);
   recruitPool = recruitPool.filter((r) => r.id !== recruitId);
   saveCompanionState();
   appendLog(`👥 ${entry.companion.name} dołącza do drużyny!`, "system");
@@ -995,14 +1005,17 @@ function getEquipmentStatBonuses() {
 
 // Passive talent nodes use the exact same {str,wyt,zre,int,cha,pancerz,
 // przebicie} shape as equipment bonuses (see equipment.js EQUIPMENT_ITEMS),
-// merged into buildPlayerCharacter() the same way getEquipmentStatBonuses()
-// is. Active/sustained nodes are shaped exactly like the 2 base subclass
-// spells (classes.js skills[]) and join that same list via
-// getUnlockedActiveTalents()/playerSkills() below, so they run through the
-// unmodified castSkill()/applySkillEffect() combat engine.
-function getTalentStatBonuses() {
+// merged into buildPlayerCharacter()/scaleCompanionToLevel() the same way
+// getEquipmentStatBonuses() is. Active/sustained nodes are shaped exactly
+// like the 2 base subclass spells (classes.js skills[]) and join that same
+// list via getUnlockedActiveTalentsFor()/playerSkills()/companionSkills()
+// below, so they run through the unmodified castSkill()/
+// applySkillEffect() combat engine. These are pure helpers over an
+// unlockedIds array so both the player and every companion (each with
+// their own unlockedTalentIds) can reuse them without duplication.
+function getTalentStatBonusesFor(unlockedIds) {
   const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
-  unlockedTalentIds.forEach((id) => {
+  unlockedIds.forEach((id) => {
     const node = findTalentNode(id);
     if (!node || node.kind !== "passive") return;
     Object.entries(node.bonus).forEach(([key, value]) => {
@@ -1012,68 +1025,129 @@ function getTalentStatBonuses() {
   return totals;
 }
 
-function getUnlockedActiveTalents() {
-  return unlockedTalentIds
+function getUnlockedActiveTalentsFor(unlockedIds) {
+  return unlockedIds
     .map((id) => findTalentNode(id))
     .filter((node) => node && node.kind !== "passive");
+}
+
+function getTalentStatBonuses() {
+  return getTalentStatBonusesFor(unlockedTalentIds);
+}
+
+function getUnlockedActiveTalents() {
+  return getUnlockedActiveTalentsFor(unlockedTalentIds);
 }
 
 function getPlayerTalentTree() {
   return selectedSubclassName ? TALENT_TREES[selectedSubclassName] : null;
 }
 
-// The tree currently shown in the talent tree modal — the player's own
+// Which "subject" the talent tree modal currently shows — the player, or
+// one specific companion (see openCompanionTalentTree()). Companions never
+// see the "🧬 Mutacja" tab (that's the player's own corruption arc), so
+// their unlockedIds never contain a mutation node id and
+// canUnlockTalentGeneric() below naturally falls through to their subclass
+// tree without needing a special case.
+let talentTreeSubject = { type: "player" };
+
+function getTalentSubjectData() {
+  if (talentTreeSubject.type === "companion") {
+    const companion = companions[talentTreeSubject.index];
+    if (!companion) return null;
+    return {
+      subclassName: companion.subclassName,
+      unlockedIds: companion.unlockedTalentIds || [],
+      pointsAvailable: companion.talentPointsAvailable || 0,
+      allowMutationTab: false,
+      label: companion.name,
+    };
+  }
+  return {
+    subclassName: selectedSubclassName,
+    unlockedIds: unlockedTalentIds,
+    pointsAvailable: talentPointsAvailable,
+    allowMutationTab: true,
+    label: null,
+  };
+}
+
+// The tree currently shown in the talent tree modal — the subject's own
 // subclass tree, or the cross-class MUTATION_TALENT_TREE (see talents.js)
-// when the "🧬 Mutacja" tab is active.
+// when the "🧬 Mutacja" tab is active (player only).
 function getActiveTalentTree() {
-  return talentTreeActiveTab === "mutation" ? MUTATION_TALENT_TREE : getPlayerTalentTree();
+  if (talentTreeActiveTab === "mutation") return MUTATION_TALENT_TREE;
+  const subject = getTalentSubjectData();
+  return subject && subject.subclassName ? TALENT_TREES[subject.subclassName] : null;
 }
 
 function isTalentUnlocked(nodeId) {
-  return unlockedTalentIds.includes(nodeId);
+  const subject = getTalentSubjectData();
+  return !!subject && subject.unlockedIds.includes(nodeId);
 }
 
 // DAO-style per-branch chain: rank N in a branch requires rank N-1 already
-// unlocked IN THAT SAME BRANCH (rank 1 only needs a spendable point). The
-// mutation tree is checked separately since it's not keyed by subclass name
-// and spends from the exact same talentPointsAvailable pool.
-function canUnlockTalent(nodeId) {
-  if (talentPointsAvailable <= 0 || isTalentUnlocked(nodeId)) return false;
+// unlocked IN THAT SAME BRANCH (rank 1 only needs a spendable point).
+function canUnlockTalentGeneric(subclassName, unlockedIds, pointsAvailable, nodeId) {
+  if (pointsAvailable <= 0 || unlockedIds.includes(nodeId)) return false;
 
   const mutationPosition = findMutationNodePosition(nodeId);
   if (mutationPosition) {
     const { branchIndex, tierIndex } = mutationPosition;
     if (tierIndex === 0) return true;
     const priorNode = MUTATION_TALENT_TREE.branches[branchIndex].nodes[tierIndex - 1];
-    return isTalentUnlocked(priorNode.id);
+    return unlockedIds.includes(priorNode.id);
   }
 
-  const tree = getPlayerTalentTree();
+  const tree = subclassName ? TALENT_TREES[subclassName] : null;
   if (!tree) return false;
   const position = findTalentNodePosition(nodeId);
   if (!position) return false;
   const { branchIndex, tierIndex } = position;
   if (tierIndex === 0) return true;
   const priorNode = tree.branches[branchIndex].nodes[tierIndex - 1];
-  return isTalentUnlocked(priorNode.id);
+  return unlockedIds.includes(priorNode.id);
+}
+
+function canUnlockTalent(nodeId) {
+  const subject = getTalentSubjectData();
+  if (!subject) return false;
+  return canUnlockTalentGeneric(subject.subclassName, subject.unlockedIds, subject.pointsAvailable, nodeId);
 }
 
 function unlockTalent(nodeId) {
   if (!canUnlockTalent(nodeId)) return;
-  unlockedTalentIds.push(nodeId);
-  talentPointsAvailable -= 1;
-  saveActiveRun();
-  if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
+
+  if (talentTreeSubject.type === "companion") {
+    const companion = companions[talentTreeSubject.index];
+    if (!companion) return;
+    companion.unlockedTalentIds = companion.unlockedTalentIds || [];
+    companion.unlockedTalentIds.push(nodeId);
+    companion.talentPointsAvailable = (companion.talentPointsAvailable || 0) - 1;
+    scaleCompanionToLevel(companion, level);
+    saveCompanionState();
+    refreshCompanionSheetIfOpen();
+  } else {
+    unlockedTalentIds.push(nodeId);
+    talentPointsAvailable -= 1;
+    saveActiveRun();
+    if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
+    refreshCharacterSheetIfOpen();
+  }
   refreshTalentTreeIfOpen();
-  refreshCharacterSheetIfOpen();
   render();
 }
 
-function openTalentTree() {
+function openTalentTree(subject = { type: "player" }) {
+  talentTreeSubject = subject;
   talentTreeActiveTab = "subclass";
   talentTreeSelectedNodeId = null;
   document.getElementById("talent-tree-overlay").classList.remove("hidden");
   refreshTalentTreeIfOpen();
+}
+
+function openCompanionTalentTree(index) {
+  openTalentTree({ type: "companion", index });
 }
 
 function closeTalentTree() {
@@ -1094,7 +1168,10 @@ function selectTalentTreeTab(tab) {
 function refreshTalentTreeIfOpen() {
   const overlay = document.getElementById("talent-tree-overlay");
   if (overlay.classList.contains("hidden")) return;
-  renderTalentTree(getActiveTalentTree(), unlockedTalentIds, talentPointsAvailable, talentTreeSelectedNodeId, talentTreeActiveTab, {
+  const subject = getTalentSubjectData();
+  if (!subject) { closeTalentTree(); return; }
+  const visibleTabs = subject.allowMutationTab ? TALENT_TREE_TABS : TALENT_TREE_TABS.filter((t) => t.key === "subclass");
+  renderTalentTree(getActiveTalentTree(), subject.unlockedIds, subject.pointsAvailable, talentTreeSelectedNodeId, talentTreeActiveTab, visibleTabs, subject.label, {
     onSelect: selectTalentNode,
     onUnlock: unlockTalent,
     onTabChange: selectTalentTreeTab,
@@ -1610,6 +1687,39 @@ function respecStats() {
   if (player && (phase === "camp" || phase === "city-place")) player = buildPlayerCharacter();
   render();
   refreshCharacterSheetIfOpen();
+  refreshTalentTreeIfOpen();
+}
+
+function adjustCompanionBonusStat(index, key, delta) {
+  const companion = companions[index];
+  if (!companion) return;
+  if (!companion.bonusStats) companion.bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  const spent = Object.values(companion.bonusStats).reduce((a, b) => a + b, 0);
+  const next = companion.bonusStats[key] + delta;
+  if (next < 0) return;
+  if (delta > 0 && spent >= (companion.statPointsAvailable || 0)) return;
+  companion.bonusStats[key] = next;
+  scaleCompanionToLevel(companion, level);
+  saveCompanionState();
+  render();
+  refreshCompanionSheetIfOpen();
+}
+
+function respecCompanionStats(index) {
+  const companion = companions[index];
+  if (!companion) return;
+  const spentStats = Object.values(companion.bonusStats || {}).reduce((a, b) => a + b, 0);
+  const spentTalents = (companion.unlockedTalentIds || []).length;
+  if (spentStats + spentTalents <= 0 || !canAffordItem({ cost: RESPEC_COST })) return;
+  resources[RESPEC_COST.currency].amount -= RESPEC_COST.amount;
+  saveResources();
+  companion.bonusStats = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+  companion.talentPointsAvailable = (companion.talentPointsAvailable || 0) + spentTalents;
+  companion.unlockedTalentIds = [];
+  scaleCompanionToLevel(companion, level);
+  saveCompanionState();
+  render();
+  refreshCompanionSheetIfOpen();
   refreshTalentTreeIfOpen();
 }
 
@@ -2385,8 +2495,9 @@ function applyBossSpecialEffect(boss, result) {
   }
 }
 
-function applySkillEffect(skill, target, result, context) {
+function applySkillEffect(caster, skill, target, result, context) {
   if (!result.hit || !skill.effectType) return;
+  const isPlayerCaster = caster === player;
 
   switch (skill.effectType) {
     case "armor_shred":
@@ -2395,23 +2506,26 @@ function applySkillEffect(skill, target, result, context) {
       break;
 
     case "heal_self": {
-      const healAmount = Math.round(player.maxHP * skill.effectValue);
-      player.currentHP = Math.min(player.maxHP, player.currentHP + healAmount);
-      appendLog(`✨ Odzyskujesz ${healAmount} PD.`, "system");
+      const healAmount = Math.round(caster.maxHP * skill.effectValue);
+      caster.currentHP = Math.min(caster.maxHP, caster.currentHP + healAmount);
+      appendLog(isPlayerCaster ? `✨ Odzyskujesz ${healAmount} PD.` : `✨ ${caster.name} odzyskuje ${healAmount} PD.`, "system");
       break;
     }
 
     case "lifesteal": {
       const healAmount = Math.round(result.damage * skill.effectValue);
-      player.currentHP = Math.min(player.maxHP, player.currentHP + healAmount);
-      appendLog(`🩸 Wysysasz ${healAmount} PD z ${target.name}.`, "system");
+      caster.currentHP = Math.min(caster.maxHP, caster.currentHP + healAmount);
+      appendLog(isPlayerCaster
+        ? `🩸 Wysysasz ${healAmount} PD z ${target.name}.`
+        : `🩸 ${caster.name} wysysa ${healAmount} PD z ${target.name}.`, "system");
       break;
     }
 
     case "self_buff": {
-      applyTimedEffect(player, skill.stat, skill.effectValue, skill.effectTurns, skill.label);
+      applyTimedEffect(caster, skill.stat, skill.effectValue, skill.effectTurns, skill.label);
       const amountText = skill.stat === "pancerz" ? `${Math.round(skill.effectValue * 100)}%` : `+${skill.effectValue}`;
-      appendLog(`${skill.icon} ${amountText} ${skill.stat.toUpperCase()} na ${turnsLabel(skill.effectTurns)}.`, "system");
+      const prefix = isPlayerCaster ? "" : `${caster.name}: `;
+      appendLog(`${prefix}${skill.icon} ${amountText} ${skill.stat.toUpperCase()} na ${turnsLabel(skill.effectTurns)}.`, "system");
       break;
     }
 
@@ -2428,7 +2542,7 @@ function applySkillEffect(skill, target, result, context) {
           minDmg: Math.round(skill.minDmg * skill.effectValue),
           maxDmg: Math.round(skill.maxDmg * skill.effectValue),
         };
-        const splashAttacker = Object.assign({}, player, { weapon: splashWeapon });
+        const splashAttacker = Object.assign({}, caster, { weapon: splashWeapon });
         const splashResult = resolveAttack(splashAttacker, e, context);
         const { text, cssClass } = formatAttackResult(splashResult);
         appendLog(`🔥 Odprysk ognia → ${text}`, cssClass);
@@ -2462,7 +2576,7 @@ function applySkillEffect(skill, target, result, context) {
       break;
 
     case "party_heal": {
-      const healAmount = Math.round(player.maxHP * skill.effectValue);
+      const healAmount = Math.round(caster.maxHP * skill.effectValue);
       livingAllies().forEach((u) => {
         u.currentHP = Math.min(u.maxHP, u.currentHP + healAmount);
       });
@@ -2471,9 +2585,9 @@ function applySkillEffect(skill, target, result, context) {
     }
 
     case "cleanse_self":
-      player.poison = null;
-      player.activeEffects = (player.activeEffects || []).filter((eff) => eff.amount > 0);
-      appendLog(`✨ Oczyszczasz się z trucizn i osłabień.`, "system");
+      caster.poison = null;
+      caster.activeEffects = (caster.activeEffects || []).filter((eff) => eff.amount > 0);
+      appendLog(isPlayerCaster ? `✨ Oczyszczasz się z trucizn i osłabień.` : `✨ ${caster.name} oczyszcza się z trucizn i osłabień.`, "system");
       break;
 
     default:
@@ -2533,7 +2647,7 @@ function castSkill(id) {
     appendLog(`${skill.icon} ${skill.name}! ${text}`, cssClass);
     triggerAttackFx(result, target.pos);
     if (result.hit) playSpellImpactSound(); else playMissSound();
-    applySkillEffect(skill, target, result, context);
+    applySkillEffect(player, skill, target, result, context);
     finishPlayerAction(target);
   });
 }
@@ -2628,6 +2742,44 @@ function resolveUnitDeath(target) {
   }
 }
 
+// Combines a companion's 2 innate subclass spells with any active/sustained
+// talent nodes they've unlocked — mirrors playerSkills() in shape (id-keyed,
+// same castable objects) so castCompanionSkill()/applySkillEffect() below
+// need zero companion-specific combat logic.
+function companionSkills(companion) {
+  const sub = findSubclassData(companion.className, companion.subclassName);
+  const base = (sub && sub.skills) || [];
+  return [...base, ...getUnlockedActiveTalentsFor(companion.unlockedTalentIds || [])];
+}
+
+function companionSkillCooldownFor(companion, id) {
+  return (companion.skillCooldowns && companion.skillCooldowns[id]) || 0;
+}
+
+// Synchronous counterpart to castSkill() — companions act during the enemy
+// phase, not the player's stepped turn, so there's no radial menu/projectile
+// animation to wait on, same as their existing basic attack below.
+function castCompanionSkill(companion, skill, target, context) {
+  const virtualAttacker = Object.assign({}, companion, { weapon: skill });
+  if (skill.effectType === "guaranteed_crit") virtualAttacker.d6Bonus = 6;
+  if (skill.effectType === "ignore_armor") virtualAttacker.przebicie = 1;
+  companion.skillCooldowns = companion.skillCooldowns || {};
+  companion.skillCooldowns[skill.id] = skill.cooldown;
+
+  const result = resolveAttack(virtualAttacker, target, context);
+  const { text, cssClass } = formatAttackResult(result);
+  appendLog(`${skill.icon} ${companion.icon} ${companion.name} używa: ${skill.name}! ${text}`, cssClass);
+  triggerAttackFx(result, target.pos);
+  if (result.hit) playSpellImpactSound(); else playMissSound();
+  applySkillEffect(companion, skill, target, result, context);
+
+  if (target.currentHP <= 0) {
+    appendLog(`${target.name} pada martwy.`, "system");
+    discoverEnemy(target.templateKey);
+    registerKill();
+  }
+}
+
 function companionActions(context) {
   for (const companion of companions) {
     if (companion.currentHP <= 0 || battleOver) continue;
@@ -2654,6 +2806,15 @@ function companionActions(context) {
 
     for (let i = 0; i < actionsRemaining; i++) {
       if (target.currentHP <= 0 || battleOver) break;
+
+      const availableSkill = companionSkills(companion).find(
+        (s) => companionSkillCooldownFor(companion, s.id) <= 0 && hexDistance(companion.pos, target.pos) <= s.range
+      );
+      if (availableSkill) {
+        castCompanionSkill(companion, availableSkill, target, context);
+        continue;
+      }
+
       const result = resolveAttack(companion, target, context);
       const { text, cssClass } = formatAttackResult(result);
       appendLog(`${companion.icon} ${text}`, cssClass);
@@ -2748,6 +2909,11 @@ function enemyPhase() {
     Object.keys(player.skillCooldowns || {}).forEach((id) => {
       if (player.skillCooldowns[id] > 0) player.skillCooldowns[id]--;
     });
+    companions.forEach((companion) => {
+      Object.keys(companion.skillCooldowns || {}).forEach((id) => {
+        if (companion.skillCooldowns[id] > 0) companion.skillCooldowns[id]--;
+      });
+    });
     if (player.mutateCooldown > 0) player.mutateCooldown--;
     tickTimedEffectsFor(player);
     companions.forEach((companion) => tickTimedEffectsFor(companion));
@@ -2799,7 +2965,7 @@ document.getElementById("camp-main-menu-btn").addEventListener("click", goToMain
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
 document.getElementById("camp-quests-btn").addEventListener("click", openQuestBoard);
 document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
-document.getElementById("camp-talents-btn").addEventListener("click", openTalentTree);
+document.getElementById("camp-talents-btn").addEventListener("click", () => openTalentTree());
 document.getElementById("talent-tree-close").addEventListener("click", closeTalentTree);
 document.getElementById("camp-campaign-btn").addEventListener("click", openCampaignBoard);
 document.getElementById("campaign-close").addEventListener("click", closeCampaignBoard);
@@ -2849,7 +3015,7 @@ document.querySelectorAll(".gender-btn").forEach((btn) => {
   btn.addEventListener("click", () => setPlayerGender(btn.dataset.gender));
 });
 document.getElementById("creation-confirm-btn").addEventListener("click", confirmCharacterCreation);
-document.getElementById("creation-talent-preview-btn").addEventListener("click", openTalentTree);
+document.getElementById("creation-talent-preview-btn").addEventListener("click", () => openTalentTree());
 document.getElementById("prologue-next-btn").addEventListener("click", advancePrologue);
 document.getElementById("prologue-finish-btn").addEventListener("click", advancePrologue);
 document.getElementById("prologue-skip-btn").addEventListener("click", skipPrologue);

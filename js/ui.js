@@ -1097,6 +1097,30 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
     </div>
   `;
 
+  const spentCompanionStats = Object.values(companion.bonusStats || {}).reduce((a, b) => a + b, 0);
+  const spentCompanionTalents = (companion.unlockedTalentIds || []).length;
+  const respecOwned = resources[RESPEC_COST.currency] ? resources[RESPEC_COST.currency].amount : 0;
+  const respecAffordable = respecOwned >= RESPEC_COST.amount;
+  const developmentHtml = `
+    <div class="sheet-section">
+      <h4>🌟 Rozwój towarzysza</h4>
+      <div id="companion-stat-allocator"></div>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">Punkty umiejętności do rozdania: ${companion.talentPointsAvailable || 0}.</div>
+        </div>
+        <button type="button" class="sheet-action-btn companion-talents-btn">🌟 Umiejętności</button>
+      </div>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">Zwraca wydane punkty statystyk i umiejętności tego towarzysza (${spentCompanionStats} pkt statystyk, ${spentCompanionTalents} pkt umiejętności).</div>
+          <div class="sheet-item-cost">Koszt: ${RESPEC_COST.amount} × ${RESPEC_COST.currency} (masz: ${respecOwned})</div>
+        </div>
+        <button type="button" class="sheet-action-btn companion-respec-btn" ${(spentCompanionStats + spentCompanionTalents) > 0 && respecAffordable ? "" : "disabled"}>🔄 Przebuduj</button>
+      </div>
+    </div>
+  `;
+
   const equippedElsewhere = new Set(Object.values(equipped).filter(Boolean));
   companions.forEach((c) => {
     if (c === companion || !c.equipped) return;
@@ -1126,7 +1150,15 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
     </div>
   `;
 
-  body.innerHTML = statsHtml + slotsHtml + inventoryHtml;
+  body.innerHTML = statsHtml + developmentHtml + slotsHtml + inventoryHtml;
+
+  renderStatAllocatorInto(
+    document.getElementById("companion-stat-allocator"),
+    companion,
+    companion.bonusStats || { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 },
+    companion.statPointsAvailable || 0,
+    handlers.onAdjustStat
+  );
 
   body.querySelectorAll(".companion-unequip-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onUnequip(btn.dataset.slot));
@@ -1134,6 +1166,10 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   body.querySelectorAll(".companion-equip-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onEquip(btn.dataset.item));
   });
+  const talentsBtn = body.querySelector(".companion-talents-btn");
+  if (talentsBtn) talentsBtn.addEventListener("click", handlers.onOpenTalents);
+  const respecBtn = body.querySelector(".companion-respec-btn");
+  if (respecBtn) respecBtn.addEventListener("click", handlers.onRespec);
 }
 
 function renderCityNpc(place, claimedNpcQuests, reputation, handlers) {
@@ -1545,10 +1581,10 @@ function describeTalentEffect(node) {
   }
 }
 
-function renderTalentTree(tree, unlockedIds, pointsAvailable, selectedNodeId, activeTab, handlers) {
+function renderTalentTree(tree, unlockedIds, pointsAvailable, selectedNodeId, activeTab, visibleTabs, subjectLabel, handlers) {
   const tabsEl = document.getElementById("talent-tree-tabs");
   tabsEl.innerHTML = "";
-  TALENT_TREE_TABS.forEach((tab) => {
+  (visibleTabs || TALENT_TREE_TABS).forEach((tab) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `codex-tab-btn${tab.key === activeTab ? " selected" : ""}`;
@@ -1564,7 +1600,7 @@ function renderTalentTree(tree, unlockedIds, pointsAvailable, selectedNodeId, ac
   }
 
   const header = `
-    <h4>${tree.icon} ${tree.name}</h4>
+    <h4>${tree.icon} ${tree.name}${subjectLabel ? ` — ${subjectLabel}` : ""}</h4>
     <p class="camp-flavor">Dostępne punkty umiejętności: <strong>${pointsAvailable}</strong> — kolejny punkt zdobywasz co każdy poziom postaci. Kliknij węzeł, aby zobaczyć szczegóły.</p>
   `;
 
