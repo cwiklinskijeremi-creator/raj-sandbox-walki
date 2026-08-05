@@ -2849,6 +2849,7 @@ document.querySelectorAll(".gender-btn").forEach((btn) => {
   btn.addEventListener("click", () => setPlayerGender(btn.dataset.gender));
 });
 document.getElementById("creation-confirm-btn").addEventListener("click", confirmCharacterCreation);
+document.getElementById("creation-talent-preview-btn").addEventListener("click", openTalentTree);
 document.getElementById("prologue-next-btn").addEventListener("click", advancePrologue);
 document.getElementById("prologue-finish-btn").addEventListener("click", advancePrologue);
 document.getElementById("prologue-skip-btn").addEventListener("click", skipPrologue);

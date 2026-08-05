@@ -500,6 +500,8 @@ function renderCharacterCreation(state, handlers) {
 
   const confirmBtn = document.getElementById("creation-confirm-btn");
   confirmBtn.disabled = !(playerName.trim().length > 0 && !!playerGender && !!selectedSub);
+
+  document.getElementById("creation-talent-preview-btn").disabled = !selectedSub;
 }
 
 const INTRO_MOOD_COLORS = ["#f0be3c", "#e0574b", "#b48ce0"];
