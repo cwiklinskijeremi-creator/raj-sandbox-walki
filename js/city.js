@@ -59,6 +59,11 @@ const CITY_NPCS = {
       description: "Wróć, gdy udowodnisz, że potrafisz udźwignąć to, co kujemy — osiągnij 4. poziom doświadczenia, a dorzucę ci coś z warsztatu.",
       reward: { currency: "Kryształy Esencji", amount: 20 },
     },
+    highCorruptionLine: "Ręce ci się zmieniają, wędrowcze. Widziałam już takie zmiany u górników z Kopalni — zwykle na gorsze.",
+    questResolutionLines: {
+      honest: "Rada wciąż nie wie, że to ode mnie wyszła ta wiadomość o Kopalniach. Dzięki, że nie musiałam mówić tego sama.",
+      dark: "Trzymamy to, co widzieliśmy w Kopalniach, między sobą. Dobrze, że przynajmniej ty rozumiesz, czemu milczę.",
+    },
   },
   swiatynia: {
     name: "Brat Aldric",
@@ -74,6 +79,11 @@ const CITY_NPCS = {
       description: "Aby zrozumieć plagę tego świata, musisz najpierw ją poznać. Odkryj 6 różnych stworzeń w Bestiariuszu, a pobłogosławię cię za to poświęcenie.",
       reward: { currency: "Fiolki Światła", amount: 20 },
     },
+    highCorruptionLine: "Modlę się za twoją duszę, wędrowcze. Sądząc po bliznach spaczenia, potrzebujesz tego bardziej niż inni.",
+    questResolutionLines: {
+      honest: "Odkąd powiedziałeś mi prawdę o Tomaszu, śpię spokojniej — nawet jeśli ta prawda była ciężka.",
+      dark: "Wciąż opłakuję Tomasza jako bohatera poległego w kopalniach. Czasem myślę, że wiesz o tym więcej, niż mówisz.",
+    },
   },
   arena: {
     name: "Grom",
@@ -87,6 +97,11 @@ const CITY_NPCS = {
       type: "kills", goal: 15,
       description: "Udowodnij, że Arena to dla ciebie za mało — pokonaj 15 przeciwników w dowolnych walkach.",
       reward: { currency: "Nagroda Gildii", amount: 25 },
+    },
+    highCorruptionLine: "Widziałem, jak spaczenie zmienia zawodników na tej arenie. Niektórzy walczą lepiej. Żaden nie wraca taki sam.",
+    questResolutionLines: {
+      honest: "Od tamtej walki z wysłannikiem Rady wciąż mówią o tobie na Arenie. Dobrze zrobiłeś, kończąc to na oczach tłumu.",
+      dark: "Nie pytam, co wyciągnąłeś z tamtego wysłannika. Widziałem tylko, że wygrałeś, i to mi wystarcza.",
     },
   },
   czarny_rynek: {
@@ -103,6 +118,11 @@ const CITY_NPCS = {
       description: "Riven kupi od Ciebie 30 Kryształów Esencji z pominięciem podatku Rady — przynieś je, a zapłaci w towarze, którego nie znajdziesz legalnie.",
       reward: { currency: "Fiolki Światła", amount: 25 },
     },
+    highCorruptionLine: "Spaczenie na twojej skórze to towar, na który zawsze znajdę kupca. Nie pytaj, kto go szuka.",
+    questResolutionLines: {
+      honest: "Ten urzędnik Rady, którego wsypałeś moimi dowodami? Wciąż płaci za to gniewem, którego nie umie ukryć. Dobra robota.",
+      dark: "Ludzie, którzy myślą jak ty, zawsze u mnie zarabiają więcej. Ten konwój Rady wciąż nam się opłaca.",
+    },
   },
   tawerna: {
     name: "Yolanda Dwa Kielichy",
@@ -118,6 +138,7 @@ const CITY_NPCS = {
       description: "Przynieś mi 40 Nagrody Gildii, a wytoczę ci coś specjalnego zza baru — coś, czego nie ma w oficjalnym menu.",
       reward: { currency: "Spaczone Zioła", amount: 20 },
     },
+    highCorruptionLine: "Nalewam ci to samo co zawsze, ale patrzysz na mnie inaczej niż kiedyś. Spaczenie robi to każdemu, prędzej czy później.",
   },
   kult_spaczenia: {
     name: "Matka Esencja",
@@ -133,5 +154,6 @@ const CITY_NPCS = {
       description: "Udowodnij, że nie boisz się przemiany — osiągnij 40% spaczenia many, a podzielimy się z tobą sekretem esencji.",
       reward: { currency: "Spaczone Zioła", amount: 25 },
     },
+    highCorruptionLine: "Esencja szepcze do ciebie już wyraźniej niż do większości, prawda? Widzę to w twoich oczach. Witaj bliżej domu.",
   },
 };

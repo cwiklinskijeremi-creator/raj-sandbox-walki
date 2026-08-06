@@ -1382,6 +1382,11 @@ button:disabled {
   color: #e8e0d8;
 }
 
+.companion-reaction-line {
+  font-style: italic;
+  opacity: 0.85;
+}
+
 .recruit-scene-actions {
   display: flex;
   justify-content: flex-end;

@@ -571,7 +571,7 @@ function renderPrologue(prologue, step) {
   finishBtn.classList.toggle("hidden", !isLast);
 }
 
-function renderEpilogue(chapter, className, corruptionValue) {
+function renderEpilogue(chapter, className, corruptionValue, storyChoicesSummary) {
   const titleEl = document.getElementById("epilogue-title");
   const bodyEl = document.getElementById("epilogue-body");
   if (!chapter) {
@@ -584,12 +584,14 @@ function renderEpilogue(chapter, className, corruptionValue) {
   const corruptionCoda = (corruptionValue || 0) >= CORRUPTION_EPILOGUE_HIGH_THRESHOLD
     ? CORRUPTION_EPILOGUE_ADDENDUM.high
     : CORRUPTION_EPILOGUE_ADDENDUM.low;
+  const choicesAddendum = buildStoryChoicesAddendum(storyChoicesSummary);
 
   titleEl.textContent = `${chapter.icon} ${chapter.title} — Epilog`;
   bodyEl.innerHTML = `
     ${chapter.outro.map((line) => `<p class="prologue-text">${line}</p>`).join("")}
     ${classEpilogue ? `<p class="prologue-text">${classEpilogue.icon} ${classEpilogue.reflection}</p>` : ""}
     <p class="prologue-text">${corruptionCoda}</p>
+    ${choicesAddendum ? `<p class="prologue-text">${choicesAddendum}</p>` : ""}
   `;
 }
 
@@ -1046,6 +1048,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   }
 
   const cEquipped = companion.equipped || {};
+  const reactionLine = getCompanionReactionLine(companion);
   const statsHtml = `
     <div class="sheet-section">
       <div class="sheet-header-row">
@@ -1055,6 +1058,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
           <div class="sheet-level-line">${companion.className} — ${companion.subclassName} &nbsp;|&nbsp; Poziom ${level}</div>
         </div>
       </div>
+      ${reactionLine ? `<p class="sheet-item-desc companion-reaction-line">„${reactionLine}”</p>` : ""}
       <div class="sheet-stats-grid">
         <div>HP: ${companion.maxHP}</div>
         <div>Pancerz: ${(companion.pancerz * 100).toFixed(0)}%</div>
@@ -1249,6 +1253,49 @@ function renderSideQuestScene(quest, sceneState, stageDef, objectiveCurrent, han
   advanceBtn.textContent = (isLastBeat && stageDef.final) ? "Zamknij" : "Dalej";
 }
 
+// Priority: the companion's own story resolution (most specific, earned
+// reaction) beats a generic high-corruption line, which beats showing
+// nothing — a companion who hasn't reacted to anything yet stays silent
+// rather than forcing filler text.
+function getCompanionReactionLine(companion) {
+  const reactions = COMPANION_REACTIONS[companion.subclassName];
+  if (!reactions) return null;
+  const progress = companion.storyProgress;
+  if (progress && progress.completed) {
+    if (progress.stage === "resolution_light") return reactions.storyLightLine;
+    if (progress.stage === "resolution_dark") return reactions.storyDarkLine;
+  }
+  if (reactions.corruptionLine && corruption >= CORRUPTION_EPILOGUE_HIGH_THRESHOLD) {
+    return reactions.corruptionLine;
+  }
+  return null;
+}
+
+// Blends the NPC's static flavor lines with conditional reactive ones —
+// a corruption-threshold line (js/city.js: highCorruptionLine) and, once
+// their multi-stage side quest (js/sideQuests.js) is resolved, a line
+// reflecting which branch the player picked. Mixed into the same random
+// pool rather than always shown, so reactivity feels like a chance
+// occurrence rather than a guaranteed popup every visit.
+function pickNpcLine(npc, place, sideQuestProgress) {
+  const pool = [...npc.lines];
+  if (npc.highCorruptionLine && corruption >= CORRUPTION_EPILOGUE_HIGH_THRESHOLD) {
+    pool.push(npc.highCorruptionLine);
+  }
+  if (npc.questResolutionLines) {
+    const entry = Object.entries(SIDE_QUESTS).find(([, q]) => q.npcKey === place.key);
+    if (entry) {
+      const [questId] = entry;
+      const progress = sideQuestProgress[questId];
+      if (progress && progress.completed) {
+        if (progress.stage === "resolution_honest") pool.push(npc.questResolutionLines.honest);
+        else if (progress.stage === "resolution_silent") pool.push(npc.questResolutionLines.dark);
+      }
+    }
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function renderCityNpc(place, claimedNpcQuests, reputation, sideQuestProgress, handlers) {
   const el = document.getElementById("city-place-npc");
   const npc = CITY_NPCS[place.key];
@@ -1263,7 +1310,7 @@ function renderCityNpc(place, claimedNpcQuests, reputation, sideQuestProgress, h
     ? `🤝 Reputacja: ${rep} (-${discountPct}% rabatu w tutejszym sklepie)`
     : `🤝 Reputacja: ${rep} (buduj ją zakupami i zleceniami, żeby odblokować rabat)`;
 
-  const line = npc.lines[Math.floor(Math.random() * npc.lines.length)];
+  const line = pickNpcLine(npc, place, sideQuestProgress);
   const quest = npc.quest;
   const claimed = quest && claimedNpcQuests.includes(place.key);
 

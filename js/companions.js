@@ -106,6 +106,65 @@ const COMPANION_SCENES = {
   ],
 };
 
+// Small ambient reactions shown in the companion sheet (js/ui.js:
+// renderCompanionSheet) — corruptionLine fires once the player's own
+// spaczenie crosses CORRUPTION_EPILOGUE_HIGH_THRESHOLD (js/prologue.js),
+// story{Light,Dark}Line reflects how that companion's own personal thread
+// (js/companionStory.js) resolved. Story reaction takes priority over the
+// corruption one when both apply — it is the more specific, earned reaction.
+const COMPANION_REACTIONS = {
+  "Arcymag": {
+    corruptionLine: "Widzę zmianę w tobie, jakiej nie da się cofnąć zaklęciem. Nawet ja nie mam na to receptury.",
+    storyLightLine: "Odkąd spaliliśmy ten tom, śpię lepiej. Dziękuję, że pomogłeś mi wybrać spokój zamiast wiedzy.",
+    storyDarkLine: "Czasem po nocach słyszę ten szept, o którym ci mówiłem. Cieszę się, że przynajmniej nie słyszę go sam.",
+  },
+  "Apostata": {
+    corruptionLine: "Rozpoznaję ten ciężar w twoich oczach. Otchłań szepcze do ciebie tak, jak kiedyś do mnie.",
+    storyLightLine: "Od czasu zerwania paktu czuję się bardziej sobą, niż od lat. To wciąż twoja zasługa.",
+    storyDarkLine: "Pakt, który pogłębiliśmy, wciąż trzyma się mocno. Mam nadzieję, że nie pożałujesz, że mi pomogłeś.",
+  },
+  "Świetlisty obrońca": {
+    corruptionLine: "Zakon nazwałby to, co widzę na twojej skórze, herezją. Ja nazywam to twoim wyborem, nie moim.",
+    storyLightLine: "Rodzina, którą ukryliśmy przed Zakonem, wciąż żyje bezpiecznie. Złamałem przysięgę i nie żałuję.",
+    storyDarkLine: "Wciąż myślę o tej rodzinie, którą zgłosiłem zgodnie z prawem. Litera prawa nie koi sumienia tak, jak sądziłem.",
+  },
+  "Mroczny rycerz": {
+    corruptionLine: "Widziałem, co spaczenie robi z ludźmi silniejszymi od ciebie. Uważaj, komu oddajesz swoje ciało.",
+    storyLightLine: "Puściłem wolno dawnego brata broni dzięki tobie. Nie wiem, czy to mądrość, czy słabość — ale czuję się lżejszy.",
+    storyDarkLine: "Zabiliśmy go razem, bez wahania. Nie żałuję tego czynu tak bardzo, jak sądziłem, że będę.",
+  },
+  "Najemnik bractwa": {
+    corruptionLine: "Bractwo płaci dobrze za ciała takie jak twoje, zanim spaczenie zrobi z nich coś bezużytecznego. Pilnuj się.",
+    storyLightLine: "Odrzuciłem tamten kontrakt bez nazwiska dzięki tobie. Bractwo wciąż na mnie krzywo patrzy, ale sypiam spokojnie.",
+    storyDarkLine: "Kontrakt wykonany, zapłata odebrana. Nie pytaj, co dokładnie zrobiliśmy temu kupcowi — lepiej dla nas obojga.",
+  },
+  "Berserk": {
+    corruptionLine: "Czuję furię inną niż moją, kiedy jesteś blisko. Spaczenie i szał to bliscy kuzyni, wiedziałeś?",
+    storyLightLine: "Ta dyscyplina oddechu, którą razem ćwiczymy, naprawdę działa. Pamiętam teraz każdą bitwę do końca.",
+    storyDarkLine: "Przestałem walczyć z furią, tak jak radziłeś. Jest szybsza, silniejsza — i coraz trudniej ją odróżnić ode mnie.",
+  },
+  "Łowca": {
+    corruptionLine: "Tropię zwierzynę od lat i rozpoznaję zmianę zapachu. Ty pachniesz teraz inaczej, niż powinieneś.",
+    storyLightLine: "Ta nieznana bestia wciąż żyje w swojej jaskini dzięki tobie. Rejestr zyskał wpis, a ona życie. Dobry układ.",
+    storyDarkLine: "Ubiliśmy ją szybko, zanim zdążyła kogoś skrzywdzić. Wciąż myślę, czy to było naprawdę konieczne.",
+  },
+  "Skrytobójca": {
+    corruptionLine: "W cieniu widać więcej, niż myślisz. To, co rośnie w tobie, nie jest już całkiem ludzkie.",
+    storyLightLine: "Ten chłopak z kontraktu wciąż gdzieś tam żyje razem z matką, dzięki tobie. Rzadko żałuję litości — tym razem nie żałuję wcale.",
+    storyDarkLine: "Kontrakt dokończony, tak jak mnie nauczono. Staram się nie myśleć o tym chłopcu i jego matce.",
+  },
+  "Truciciel": {
+    corruptionLine: "Znam się na truciznach lepiej niż ktokolwiek — i to, co widzę w tobie, nie jest żadną z moich receptur.",
+    storyLightLine: "Uratowaliśmy razem tę osadę, zamiast ścigać mojego dawnego ucznia. Sypiam spokojniej, wiedząc, że wybrałem dobrze.",
+    storyDarkLine: "Dopadliśmy go jego własną trucizną. Skuteczne, owszem. Wciąż nie czuję się z tym tak dobrze, jak sądziłem.",
+  },
+  "Medyk": {
+    corruptionLine: "Badałam niejedno ciało dotknięte spaczeniem. Twoje zmienia się szybciej, niż powinno — uważaj na siebie.",
+    storyLightLine: "Rozdzieliliśmy lekarstwo równo między wszystkich w tamtej osadzie. Niektórzy i tak nie przeżyli, ale nikogo nie spisaliśmy na straty.",
+    storyDarkLine: "Musiałam wybierać, komu pomóc najpierw. Ocaliłam więcej istnień niż inaczej — ale wciąż widzę twarze tych pominiętych.",
+  },
+};
+
 function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeNames = []) {
   const availableClasses = CLASS_DATA.filter((c) => c.name !== excludeClassName);
   const availablePairs = [];

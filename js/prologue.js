@@ -90,3 +90,27 @@ const CORRUPTION_EPILOGUE_ADDENDUM = {
   high: "Twoje odbicie w kryształowych ścianach Wieży Rady już dawno przestało wyglądać jak twoje własne. Pokonałeś Doriana z siłą, którą kupiłeś własnym ciałem i umysłem — i teraz, stojąc nad jego zwłokami, nie jesteś już pewien, kto tu naprawdę wygrał.",
   low: "Siedem lat wygnania i cała ta droga nie zmieniły cię tak, jak mogły. Stoisz nad ciałem Doriana wciąż sobą — obolały, zmęczony, ale rozpoznawalny we własnej skórze. To też jest rodzaj zwycięstwa, o którym niewielu w Aetherionie mogłoby dziś powiedzieć to samo.",
 };
+
+// Trzecia, ostatnia część epilogu — podsumowanie wyborów z wieloetapowych
+// misji pobocznych NPC (js/sideQuests.js) i osobistych wątków towarzyszy
+// (js/companionStory.js), liczone przez main.js: getStoryChoicesSummary().
+// Pokazuje się tylko, jeśli gracz ukończył choć jeden z tych wątków —
+// inaczej po prostu nic o nich nie wspomina, żeby nie spoilerować mechaniki
+// tym, kto ich nie tknął.
+const STORY_CHOICES_EPILOGUE_ADDENDUM = {
+  light: (light, dark) =>
+    `Z tego, co zostawiłeś za sobą w Aetherionie: ${light} razy postawiłeś na uczciwość i lojalność wobec tych, którzy ci zaufali, wobec ${dark} razy, gdy wybrałeś inaczej. Ludzie z miasta i towarzysze, którzy szli z tobą, zapamiętają cię jako kogoś, komu można było zaufać — mimo Doriana, mimo spaczenia, mimo wszystkiego, co po drodze straciłeś.`,
+  dark: (light, dark) =>
+    `Z tego, co zostawiłeś za sobą w Aetherionie: ${dark} razy wybrałeś milczenie, zysk albo mrok, wobec zaledwie ${light} chwil, gdy postawiłeś na uczciwość. Ci, którym pomogłeś po cichu, i ci, których po cichu wykorzystałeś, noszą teraz część tego ciężaru razem z tobą — czy o tym wiedzą, czy nie.`,
+  balanced: (light, dark) =>
+    `Z tego, co zostawiłeś za sobą w Aetherionie: ${light} razy postawiłeś na uczciwość, ${dark} razy na coś przeciwnego. Ani światło, ani mrok nie wygrały do końca — ta niejednoznaczność też jest odpowiedzią na pytanie, kim się stałeś przez te siedem lat.`,
+};
+
+function buildStoryChoicesAddendum(summary) {
+  if (!summary) return "";
+  const light = summary.honestQuests + summary.lightCompanions;
+  const dark = summary.darkQuests + summary.darkCompanions;
+  if (light === 0 && dark === 0) return "";
+  const variant = light > dark ? "light" : dark > light ? "dark" : "balanced";
+  return STORY_CHOICES_EPILOGUE_ADDENDUM[variant](light, dark);
+}

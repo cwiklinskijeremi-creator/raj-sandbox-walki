@@ -685,6 +685,33 @@ function getCompanionStoryStatusText(companion) {
   return { status: `„${quest.name}” w toku.`, buttonLabel: "Kontynuuj" };
 }
 
+// Tallies how the player resolved every completed NPC side quest and
+// companion story thread — read by the epilogue (prologue.js:
+// buildStoryChoicesAddendum) for a closing summary of the whole session's
+// reputation-vs-corruption / stat-bonus-vs-corruption choices. Both quest
+// types share the same "resolution_honest"/"resolution_silent" (NPC) and
+// "resolution_light"/"resolution_dark" (companion) stage-name convention.
+function getStoryChoicesSummary() {
+  let honestQuests = 0;
+  let darkQuests = 0;
+  Object.values(sideQuestProgress).forEach((progress) => {
+    if (!progress || !progress.completed) return;
+    if (progress.stage === "resolution_honest") honestQuests++;
+    else if (progress.stage === "resolution_silent") darkQuests++;
+  });
+
+  let lightCompanions = 0;
+  let darkCompanions = 0;
+  companions.forEach((c) => {
+    const progress = c.storyProgress;
+    if (!progress || !progress.completed) return;
+    if (progress.stage === "resolution_light") lightCompanions++;
+    else if (progress.stage === "resolution_dark") darkCompanions++;
+  });
+
+  return { honestQuests, darkQuests, lightCompanions, darkCompanions };
+}
+
 let activeRecruitScene = null;
 
 function openRecruitScene(recruitId) {
@@ -2452,7 +2479,7 @@ function render() {
 
   if (phase === "epilogue") {
     hideAllExcept(epilogueScreen);
-    renderEpilogue(CAMPAIGN_CHAPTERS.find((c) => c.isFinale), selectedClassName, corruption);
+    renderEpilogue(CAMPAIGN_CHAPTERS.find((c) => c.isFinale), selectedClassName, corruption, getStoryChoicesSummary());
     saveActiveRun();
     return;
   }
