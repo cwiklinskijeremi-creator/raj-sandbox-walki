@@ -1121,6 +1121,21 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
     </div>
   `;
 
+  const storyInfo = getCompanionStoryStatusText(companion);
+  const storyHtml = storyInfo
+    ? `
+    <div class="sheet-section">
+      <h4>📖 Historia towarzysza</h4>
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-desc">${storyInfo.status}</div>
+        </div>
+        <button type="button" class="sheet-action-btn companion-story-btn">${storyInfo.buttonLabel}</button>
+      </div>
+    </div>
+  `
+    : "";
+
   const equippedElsewhere = new Set(Object.values(equipped).filter(Boolean));
   companions.forEach((c) => {
     if (c === companion || !c.equipped) return;
@@ -1150,7 +1165,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
     </div>
   `;
 
-  body.innerHTML = statsHtml + developmentHtml + slotsHtml + inventoryHtml;
+  body.innerHTML = statsHtml + developmentHtml + storyHtml + slotsHtml + inventoryHtml;
 
   renderStatAllocatorInto(
     document.getElementById("companion-stat-allocator"),
@@ -1170,6 +1185,8 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
   if (talentsBtn) talentsBtn.addEventListener("click", handlers.onOpenTalents);
   const respecBtn = body.querySelector(".companion-respec-btn");
   if (respecBtn) respecBtn.addEventListener("click", handlers.onRespec);
+  const storyBtn = body.querySelector(".companion-story-btn");
+  if (storyBtn) storyBtn.addEventListener("click", handlers.onOpenStory);
 }
 
 // Multi-stage narrative side quest scene (js/sideQuests.js) — mirrors the

@@ -460,11 +460,17 @@ function getSideQuestObjectiveProgress(stageDef, objectiveStartValue) {
   return isAbsoluteSideQuestMetric(stageDef.progressType) ? value : value - (objectiveStartValue || 0);
 }
 
-// Wieloetapowe misje fabularne (js/sideQuests.js) — w przeciwieństwie do
-// płaskich CITY_NPCS[].quest, mają dialog -> prawdziwy cel w świecie ->
-// wybór z konsekwencją -> zakończenie z unikalnym przedmiotem. Stan trzyma
-// tylko nazwę bieżącego stage'u + wartość metryki zanotowaną przy wejściu w
-// stage typu objective (cel liczony jako przyrost od tego momentu).
+// Wieloetapowe misje fabularne — dialog -> prawdziwy cel w świecie -> wybór
+// z konsekwencją -> zakończenie z unikalnym przedmiotem. Dwa źródła współdzielą
+// dokładnie ten sam silnik przez discriminator `source` (mirror wzorca
+// talentTreeSubject dla drzewek umiejętności):
+//   {type:"npc", questId}       -> js/sideQuests.js, postęp w sideQuestProgress
+//   {type:"companion", index}   -> js/companionStory.js, postęp na samym
+//                                   obiekcie companion.storyProgress (przeżywa
+//                                   save/load razem z resztą stanu towarzysza)
+// Stan trzyma tylko nazwę bieżącego stage'u + wartość metryki zanotowaną przy
+// wejściu w stage typu objective (cel liczony jako przyrost od tego momentu,
+// patrz getSideQuestObjectiveProgress powyżej).
 function canStartSideQuest(questId) {
   const quest = SIDE_QUESTS[questId];
   if (!quest || sideQuestProgress[questId]) return false;
@@ -473,38 +479,61 @@ function canStartSideQuest(questId) {
   return getTrackableMetric(pre.type, pre.currency) >= pre.goal;
 }
 
-let activeSideQuestScene = null; // { questId, stage, beatIndex, prefixBeats }
+function getStoryQuestFor(source) {
+  if (source.type === "npc") return SIDE_QUESTS[source.questId];
+  const companion = companions[source.index];
+  return companion ? COMPANION_STORY_QUESTS[companion.subclassName] : null;
+}
+
+function getStoryProgressFor(source) {
+  if (source.type === "npc") return sideQuestProgress[source.questId];
+  const companion = companions[source.index];
+  return companion ? companion.storyProgress : undefined;
+}
+
+function setStoryProgressFor(source, progress) {
+  if (source.type === "npc") {
+    sideQuestProgress[source.questId] = progress;
+    saveQuestState();
+    return;
+  }
+  const companion = companions[source.index];
+  if (!companion) return;
+  companion.storyProgress = progress;
+  saveCompanionState();
+}
+
+let activeSideQuestScene = null; // { source, stage, beatIndex, prefixBeats }
 
 function currentSideQuestBeats() {
-  const quest = SIDE_QUESTS[activeSideQuestScene.questId];
+  const quest = getStoryQuestFor(activeSideQuestScene.source);
   const stageDef = quest.stages[activeSideQuestScene.stage];
   const prefix = activeSideQuestScene.prefixBeats || [];
   const own = Array.isArray(stageDef.text) ? stageDef.text : [];
   return [...prefix, ...own];
 }
 
-function moveSideQuestToStage(questId, stageKey, prefixBeats = []) {
-  const quest = SIDE_QUESTS[questId];
+function moveSideQuestToStage(source, stageKey, prefixBeats = []) {
+  const quest = getStoryQuestFor(source);
   const stageDef = quest.stages[stageKey];
-  const progress = sideQuestProgress[questId] || {};
+  const progress = getStoryProgressFor(source) || {};
   progress.stage = stageKey;
   if (stageDef.progressType) {
     progress.objectiveStartValue = getTrackableMetric(stageDef.progressType, stageDef.currency);
   }
   if (stageDef.final) progress.completed = true;
-  sideQuestProgress[questId] = progress;
-  saveQuestState();
-  activeSideQuestScene = { questId, stage: stageKey, beatIndex: 0, prefixBeats };
+  setStoryProgressFor(source, progress);
+  activeSideQuestScene = { source, stage: stageKey, beatIndex: 0, prefixBeats };
   refreshSideQuestSceneIfOpen();
   if (stageDef.final && stageDef.reward) {
-    grantSideQuestReward(questId, stageDef.reward.itemId);
+    grantSideQuestReward(stageDef.reward.itemId);
   }
   render();
 }
 
 function advanceSideQuestScene() {
   if (!activeSideQuestScene) return;
-  const quest = SIDE_QUESTS[activeSideQuestScene.questId];
+  const quest = getStoryQuestFor(activeSideQuestScene.source);
   const stageDef = quest.stages[activeSideQuestScene.stage];
   const beats = currentSideQuestBeats();
   if (activeSideQuestScene.beatIndex < beats.length - 1) {
@@ -513,13 +542,13 @@ function advanceSideQuestScene() {
     return;
   }
   if (stageDef.final) { closeSideQuestScene(); return; }
-  if (stageDef.next) moveSideQuestToStage(activeSideQuestScene.questId, stageDef.next);
+  if (stageDef.next) moveSideQuestToStage(activeSideQuestScene.source, stageDef.next);
 }
 
 function chooseSideQuestOption(optionIndex) {
   if (!activeSideQuestScene) return;
-  const questId = activeSideQuestScene.questId;
-  const quest = SIDE_QUESTS[questId];
+  const source = activeSideQuestScene.source;
+  const quest = getStoryQuestFor(source);
   const stageDef = quest.stages[activeSideQuestScene.stage];
   const option = stageDef.options && stageDef.options[optionIndex];
   if (!option) return;
@@ -528,15 +557,24 @@ function chooseSideQuestOption(optionIndex) {
     corruption = Math.min(100, corruption + option.corruption);
     saveActiveRun();
   }
-  moveSideQuestToStage(questId, option.next, [option.resultText]);
+  if (option.bonusStat && source.type === "companion") {
+    const companion = companions[source.index];
+    if (companion) {
+      companion.bonusStats = companion.bonusStats || { str: 0, wyt: 0, zre: 0, int: 0, cha: 0 };
+      companion.bonusStats[option.bonusStat.key] = (companion.bonusStats[option.bonusStat.key] || 0) + option.bonusStat.amount;
+      scaleCompanionToLevel(companion, level);
+      saveCompanionState();
+    }
+  }
+  moveSideQuestToStage(source, option.next, [option.resultText]);
 }
 
-function grantSideQuestReward(questId, itemId) {
+function grantSideQuestReward(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
   if (!item) return;
   inventory.push(itemId);
   saveEquipmentState();
-  appendLog(`📖 Ukończono misję poboczną — zdobywasz unikalny przedmiot: ${item.icon} ${item.name}!`, "system");
+  appendLog(`📖 Ukończono wątek fabularny — zdobywasz unikalny przedmiot: ${item.icon} ${item.name}!`, "system");
 }
 
 function closeSideQuestScene() {
@@ -548,10 +586,10 @@ function closeSideQuestScene() {
 function refreshSideQuestSceneIfOpen() {
   const overlay = document.getElementById("side-quest-overlay");
   if (overlay.classList.contains("hidden") || !activeSideQuestScene) return;
-  const quest = SIDE_QUESTS[activeSideQuestScene.questId];
+  const quest = getStoryQuestFor(activeSideQuestScene.source);
   if (!quest) { closeSideQuestScene(); return; }
   const stageDef = quest.stages[activeSideQuestScene.stage];
-  const progress = sideQuestProgress[activeSideQuestScene.questId] || {};
+  const progress = getStoryProgressFor(activeSideQuestScene.source) || {};
   let objectiveCurrent = null;
   if (stageDef.progressType) {
     objectiveCurrent = getSideQuestObjectiveProgress(stageDef, progress.objectiveStartValue);
@@ -572,6 +610,7 @@ function continueSideQuestAtNpc(npcKey) {
   const entry = Object.entries(SIDE_QUESTS).find(([, q]) => q.npcKey === npcKey);
   if (!entry) return;
   const [questId, quest] = entry;
+  const source = { type: "npc", questId };
   const progress = sideQuestProgress[questId];
 
   if (!progress && !canStartSideQuest(questId)) return;
@@ -579,7 +618,7 @@ function continueSideQuestAtNpc(npcKey) {
   document.getElementById("side-quest-overlay").classList.remove("hidden");
 
   if (!progress) {
-    moveSideQuestToStage(questId, "start");
+    moveSideQuestToStage(source, "start");
     return;
   }
 
@@ -587,13 +626,63 @@ function continueSideQuestAtNpc(npcKey) {
     const stageDef = quest.stages.objective;
     const current = getSideQuestObjectiveProgress(stageDef, progress.objectiveStartValue);
     if (current >= stageDef.goal) {
-      moveSideQuestToStage(questId, stageDef.next);
+      moveSideQuestToStage(source, stageDef.next);
       return;
     }
   }
 
-  activeSideQuestScene = { questId, stage: progress.stage, beatIndex: 0, prefixBeats: [] };
+  activeSideQuestScene = { source, stage: progress.stage, beatIndex: 0, prefixBeats: [] };
   refreshSideQuestSceneIfOpen();
+}
+
+// Called from the companion sheet — unlike NPC quests, a companion's
+// personal story has no prerequisite (they already "proved themselves" at
+// recruitment) and no npcKey, just their subclassName as the lookup key into
+// COMPANION_STORY_QUESTS. Otherwise identical resume/auto-advance behavior.
+function continueCompanionStory(companionIndex) {
+  const companion = companions[companionIndex];
+  if (!companion) return;
+  const quest = COMPANION_STORY_QUESTS[companion.subclassName];
+  if (!quest) return;
+  const source = { type: "companion", index: companionIndex };
+  const progress = companion.storyProgress;
+
+  document.getElementById("side-quest-overlay").classList.remove("hidden");
+
+  if (!progress) {
+    moveSideQuestToStage(source, "start");
+    return;
+  }
+
+  if (progress.stage === "objective") {
+    const stageDef = quest.stages.objective;
+    const current = getSideQuestObjectiveProgress(stageDef, progress.objectiveStartValue);
+    if (current >= stageDef.goal) {
+      moveSideQuestToStage(source, stageDef.next);
+      return;
+    }
+  }
+
+  activeSideQuestScene = { source, stage: progress.stage, beatIndex: 0, prefixBeats: [] };
+  refreshSideQuestSceneIfOpen();
+}
+
+// Status line + button label for the companion sheet's story section —
+// mirrors the equivalent NPC-side status text inside renderCityNpc (ui.js).
+function getCompanionStoryStatusText(companion) {
+  const quest = COMPANION_STORY_QUESTS[companion.subclassName];
+  if (!quest) return null;
+  const progress = companion.storyProgress;
+  if (!progress) return { status: `Nowy wątek fabularny dostępny: „${quest.name}”.`, buttonLabel: "Porozmawiaj" };
+  if (progress.completed) return { status: `Wątek „${quest.name}” ukończony.`, buttonLabel: "Zobacz" };
+  if (progress.stage === "objective") {
+    const stageDef = quest.stages.objective;
+    const current = Math.max(0, getSideQuestObjectiveProgress(stageDef, progress.objectiveStartValue));
+    if (current >= stageDef.goal) return { status: `„${quest.name}” — cel osiągnięty, wróć do rozmowy.`, buttonLabel: "Zdaj relację" };
+    return { status: `„${quest.name}” w trakcie: ${Math.min(current, stageDef.goal)}/${stageDef.goal}.`, buttonLabel: "Sprawdź postęp" };
+  }
+  if (progress.stage === "choice") return { status: `„${quest.name}” czeka na Twoją decyzję.`, buttonLabel: "Podejmij decyzję" };
+  return { status: `„${quest.name}” w toku.`, buttonLabel: "Kontynuuj" };
 }
 
 let activeRecruitScene = null;
@@ -678,6 +767,7 @@ function refreshCompanionSheetIfOpen() {
     onAdjustStat: (key, delta) => adjustCompanionBonusStat(companionIndex, key, delta),
     onOpenTalents: () => openCompanionTalentTree(companionIndex),
     onRespec: () => respecCompanionStats(companionIndex),
+    onOpenStory: () => continueCompanionStory(companionIndex),
   });
 }
 
