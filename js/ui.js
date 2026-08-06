@@ -1656,11 +1656,15 @@ function renderCampaignBoard(chapters, completedChapterIds, currentChapter, onSt
     }
 
     const text = completed ? chapter.outro : chapter.intro;
+    const finaleTaunts = (chapter.isFinale && isCurrent)
+      ? getFinaleTaunts(corruption, getStoryChoicesSummary())
+      : [];
     return `
       <div class="sheet-item-row">
         <div class="sheet-item-info">
           <div class="sheet-item-name">${completed ? "✅ " : ""}${chapter.icon} ${chapter.title}</div>
           ${text.map((line) => `<div class="sheet-item-desc recruit-scene-text">${line}</div>`).join("")}
+          ${finaleTaunts.map((line) => `<div class="sheet-item-desc recruit-scene-text">${line}</div>`).join("")}
           ${completed
             ? `<div class="sheet-item-bonus">Otrzymano: ${chapter.reward.amount} × ${chapter.reward.currency}</div>`
             : `<div class="sheet-item-bonus">Nagroda: ${chapter.reward.amount} × ${chapter.reward.currency}</div>`}

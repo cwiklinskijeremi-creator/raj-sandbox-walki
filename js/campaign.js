@@ -107,6 +107,42 @@ const CAMPAIGN_CHAPTERS = [
   },
 ];
 
+// Dorian's opening taunt on the campaign board, shown once chapter 7
+// unlocks (js/ui.js: renderCampaignBoard) — appended after finale.intro,
+// before the fight itself. Reacts to the same two threads as the epilogue
+// (main.js: getStoryChoicesSummary): how far the player's own spaczenie
+// went, and light-vs-dark on the NPC side quests / companion story arcs.
+// Corruption always shows one of its two variants; the choices taunt only
+// appears once the player has actually completed one of those threads —
+// mirrors buildStoryChoicesAddendum in js/prologue.js exactly, so the same
+// light/dark/balanced verdict a player earns here echoes again in the
+// epilogue after the fight.
+const DORIAN_CORRUPTION_TAUNTS = {
+  high: "Dorian mierzy cię wzrokiem, a kącik jego ust unosi się w czymś na kształt uznania. „Spaczenie... widzę je na tobie wyraźniej niż na jakimkolwiek innym eksperymencie z Kopalni. Może w końcu rozumiesz, co próbowałem osiągnąć — zamiast tylko mnie za to nienawidzić.”",
+  low: "Dorian mierzy cię wzrokiem, szukając śladów tego, co przydarzyło się innym, którzy stanęli mu na drodze. „Nietknięty. Ciekawe. Rzadko widuję kogoś, kto przeszedł przez to wszystko i wciąż wygląda... normalnie.”",
+};
+const DORIAN_CHOICES_TAUNTS = {
+  light: "„Słyszałem o tobie w mieście, zanim jeszcze tu dotarłeś” dodaje Dorian. „Uczciwy. Lojalny wobec tych, którzy ci zaufali. Rada uczyła mnie, że takich ludzi łamie się najłatwiej — mieli zbyt wiele do stracenia.”",
+  dark: "„Słyszałem o tobie w mieście, zanim jeszcze tu dotarłeś” dodaje Dorian. „Milczenie, zysk, cienie zamiast prawdy. Rada byłaby z ciebie dumna, może bardziej, niż chciałbyś przyznać.”",
+  balanced: "„Słyszałem o tobie w mieście, zanim jeszcze tu dotarłeś” dodaje Dorian. „Ani światły, ani mroczny do końca. Trudno cię przejrzeć — a ja lubię wiedzieć, z kim mam do czynienia, zanim umrę.”",
+};
+
+function getFinaleTaunts(corruptionValue, storyChoicesSummary) {
+  const taunts = [(corruptionValue || 0) >= CORRUPTION_EPILOGUE_HIGH_THRESHOLD
+    ? DORIAN_CORRUPTION_TAUNTS.high
+    : DORIAN_CORRUPTION_TAUNTS.low];
+
+  if (storyChoicesSummary) {
+    const light = storyChoicesSummary.honestQuests + storyChoicesSummary.lightCompanions;
+    const dark = storyChoicesSummary.darkQuests + storyChoicesSummary.darkCompanions;
+    if (light > 0 || dark > 0) {
+      const variant = light > dark ? "light" : dark > light ? "dark" : "balanced";
+      taunts.push(DORIAN_CHOICES_TAUNTS[variant]);
+    }
+  }
+  return taunts;
+}
+
 const CAMPAIGN_FINALE_LOCATION = {
   key: "wieza_rady",
   name: "Wieża Rady",
