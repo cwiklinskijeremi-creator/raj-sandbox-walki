@@ -760,6 +760,7 @@ button:disabled {
 .log-entry.miss { color: #8a8378; }
 .log-entry.crit { color: #d9534f; font-weight: 600; }
 .log-entry.system { color: #c9a24b; font-weight: 600; }
+.log-entry.banter { color: #9fb4c7; font-style: italic; }
 
 .radial-menu-btn {
   position: absolute;

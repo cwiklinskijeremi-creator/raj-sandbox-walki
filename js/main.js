@@ -939,17 +939,50 @@ function loadCompanionState() {
     recruitPool.forEach((r) => {
       if (!r.quest) r.quest = COMPANION_QUESTS[r.companion.subclassName];
     });
-    return { companions: (data && data.companions) || [], recruitPool };
+    return { companions: (data && data.companions) || [], recruitPool, firedBanters: (data && data.firedBanters) || [] };
   } catch {
-    return { companions: [], recruitPool: [] };
+    return { companions: [], recruitPool: [], firedBanters: [] };
   }
 }
 
 function saveCompanionState() {
-  localStorage.setItem(COMPANION_STORAGE_KEY, JSON.stringify({ companions, recruitPool }));
+  localStorage.setItem(COMPANION_STORAGE_KEY, JSON.stringify({ companions, recruitPool, firedBanters }));
 }
 
-let { companions, recruitPool } = loadCompanionState();
+let { companions, recruitPool, firedBanters } = loadCompanionState();
+
+// Party banter (js/companions.js: COMPANION_BANTER) — rolled once per new
+// battle; fires at most one exchange, chosen among curated pairs currently
+// present in the party that haven't already played this game. Each pair
+// fires at most once ever (tracked in firedBanters, persisted alongside the
+// rest of companion state), matching how these games treat banter as a
+// one-time character beat rather than repeatable ambience.
+function getBanterPairKey(subclassA, subclassB) {
+  return [subclassA, subclassB].sort().join("|");
+}
+
+function maybeTriggerCompanionBanter() {
+  if (companions.length < 2) return;
+  const candidates = [];
+  for (let i = 0; i < companions.length; i++) {
+    for (let j = i + 1; j < companions.length; j++) {
+      const key = getBanterPairKey(companions[i].subclassName, companions[j].subclassName);
+      if (COMPANION_BANTER[key] && !firedBanters.includes(key)) {
+        candidates.push({ key, a: companions[i], b: companions[j] });
+      }
+    }
+  }
+  if (candidates.length === 0 || Math.random() > 0.35) return;
+
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  const lines = COMPANION_BANTER[chosen.key];
+  lines.forEach((line) => {
+    const speaker = line.speaker === chosen.a.subclassName ? chosen.a : chosen.b;
+    appendLog(`${speaker.baseName}: „${line.text}”`, "banter");
+  });
+  firedBanters.push(chosen.key);
+  saveCompanionState();
+}
 
 function rotateRecruitPool() {
   const shuffledPlaces = [...CITY_PLACES].sort(() => Math.random() - 0.5);
@@ -1908,6 +1941,7 @@ function startNewGame() {
   postBattleReturnPhase = "camp";
   companions = [];
   recruitPool = [];
+  firedBanters = [];
   saveCompanionState();
   introStep = 0;
   phase = "intro";
@@ -2104,6 +2138,7 @@ function clearAllProgress() {
   saveQuestState();
   companions = [];
   recruitPool = [];
+  firedBanters = [];
   saveCompanionState();
   selectedClassName = null;
   selectedSubclassName = null;
@@ -2237,6 +2272,7 @@ function startNewBattle() {
     appendLog(`Błogosławieństwo ołtarza wzmacnia twój pancerz na tę walkę (+${Math.round(dungeonBattleBuff.pancerz * 100)}%).`, "system");
     dungeonBattleBuff = { pancerz: 0 };
   }
+  maybeTriggerCompanionBanter();
   render();
 }
 

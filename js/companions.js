@@ -165,6 +165,70 @@ const COMPANION_REACTIONS = {
   },
 };
 
+// Party banter — a curated set of exchanges between specific pairs of
+// specializations, triggered once each at the start of a battle when both
+// are in the active party (main.js: maybeTriggerCompanionBanter(), fired
+// from startNewBattle()). Not every one of the 45 possible pairs has an
+// entry — only the combinations with enough friction or chemistry to be
+// worth writing, same "curated over exhaustive" scope call as elsewhere
+// this session. Key is the two subclass names alphabetically sorted and
+// joined with "|" (order-independent lookup), value is the exchange in
+// speaking order — each line's `speaker` picks out whichever of the two
+// present companions holds that subclass, so the dialogue itself stays
+// gender-neutral quoted speech (no narrator verb to conjugate).
+const COMPANION_BANTER = {
+  "Mroczny rycerz|Świetlisty obrońca": [
+    { speaker: "Świetlisty obrońca", text: "Czuję krew twojego miecza stąd. Zemsta nie jest ścieżką, którą Zakon by pochwalił." },
+    { speaker: "Mroczny rycerz", text: "Twój Zakon chował zbiegów z kopalni i nazywał to miłosierdziem. Nie potrzebuję jego pochwały." },
+    { speaker: "Świetlisty obrońca", text: "...Może masz rację. Ale wciąż wolę stać obok ciebie niż naprzeciw." },
+  ],
+  "Apostata|Świetlisty obrońca": [
+    { speaker: "Świetlisty obrońca", text: "Czuję Otchłań na twojej skórze. Nie wiem, jak śpisz spokojnie, wiedząc, czym się zajmujesz." },
+    { speaker: "Apostata", text: "A ja nie wiem, jak ty śpisz, wiedząc, ile Zakon przemilczał w imię tego samego spokoju." },
+    { speaker: "Świetlisty obrońca", text: "Może żadne z nas nie śpi tak dobrze, jak udaje." },
+  ],
+  "Berserk|Skrytobójca": [
+    { speaker: "Berserk", text: "Skradasz się, szepczesz, znikasz. Nudne. Ja wolę, żeby wróg wiedział, że nadchodzę." },
+    { speaker: "Skrytobójca", text: "Ja wolę, żeby wróg w ogóle się nie dowiedział, że przyszłam. Twój sposób zostawia więcej blizn." },
+    { speaker: "Berserk", text: "Blizny się liczą. Cisza nie zostawia niczego, czym można się pochwalić." },
+  ],
+  "Najemnik bractwa|Skrytobójca": [
+    { speaker: "Najemnik bractwa", text: "Bractwo bierze kontrakt, wykonuje robotę, płaci się uczciwie. Twoja robota nie ma takich zasad." },
+    { speaker: "Skrytobójca", text: "Moja robota ma zasady — po prostu nie zapisuje się ich w księgach Gildii." },
+    { speaker: "Najemnik bractwa", text: "Uczciwe. Dopóki żadna z tych niezapisanych zasad nie dotyczy mnie." },
+  ],
+  "Truciciel|Łowca": [
+    { speaker: "Łowca", text: "Widziałam, co Spaczone Zioła robią zwierzynie, którą zbierasz. To nie jest polowanie, to trucie na zapas." },
+    { speaker: "Truciciel", text: "To nie polowanie, zgadza się. To medycyna, która czasem wygląda jak trucizna, zanim zdąży komuś pomóc." },
+    { speaker: "Łowca", text: "Dopilnuj, żeby ta różnica nie umknęła ci w złym momencie." },
+  ],
+  "Apostata|Arcymag": [
+    { speaker: "Arcymag", text: "Twoja magia cuchnie Otchłanią na milę. Nie rozumiem, jak ktoś może świadomie wybrać takie źródło mocy." },
+    { speaker: "Apostata", text: "A ja nie rozumiem, jak ktoś może studiować potwory z bezpiecznej odległości bibliotecznego regału." },
+    { speaker: "Arcymag", text: "Uczciwa wymiana zarzutów. Może to jest podstawa jakiegoś szacunku." },
+  ],
+  "Berserk|Mroczny rycerz": [
+    { speaker: "Mroczny rycerz", text: "Twoja furia jest chaotyczna. Moja zimna. Ciekawe, które z nas skrzywdzi więcej niewłaściwych ludzi." },
+    { speaker: "Berserk", text: "Moja przynajmniej krzyczy, zanim uderzy. Twoja podkrada się jak zdrada, o której lubisz gadać." },
+    { speaker: "Mroczny rycerz", text: "...Trafione. Może dlatego wolę walczyć obok ciebie niż obok kogoś cichego." },
+  ],
+  "Medyk|Świetlisty obrońca": [
+    { speaker: "Świetlisty obrońca", text: "Twoje ręce ratują więcej istnień niż moje ostrze kiedykolwiek zdoła. Zazdroszczę ci tego czasem." },
+    { speaker: "Medyk", text: "Twoje ostrze pozwala mi w ogóle dotrzeć do rannych, zanim będzie za późno. Nie ma tu powodu do zazdrości." },
+    { speaker: "Świetlisty obrońca", text: "Może po prostu dobrze się uzupełniamy. Zapiszę to jako błogosławieństwo, nie przypadek." },
+  ],
+  "Arcymag|Skrytobójca": [
+    { speaker: "Skrytobójca", text: "Nigdy nie rozumiałam magów. Cała ta moc, a i tak wolicie czytać o niej, zamiast jej używać na ulicy." },
+    { speaker: "Arcymag", text: "Ulica nie wybacza błędów tak, jak biblioteka. Wolę zrozumieć zaklęcie, zanim ono zrozumie mnie — źle." },
+    { speaker: "Skrytobójca", text: "Rozsądne. Nudne, ale rozsądne." },
+  ],
+  "Medyk|Truciciel": [
+    { speaker: "Medyk", text: "Warzysz trucizny w tym samym moździerzu, w którym ja warzę lekarstwa. To mnie nie uspokaja." },
+    { speaker: "Truciciel", text: "To ten sam moździerz, bo to ta sama wiedza. Różnica to tylko proporcje i intencja." },
+    { speaker: "Medyk", text: "Intencja, którą znasz tylko ty. Pilnuj proporcji, dla nas obojga." },
+  ],
+};
+
 function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeNames = []) {
   const availableClasses = CLASS_DATA.filter((c) => c.name !== excludeClassName);
   const availablePairs = [];
