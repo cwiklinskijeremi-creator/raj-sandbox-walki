@@ -504,7 +504,7 @@ function renderCharacterCreation(state, handlers) {
   document.getElementById("creation-talent-preview-btn").disabled = !selectedSub;
 }
 
-const INTRO_MOOD_COLORS = ["#f0be3c", "#e0574b", "#b48ce0"];
+const INTRO_MOOD_COLORS = ["#f0be3c", "#e0574b", "#b48ce0", "#5fa8d3", "#8bbf6b"];
 
 function ensureIntroParticles() {
   const layer = document.getElementById("intro-particles");

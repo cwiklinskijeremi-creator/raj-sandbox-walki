@@ -6,6 +6,8 @@ const LORE_DATA = {
       "W sercu zdewastowanego kontynentu rozciąga się „Raj” — despotyczne imperium rządzone przez Rokę Arcymagów, radę potężnych czarodziejów, którzy przed wiekami podbili świat za pomocą surowej many. Magia to ich boski dar, a reszta ludzkości to jedynie narzędzia.",
       "Kryształy esencji, pulsujące kamienie wydobywane z głębin ziemi, są sercem gospodarki: walutą, źródłem many i przekleństwem. Niewolnicy kopią je w piekle podziemnych szybów, gdzie promieniowanie esencji mutuje ich ciała — skóra pęka, kości wykrzywiają się, a umysły pogrążają się w szaleństwie. Wielu staje się bestiami, inni zyskują groteskowe „dary”: kły, pazury czy łuski, ale za cenę człowieczeństwa.",
       "Stolica, Aetherion, to forteca z kryształowych wież, gdzie magowie żyją w luksusie, eksperymentując na niewolnikach. Poza murami fauna jest zdegenerowana: zwierzęta przemienione w abominacje, a lasy pełne aberracji many. Powietrze poza miastem trzeszczy od niestabilnej many, powodując halucynacje.",
+      "Gildia Poszukiwaczy Przygód powstała jako zawór bezpieczeństwa Rady — miejsce, gdzie odważni, zdesperowani albo po prostu niemający dokąd pójść mogą polować na aberracje many i odzyskiwać zaginione kryształy w zamian za ochłapy esencji i odrobinę wolności, jakiej nie zaznają niewolnicy w kopalniach. Nikt w Gildii nie pyta, skąd przybywasz ani co zostawiłeś za sobą — liczy się tylko, ile potrafisz przetrwać i ile esencji przyniesiesz z powrotem.",
+      "Dziś do bram Aetherionu zbliża się kolejny nowy rekrut. Ma za sobą historię, której nikt tu nie zna, i cel, którego nie zdradzi nikomu, dopóki nie będzie gotów. Ta historia właśnie się zaczyna.",
     ],
   },
   castes: {
