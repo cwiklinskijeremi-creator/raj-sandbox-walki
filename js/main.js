@@ -65,6 +65,21 @@ const DUNGEON_ROOM_TYPES = [
     prompt: "Stary, zapomniany ołtarz stoi w mroku — wciąż pulsuje esencją.",
     optionALabel: "🩸 Złóż ofiarę z krwi", optionBLabel: "🙅 Odejdź",
   },
+  {
+    type: "cache", icon: "🔒", label: "Zapieczętowana skrzynia",
+    prompt: "Ciężka, okuta skrzynia stoi wciśnięta w róg — zamek wygląda solidnie, ale nie niezniszczalnie.",
+    optionALabel: "💪 Wyważ siłą", optionBLabel: "🚶 Zostaw zamkniętą",
+  },
+  {
+    type: "corrupted_altar", icon: "🌀", label: "Spaczony posąg",
+    prompt: "Pokruszony posąg pulsuje słabym, fioletowym blaskiem — esencja w nim jeszcze nie wygasła.",
+    optionALabel: "🌀 Dotknij posągu", optionBLabel: "🙅 Odejdź",
+  },
+  {
+    type: "wounded_survivor", icon: "🩹", label: "Ranny wędrowiec",
+    prompt: "W cieniu korytarza leży ranny wędrowiec, zbyt słaby, by iść dalej samodzielnie.",
+    optionALabel: "🩹 Opatrz rany", optionBLabel: "🚶 Idź dalej",
+  },
 ];
 
 function findDungeonRoomType(propType) {
@@ -211,6 +226,42 @@ function resolvePropChoice(choice) {
       interaction.outcomeText = "Ołtarz przyjmuje ofiarę — czujesz, jak coś niewidzialnego otacza twoją skórę (-8 HP, +8% pancerza na nadchodzącą walkę).";
     } else {
       interaction.outcomeText = "Odchodzisz od ołtarza — wolisz nie ryzykować.";
+    }
+  } else if (interaction.propType === "cache") {
+    if (choice === "A") {
+      const roll = rollD20() + Math.floor(player.str / 5);
+      if (roll >= 15) {
+        const { name, icon, min, max } = currentLocation.resource;
+        const amount = min + Math.floor(Math.random() * (max - min + 1));
+        const existing = resources[name] ? resources[name].amount : 0;
+        resources[name] = { icon, amount: existing + amount };
+        saveResources();
+        interaction.outcomeText = `Zamek pęka pod twoją siłą (K20+STR/5=${roll}): +${amount} × ${icon} ${name}.`;
+      } else {
+        const dmg = rollD6() * 2;
+        dungeonHpLoss += dmg;
+        interaction.outcomeText = `Zamek nie ustępuje, a okucia boleśnie odbijają się od twoich dłoni (K20+STR/5=${roll}) — tracisz ${dmg} HP przed walką.`;
+      }
+    } else {
+      interaction.outcomeText = "Zostawiasz skrzynię zamkniętą — może ktoś inny spróbuje szczęścia.";
+    }
+  } else if (interaction.propType === "corrupted_altar") {
+    if (choice === "A") {
+      const healed = Math.round(player.maxHP * 0.15);
+      dungeonHpLoss = Math.max(0, dungeonHpLoss - healed);
+      corruption = Math.min(100, corruption + 6);
+      interaction.outcomeText = `Posąg wypełnia twoje rany spaczoną esencją zamiast krwi (-${healed} nagromadzonych obrażeń), ale zostawia w tobie coś, czego nie da się już zmyć (+6% spaczenia).`;
+    } else {
+      interaction.outcomeText = "Odsuwasz się od posągu — niektóre dary kosztują więcej, niż warto zapłacić.";
+    }
+  } else if (interaction.propType === "wounded_survivor") {
+    if (choice === "A") {
+      const potion = POTION_ITEMS[Math.floor(Math.random() * POTION_ITEMS.length)];
+      potionInventory[potion.id] = (potionInventory[potion.id] || 0) + 1;
+      savePotionInventory();
+      interaction.outcomeText = `Opatrujesz rannego, a on w podzięce wciska ci w dłoń ${potion.icon} ${potion.name}, zanim znika w mroku korytarza.`;
+    } else {
+      interaction.outcomeText = "Zostawiasz go i idziesz dalej — loch nie wybacza sentymentów.";
     }
   }
 

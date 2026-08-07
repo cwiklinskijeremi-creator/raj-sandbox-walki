@@ -21,7 +21,7 @@ const DUNGEON_PROP_COUNT_MAX = 5;
 const DUNGEON_BONUS_POCKET_TARGET = 2;
 const DUNGEON_FOG_REVEAL_RADIUS = 2;
 const DUNGEON_HIDDEN_BOSS_CHANCE = 0.2;
-const DUNGEON_PROP_TYPES = ["empty", "trap", "find", "shrine"];
+const DUNGEON_PROP_TYPES = ["empty", "trap", "find", "shrine", "cache", "corrupted_altar", "wounded_survivor"];
 
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
