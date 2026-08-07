@@ -1636,6 +1636,13 @@ function canAffordItem(item) {
   return owned >= getDiscountedCost(item);
 }
 
+function meetsItemRequirement(item) {
+  if (!item.requirement) return true;
+  if (level < item.requirement.level) return false;
+  const statValue = player ? player[item.requirement.stat] : 0;
+  return statValue >= item.requirement.amount;
+}
+
 function refreshCharacterSheetIfOpen() {
   const overlay = document.getElementById("character-sheet-overlay");
   if (overlay.classList.contains("hidden")) return;
@@ -1648,7 +1655,7 @@ function refreshCharacterSheetIfOpen() {
 
 function buyEquipment(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
-  if (!item || inventory.includes(itemId) || !canAffordItem(item)) return;
+  if (!item || inventory.includes(itemId) || !canAffordItem(item) || !meetsItemRequirement(item)) return;
   resources[item.cost.currency].amount -= getDiscountedCost(item);
   saveResources();
   inventory.push(itemId);

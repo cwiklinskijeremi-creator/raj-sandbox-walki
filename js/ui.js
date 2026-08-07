@@ -694,6 +694,12 @@ function formatItemWeapon(item) {
   return `<div class="sheet-item-weapon">🗡️ Broń: ${item.weapon.name} (${item.weapon.minDmg}-${item.weapon.maxDmg}, zas.${item.weapon.range})</div>`;
 }
 
+function formatItemRequirement(item) {
+  if (!item.requirement) return "";
+  const met = meetsItemRequirement(item);
+  return `<div class="sheet-item-requirement${met ? "" : " requirement-unmet"}">Wymaga: poziom ${item.requirement.level}, ${item.requirement.stat.toUpperCase()} ${item.requirement.amount}</div>`;
+}
+
 function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers) {
   const body = document.getElementById("character-sheet-body");
   if (!player) {
@@ -816,6 +822,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
       ${notOwned.map((item) => {
         const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
         const affordable = owned >= item.cost.amount;
+        const meetsReq = meetsItemRequirement(item);
         return `
           <div class="sheet-item-row">
             <div class="sheet-item-info">
@@ -823,9 +830,10 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
               <div class="sheet-item-desc">${item.description}</div>
               ${formatItemWeapon(item)}
               <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+              ${formatItemRequirement(item)}
               <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
             </div>
-            <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable ? "" : "disabled"}>Kup</button>
+            <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
           </div>
         `;
       }).join("")}
@@ -1618,6 +1626,7 @@ function renderCityPlace(place, state, handlers) {
           const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
           const discountedCost = getDiscountedCost(item);
           const affordable = owned >= discountedCost;
+          const meetsReq = meetsItemRequirement(item);
           const discountPct = Math.round(getReputationDiscount(item.vendor) * 100);
           const costLine = discountPct > 0
             ? `Koszt: <s>${item.cost.amount}</s> ${discountedCost} × ${item.cost.currency} (masz: ${owned}) — rabat -${discountPct}%`
@@ -1629,9 +1638,10 @@ function renderCityPlace(place, state, handlers) {
                 <div class="sheet-item-desc">${item.description}</div>
                 ${formatItemWeapon(item)}
                 <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+                ${formatItemRequirement(item)}
                 <div class="sheet-item-cost">${costLine}</div>
               </div>
-              <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable ? "" : "disabled"}>Kup</button>
+              <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
             </div>
           `;
         }).join(""));

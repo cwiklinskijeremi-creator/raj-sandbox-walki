@@ -1990,6 +1990,15 @@ button:disabled {
   color: #a89c8f;
 }
 
+.sheet-item-requirement {
+  font-size: 0.82rem;
+  color: #a89c8f;
+}
+
+.sheet-item-requirement.requirement-unmet {
+  color: var(--danger-bright);
+}
+
 .craft-ingredient-missing {
   color: var(--danger-bright);
 }
