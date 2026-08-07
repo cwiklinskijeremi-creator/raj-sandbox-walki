@@ -1657,6 +1657,10 @@ button:disabled {
 .portrait-md { width: 84px; height: 105px; }
 .portrait-sm { width: 54px; height: 67px; }
 
+.creation-portrait-box {
+  margin: 1.2rem auto 0;
+}
+
 .camp-character-portrait {
   display: block;
   margin: 0 auto;

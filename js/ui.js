@@ -476,8 +476,18 @@ function renderCharacterCreation(state, handlers) {
     });
   }
 
-  const descEl = document.getElementById("creation-description");
   const selectedSub = selectedClass && selectedClass.subclasses.find((s) => s.name === selectedSubclassName);
+
+  const portraitBox = document.getElementById("creation-portrait-box");
+  if (playerGender && selectedSub) {
+    portraitBox.innerHTML = renderPortraitImage(playerGender, selectedSub.name);
+    portraitBox.classList.remove("hidden");
+  } else {
+    portraitBox.innerHTML = "";
+    portraitBox.classList.add("hidden");
+  }
+
+  const descEl = document.getElementById("creation-description");
   if (!selectedClassName) {
     descEl.innerHTML = `<p class="creation-hint">Wybierz klasę postaci.</p>`;
   } else if (!selectedSub) {
