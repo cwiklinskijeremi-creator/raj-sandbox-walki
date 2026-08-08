@@ -227,6 +227,81 @@ const COMPANION_BANTER = {
     { speaker: "Truciciel", text: "To ten sam moździerz, bo to ta sama wiedza. Różnica to tylko proporcje i intencja." },
     { speaker: "Medyk", text: "Intencja, którą znasz tylko ty. Pilnuj proporcji, dla nas obojga." },
   ],
+  "Mroczny rycerz|Łowca": [
+    { speaker: "Łowca", text: "Tropię aberracje many dla Gildii. Czasem trudno mi znaleźć różnicę między nimi a klątwami, którymi walczysz." },
+    { speaker: "Mroczny rycerz", text: "Różnica jest taka, że ja wciąż wybieram, kogo nimi tnę. Aberracja nie wybiera niczego." },
+    { speaker: "Łowca", text: "Dopilnuj, żeby ten wybór wciąż coś dla ciebie znaczył. Ja będę patrzeć." },
+  ],
+  "Najemnik bractwa|Łowca": [
+    { speaker: "Najemnik bractwa", text: "Gildia Poszukiwaczy płaci w ochłapach esencji. Bractwo płaci w srebrze. Kiedyś zapytam, dlaczego wybrałaś gorszy interes." },
+    { speaker: "Łowca", text: "Bo wasze srebro nie kupuje mi tego, czego szukam między drzewami. Twój kontrakt kończy się na zapłacie. Mój nie." },
+    { speaker: "Najemnik bractwa", text: "Romantyczne. I tak zapytam o cenę, jeśli kiedyś się znudzisz." },
+  ],
+  "Arcymag|Łowca": [
+    { speaker: "Arcymag", text: "Tropisz aberracje po zapachu i śladach. Ja bym po prostu przeczytał, czym są, zanim wyruszyłbym w las." },
+    { speaker: "Łowca", text: "Księgi się mylą, kiedy aberracja zmieni się, zanim ktoś zdąży ją opisać. Ślady nie kłamią." },
+    { speaker: "Arcymag", text: "Uczciwy argument. Może przy następnej wyprawie zabiorę notatnik zamiast tomu teorii." },
+  ],
+  "Apostata|Łowca": [
+    { speaker: "Łowca", text: "Tropię aberracje many, żeby Gildia mogła spać spokojnie. Czasem zastanawiam się, czy pewnego dnia nie dopiszą cię do mojej listy." },
+    { speaker: "Apostata", text: "Dopiszą, jeśli kiedyś przestanę panować nad tym, co pożyczyłem od Otchłani. Na razie to ja panuję, nie ono." },
+    { speaker: "Łowca", text: "'Na razie' to niewiele, ale wystarczy, żebym na razie odłożyła kuszę." },
+  ],
+  "Najemnik bractwa|Truciciel": [
+    { speaker: "Najemnik bractwa", text: "Ufam stali, bo wiem, jak pęka. Twoim fiolkom nie ufam, bo nigdy nie wiem, co jest w środku, dopóki nie jest za późno." },
+    { speaker: "Truciciel", text: "Stal też nie mówi, zanim wbije się między żebra. Fiolka przynajmniej daje ci wybór, czy ją wypić." },
+    { speaker: "Najemnik bractwa", text: "Zapamiętam to jako 'nie', na wszelki wypadek." },
+  ],
+  "Medyk|Najemnik bractwa": [
+    { speaker: "Medyk", text: "Leczę cię za darmo, kiedy krwawisz. Ty bierzesz zapłatę za każdą ranę, którą zadajesz komuś innemu. Nie rozumiem tej matematyki." },
+    { speaker: "Najemnik bractwa", text: "Matematyka jest prosta: Bractwo płaci mi za ryzyko, nie za litość. Twoja litość to twój wybór, nie mój obowiązek." },
+    { speaker: "Medyk", text: "Może. Ale kiedy następnym razem będziesz krwawić, zapamiętaj, kto nie wystawił ci rachunku." },
+  ],
+  "Najemnik bractwa|Świetlisty obrońca": [
+    { speaker: "Świetlisty obrońca", text: "Bractwo Rzemieślników kuje broń dla Rady, która trzyma niewolników w kopalniach. Twoje ręce nie są czystsze niż moje." },
+    { speaker: "Najemnik bractwa", text: "Przynajmniej nie nazywam tego miłosierdziem. Ty leczysz niewolników, żeby mogli wrócić do kopania, i wołasz to łaską." },
+    { speaker: "Świetlisty obrońca", text: "...Może żadne z nas nie ma prawa patrzeć na drugie z góry. To niewygodna myśl, ale prawdziwa." },
+  ],
+  "Apostata|Truciciel": [
+    { speaker: "Truciciel", text: "Zakon nazwałby nas oboje heretykami — ciebie za rytuały, mnie za fiolki. Różnica jest głównie kosmetyczna." },
+    { speaker: "Apostata", text: "Różnica jest taka, że twoje fiolki czasem leczą. Moje rytuały nigdy nie miały takiej ambicji." },
+    { speaker: "Truciciel", text: "Uczciwe. Ale oboje wiemy, że klient rzadko pyta o ambicje, tylko o skutek." },
+  ],
+  "Mroczny rycerz|Truciciel": [
+    { speaker: "Mroczny rycerz", text: "Trucizna zabija po cichu, z ukrycia. Ja przynajmniej patrzę wrogowi w oczy, kiedy klątwa robi swoje." },
+    { speaker: "Truciciel", text: "Klątwa krwi patrzy w oczy równie rzadko co fiolka w plecaku. Oboje wolimy, żeby wróg nie zdążył zareagować." },
+    { speaker: "Mroczny rycerz", text: "...Może to prawda, której nie chciałem usłyszeć. Zapamiętam ją mimo to." },
+  ],
+  "Arcymag|Mroczny rycerz": [
+    { speaker: "Arcymag", text: "Rada uczyła mnie, że honor to luksus, na który stać tylko tych, którzy nigdy nie musieli wybierać. Twoja pęknięta przysięga to potwierdza." },
+    { speaker: "Mroczny rycerz", text: "Rada uczyła cię też, że twoja krew jest warta więcej niż moja. Też się myliła, tylko boleśniej." },
+    { speaker: "Arcymag", text: "Nie mam na to odpowiedzi, która nie brzmiałaby jak wymówka. Więc jej nie szukam." },
+  ],
+  "Apostata|Berserk": [
+    { speaker: "Berserk", text: "Mutacja z kopalń zrobiła ze mnie to, czym jestem. Ty wybrałeś Otchłań sam. Nie wiem, które z nas ma gorzej." },
+    { speaker: "Apostata", text: "Ja przynajmniej wiedziałem, na co się piszę. Ty nie miałeś wyboru, a i tak Rada nazwie nas oboje tym samym słowem." },
+    { speaker: "Berserk", text: "Tym samym słowem, ta sama klatka. Przynajmniej dzielimy ją z kimś, kto rozumie." },
+  ],
+  "Arcymag|Berserk": [
+    { speaker: "Arcymag", text: "Twoja siła to niekontrolowana mutacja. Moja to lata studiów. Rada by powiedziała, że jedno z nas jest cywilizowane." },
+    { speaker: "Berserk", text: "Rada powiedziałaby to, patrząc z bezpiecznej wieży. Niech spróbuje przetrwać dzień w kopalni z twoimi 'latami studiów'." },
+    { speaker: "Arcymag", text: "...Punkt dla ciebie. Może różnica między nami jest mniejsza, niż uczono mnie wierzyć." },
+  ],
+  "Berserk|Medyk": [
+    { speaker: "Medyk", text: "Jesteś najgorszym pacjentem, jakiego leczyłem. Wciąż walczysz, kiedy powinieneś już dawno leżeć." },
+    { speaker: "Berserk", text: "Furia nie pyta, czy rana jest wystarczająco głęboka, żeby przestać. Pytaj ją, nie mnie." },
+    { speaker: "Medyk", text: "Będę pytać ciebie, bo furia nie odpowiada na bandaże. Zwolnij chociaż raz, dla mnie." },
+  ],
+  "Skrytobójca|Świetlisty obrońca": [
+    { speaker: "Świetlisty obrońca", text: "Zabijasz po cichu, bez procesu, bez modlitwy. Nie zostawiasz nawet chwili na skruchę." },
+    { speaker: "Skrytobójca", text: "Twój Zakon leczy niewolników, żeby mogli wrócić do kopania, i nazywa to łaską. Ja przynajmniej nie udaję, że to co robię, jest miłosierdziem." },
+    { speaker: "Świetlisty obrońca", text: "...Trudno się z tym nie zgodzić. Może uczciwość bez złudzeń jest warta więcej niż modlitwa, której nikt nie słucha." },
+  ],
+  "Medyk|Skrytobójca": [
+    { speaker: "Medyk", text: "Obie nasze ręce są precyzyjne. Różnica jest taka, że moje coś naprawiają, a twoje coś kończą." },
+    { speaker: "Skrytobójca", text: "Czasem kończę coś, co ty nie zdążyłabyś naprawić na czas. To też forma litości, tylko szybszej." },
+    { speaker: "Medyk", text: "Nie nazwę tego litością. Ale przyznaję, że nie zawsze mam lepszą odpowiedź niż twoja." },
+  ],
 };
 
 function generateCompanion(excludeClassName, excludeSubclassNames = [], excludeNames = []) {
