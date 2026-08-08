@@ -2059,6 +2059,15 @@ button:disabled {
   color: #9c8fc9;
 }
 
+.shop-category-tabs {
+  margin-bottom: 0.8rem;
+}
+
+.shop-category-tab-btn {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.7rem;
+}
+
 .set-progress-block {
   margin-bottom: 0.9rem;
   padding-bottom: 0.9rem;

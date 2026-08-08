@@ -717,6 +717,30 @@ function formatSetBonusText(bonus) {
   return parts.join(", ");
 }
 
+const SHOP_CATEGORY_TABS = [
+  { key: "weapon", label: "⚔️ Broń" },
+  { key: "armor", label: "🛡️ Zbroja" },
+  { key: "jewelry", label: "💍 Biżuteria" },
+];
+
+function getShopItemCategory(item) {
+  if (item.weapon) return "weapon";
+  if (["helm", "napiersnik", "rekawice", "spodnie", "buty"].includes(item.slot)) return "armor";
+  return "jewelry";
+}
+
+function categorizeShopItems(items) {
+  const categorized = { weapon: [], armor: [], jewelry: [] };
+  items.forEach((item) => categorized[getShopItemCategory(item)].push(item));
+  return categorized;
+}
+
+function renderShopCategoryTabs(activeTab, categorized) {
+  return `<div class="codex-tabs shop-category-tabs">${SHOP_CATEGORY_TABS.map((tab) => `
+    <button type="button" class="codex-tab-btn shop-category-tab-btn${tab.key === activeTab ? " selected" : ""}" data-shop-tab="${tab.key}">${tab.label} (${categorized[tab.key].length})</button>
+  `).join("")}</div>`;
+}
+
 function renderSetProgressSection(equippedObj) {
   const setProgress = getSetProgressFor(equippedObj);
   return `
@@ -743,6 +767,7 @@ const CHARACTER_SHEET_TABS = [
   { key: "potions", label: "🧪 Mikstury" },
 ];
 let characterSheetActiveTab = "stats";
+let campShopActiveTab = "weapon";
 
 function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers) {
   const tabsEl = document.getElementById("character-sheet-tabs");
@@ -895,14 +920,17 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
       </div>
     `;
   };
-  const campWeaponItems = notOwned.filter((item) => item.weapon);
-  const campOtherItems = notOwned.filter((item) => !item.weapon);
+  const campCategorized = categorizeShopItems(notOwned);
+  const campActiveItems = campCategorized[campShopActiveTab] || [];
   const shopHtml = `
     <div class="sheet-section">
       <h4>Kupiec obozowy</h4>
-      ${notOwned.length === 0 ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>` : ""}
-      ${campWeaponItems.length > 0 ? `<h5 class="sheet-subheading">⚔️ Broń</h5>${campWeaponItems.map(renderCampShopRow).join("")}` : ""}
-      ${campOtherItems.length > 0 ? `<h5 class="sheet-subheading">🛡️ Ekwipunek</h5>${campOtherItems.map(renderCampShopRow).join("")}` : ""}
+      ${notOwned.length === 0
+        ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>`
+        : renderShopCategoryTabs(campShopActiveTab, campCategorized)
+          + (campActiveItems.length === 0
+            ? `<p class="sheet-empty-note">Brak towaru w tej kategorii.</p>`
+            : campActiveItems.map(renderCampShopRow).join(""))}
     </div>
   `;
 
@@ -967,6 +995,12 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
   });
   body.querySelectorAll(".buy-potion-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onBuyPotion(btn.dataset.potion));
+  });
+  body.querySelectorAll(".shop-category-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      campShopActiveTab = btn.dataset.shopTab;
+      renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers);
+    });
   });
 }
 
@@ -1484,6 +1518,8 @@ function renderCityNpc(place, claimedNpcQuests, reputation, sideQuestProgress, h
   if (sideQuestBtn) sideQuestBtn.addEventListener("click", () => handlers.onOpenSideQuest(place.key));
 }
 
+let cityShopActiveTab = "weapon";
+
 function renderCityPlace(place, state, handlers) {
   if (!place) return;
   const { inventory, resources, equipmentUpgrades, bonusStats, potionInventory, lastGambleResult, equipped, recruitPool, companions, corruption, devouredCount, mutationTier, claimedNpcQuests, reputation, sideQuestProgress } = state;
@@ -1718,17 +1754,22 @@ function renderCityPlace(place, state, handlers) {
     `;
   };
 
-  const weaponItems = notOwned.filter((item) => item.weapon);
-  const otherItems = notOwned.filter((item) => !item.weapon);
+  const categorized = categorizeShopItems(notOwned);
+  const activeItems = categorized[cityShopActiveTab] || [];
 
   shopEl.innerHTML = `<h4>Towar na sprzedaż</h4>` +
     (notOwned.length === 0
       ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>`
-      : (weaponItems.length > 0 ? `<h5 class="sheet-subheading">⚔️ Broń</h5>${weaponItems.map(renderShopRow).join("")}` : "")
-        + (otherItems.length > 0 ? `<h5 class="sheet-subheading">🛡️ Ekwipunek</h5>${otherItems.map(renderShopRow).join("")}` : ""));
+      : renderShopCategoryTabs(cityShopActiveTab, categorized)
+        + (activeItems.length === 0
+          ? `<p class="sheet-empty-note">Brak towaru w tej kategorii.</p>`
+          : activeItems.map(renderShopRow).join("")));
 
   shopEl.querySelectorAll(".buy-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onBuy(btn.dataset.item));
+  });
+  shopEl.querySelectorAll(".shop-category-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => { cityShopActiveTab = btn.dataset.shopTab; render(); });
   });
 }
 
