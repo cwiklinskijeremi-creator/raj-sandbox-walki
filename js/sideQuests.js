@@ -208,4 +208,103 @@ const SIDE_QUESTS = {
       },
     },
   },
+
+  yolanda_ostatnia_stawka: {
+    npcKey: "tawerna",
+    name: "Ostatnia Stawka",
+    icon: "🎲",
+    prerequisite: { type: "resource", currency: "Nagroda Gildii", goal: 20 },
+    stages: {
+      start: {
+        text: [
+          "Yolanda odstawia dzban z piwem i zniża głos, mimo że w tawernie i tak nikt nie słucha nikogo poza sobą. „Cichy Marek nie zjawił się tu od dwóch tygodni. Winien mi tyle, że powinien się bać wracać — ale winien jest też ludziom gorszym ode mnie, a tacy nie zapominają.”",
+          "„Ostatniej nocy, zanim zniknął, przechwalał się przy kościach, że znalazł w lasach coś, co spłaci każdy dług — jakąś bestię, którą podobno oswoił. Nikt mu nie uwierzył, ale nikt też go więcej nie widział. Zejdź tam, gdzie chełpił się, że był, i powiedz mi, czy kłamał, czy naprawdę znalazł coś, co go zabiło.”",
+        ],
+        next: "objective",
+      },
+      objective: {
+        progressType: "bestiary",
+        goal: 3,
+        text: "Odkryj w Bestiariuszu przynajmniej 3 kolejne stworzenia, których jeszcze nie znasz — tylko tak dowiesz się, czy historia Marka o oswojonej bestii miała choć ziarno prawdy.",
+        next: "choice",
+      },
+      choice: {
+        text: "Wracasz do tawerny z tym, czego się dowiedziałeś. Yolanda słucha, przecierając ten sam kufel od dziesięciu minut. Prawda jest prosta i brzydka: nic, co widziałeś, nie dało się oswoić, a chełpliwa opowieść Marka była zwykłym kłamstwem dłużnika kupującego sobie czas. Co powiesz Yolandzie?",
+        options: [
+          {
+            label: "Powiedz jej prawdę",
+            resultText: "Yolanda kiwa głową bez zdziwienia. „Wiedziałam. Ale przynajmniej teraz mogę spisać ten dług na straty, zamiast czekać na kogoś, kto nie wróci.” Dzieli się z tobą tym, co uważa za sprawiedliwą zapłatę za uczciwość.",
+            reputation: 10,
+            next: "resolution_honest",
+          },
+          {
+            label: "Powiedz jej, że Marek naprawdę oswoił bestię i uciekł z nią gdzieś dalej",
+            resultText: "Kłamiesz — mówisz, że Marek żyje, wolny, gdzieś poza zasięgiem swoich wierzycieli. Yolanda uśmiecha się, chce w to uwierzyć, i to jej wystarcza, żeby przestać szukać dalej. Zostawiasz ją z nadzieją zbudowaną na niczym, a sam czujesz ciężar tego kłamstwa dłużej, niż powinieneś.",
+            corruption: 8,
+            next: "resolution_silent",
+          },
+        ],
+      },
+      resolution_honest: {
+        text: ["Yolanda wyciąga zza baru mały, oklejony pieczęciami woreczek. „Marek zostawił to jako zastaw, zanim zniknął. Teraz już wiem, że nikt po niego nie wróci — a tobie przyda się bardziej niż jemu.” W środku brzęczą kości oprawione w srebro, cięższe, niż powinny być."],
+        reward: { itemId: "quest_yolanda_kosci" },
+        final: true,
+      },
+      resolution_silent: {
+        text: ["Yolanda wręcza ci mimo wszystko zastaw Marka — kości oprawione w srebro — z uśmiechem, który nie sięga jej oczu. „Powiedz mu, żeby wrócił i je odebrał, kiedy indziej.” Nigdy nie wróci, a ty jesteś jedyną osobą, która o tym wie."],
+        reward: { itemId: "quest_yolanda_kosci" },
+        final: true,
+      },
+    },
+  },
+
+  matka_esencja_szept_esencji: {
+    npcKey: "kult_spaczenia",
+    name: "Szept Esencji",
+    icon: "🌒",
+    prerequisite: { type: "corruption", goal: 10 },
+    stages: {
+      start: {
+        text: [
+          "Matka Esencja przygląda się bliznom spaczenia na twojej skórze dłużej niż zwykle. „Widzę, że esencja zaczyna w tobie szeptać. To dobry moment, żebyś poznał, jak daleko sięga nasza troska o własnych.”",
+          "„Jedna z naszych, Sira, zbyt szybko poszła za głosem esencji — jej przemiana przyspiesza, ciało nie nadąża za tym, czym się staje. Możemy ją ustabilizować, ale rytuał wymaga czystych Spaczonych Ziół, zerwanych tam, gdzie skażenie lasu jest najgłębsze. Przynieś nam 30, zanim będzie za późno.”",
+        ],
+        next: "objective",
+      },
+      objective: {
+        progressType: "resource",
+        currency: "Spaczone Zioła",
+        goal: 30,
+        text: "Zbierz 30 × Spaczone Zioła w Skażonym Lesie — Kult potrzebuje ich, żeby ustabilizować przemianę Siry, zanim pochłonie ją całkowicie.",
+        next: "choice",
+      },
+      choice: {
+        text: "Wracasz z workiem ziół. Matka Esencja prowadzi cię do izby, gdzie na posłaniu leży Sira, drżąca, na wpół już nierozpoznawalna. „Mogę przeprowadzić rytuał łagodnie — spowolnić przemianę, dać jej więcej czasu jako sobą. Albo mogę pozwolić esencji dokończyć to, co zaczęła, w pełni, na raz. Sira się nie sprzeciwi — już dawno przestała się bać.” Co robisz?",
+        options: [
+          {
+            label: "Nalegaj na łagodniejszy rytuał",
+            resultText: "Matka Esencja niechętnie się zgadza. Rytuał spowalnia przemianę Siry, dając jej twarz, która wciąż przypomina człowieka, chociaż na jak długo — nikt nie wie. „Kupiłeś jej czas. Miejmy nadzieję, że to była łaska, nie tylko odwłoka.”",
+            reputation: 10,
+            next: "resolution_honest",
+          },
+          {
+            label: "Pozwól na pełny rytuał przebudzenia",
+            resultText: "Nie sprzeciwiasz się. Rytuał przechodzi w pełni, a esencja kończy to, co zaczęła w Sirze, w ciągu jednej nocy pełnej krzyku, który stopniowo cichnie w coś, co nie brzmi już jak ból. Rano Sira patrzy na ciebie oczami, które nie są już całkiem ludzkie — i dziękuje ci za to, cicho, z czymś, co mogłoby być spokojem.",
+            corruption: 10,
+            next: "resolution_silent",
+          },
+        ],
+      },
+      resolution_honest: {
+        text: ["Kilka dni później Matka Esencja wręcza ci naszyjnik zdjęty z szyi Siry, zanim zaczęła się przemiana — pamiątkę po tym, kim była, zanim zdecydowała się wybrać coś innego. „Nosisz dowód, że łagodność wciąż ma tu miejsce.”"],
+        reward: { itemId: "quest_matka_wisior" },
+        final: true,
+      },
+      resolution_silent: {
+        text: ["Matka Esencja wręcza ci ten sam naszyjnik, ale jej słowa brzmią inaczej. „Sira nie żałuje. Może ty też pewnego dnia przestaniesz.” Nosisz go, wiedząc dokładnie, na co się zgodziłeś tamtej nocy."],
+        reward: { itemId: "quest_matka_wisior" },
+        final: true,
+      },
+    },
+  },
 };

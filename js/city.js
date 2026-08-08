@@ -139,6 +139,10 @@ const CITY_NPCS = {
       reward: { currency: "Spaczone Zioła", amount: 20 },
     },
     highCorruptionLine: "Nalewam ci to samo co zawsze, ale patrzysz na mnie inaczej niż kiedyś. Spaczenie robi to każdemu, prędzej czy później.",
+    questResolutionLines: {
+      honest: "Marek nie wraca po ten dług, a ja przynajmniej już wiem, dlaczego. Dzięki, że nie kazałeś mi dłużej czekać na kłamstwo.",
+      dark: "Czasem myślę o Marku, gdzieś tam, wolnym. Ładniej tak wierzyć, niż wiedzieć, prawda?",
+    },
   },
   kult_spaczenia: {
     name: "Matka Esencja",
@@ -155,5 +159,9 @@ const CITY_NPCS = {
       reward: { currency: "Spaczone Zioła", amount: 25 },
     },
     highCorruptionLine: "Esencja szepcze do ciebie już wyraźniej niż do większości, prawda? Widzę to w twoich oczach. Witaj bliżej domu.",
+    questResolutionLines: {
+      honest: "Sira wciąż ma twarz, którą pamiętam. Kupiłeś jej to trochę czasu, kiedy nikt inny by się nie odważył.",
+      dark: "Sira już nie pyta, kim była. Czasem zazdroszczę jej tego spokoju — a ty pomogłeś jej go znaleźć.",
+    },
   },
 };

@@ -622,6 +622,26 @@ const EQUIPMENT_ITEMS = [
     bonus: { zre: 3, przebicie: 0.05 },
     cost: { currency: "Kryształy Esencji", amount: 40 },
   },
+  {
+    id: "quest_yolanda_kosci",
+    name: "Kości Ostatniej Stawki",
+    slot: "pierscien",
+    icon: "🎲",
+    sideQuestDrop: "yolanda_ostatnia_stawka",
+    description: "Zastaw Cichego Marka, oprawione w srebro kości, cięższe niż powinny być — jakby wciąż pamiętały ostatnią, przegraną stawkę.",
+    bonus: { cha: 2, zre: 2 },
+    cost: { currency: "Nagroda Gildii", amount: 40 },
+  },
+  {
+    id: "quest_matka_wisior",
+    name: "Wisior Siry",
+    slot: "naszyjnik",
+    icon: "🌒",
+    sideQuestDrop: "matka_esencja_szept_esencji",
+    description: "Zdjęty z szyi Siry, zanim przemiana dokończyła swoje dzieło — pamiątka po tym, kim była, zanim esencja zaczęła szeptać głośniej niż ona sama.",
+    bonus: { int: 2, cha: 2 },
+    cost: { currency: "Spaczone Zioła", amount: 40 },
+  },
 
   // Nagrody z osobistych wątków fabularnych towarzyszy (js/companionStory.js,
   // main.js: grantSideQuestReward) — companionStoryDrop mirroruje sideQuestDrop
