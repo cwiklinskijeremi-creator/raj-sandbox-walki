@@ -802,6 +802,37 @@ function closeQuestBoard() {
   document.getElementById("quest-board-overlay").classList.add("hidden");
 }
 
+// Zbiorcze podsumowanie postępu z kilku niezależnych systemów — czysto
+// odczytowa agregacja, bez własnego stanu. Wątki fabularne towarzyszy liczone
+// są przez obecność ich unikalnej nagrody w plecaku (companionStoryDrop),
+// ponieważ companion.storyProgress żyje na obiekcie towarzysza i nie
+// przeżywa "Nowej gry" tak jak reszta tego zestawienia.
+function getChronicleStats() {
+  const totalBestiary = Object.keys(ENEMY_TEMPLATES).length + Object.keys(BOSS_TEMPLATES).length;
+  const completedSideQuests = Object.values(sideQuestProgress).filter((p) => p && p.completed).length;
+  const companionStoryDropIds = EQUIPMENT_ITEMS.filter((i) => i.companionStoryDrop).map((i) => i.id);
+  const completedCompanionStories = companionStoryDropIds.filter((id) => inventory.includes(id)).length;
+
+  return [
+    { icon: "⚔️", label: "Bossowie pokonani", current: defeatedBosses.length, total: Object.keys(BOSS_TEMPLATES).length },
+    { icon: "📖", label: "Misje poboczne NPC", current: completedSideQuests, total: Object.keys(SIDE_QUESTS).length },
+    { icon: "🤝", label: "Zlecenia NPC", current: claimedNpcQuests.length, total: Object.keys(CITY_NPCS).length },
+    { icon: "📋", label: "Tablica zadań Gildii", current: claimedQuests.length, total: QUESTS.length },
+    { icon: "👥", label: "Wątki towarzyszy", current: completedCompanionStories, total: companionStoryDropIds.length },
+    { icon: "🗡️", label: "Rozdziały kampanii", current: completedChapterIds.length, total: CAMPAIGN_CHAPTERS.length },
+    { icon: "📕", label: "Bestiariusz", current: discoveredEnemies.length, total: totalBestiary },
+  ];
+}
+
+function openChronicle() {
+  document.getElementById("chronicle-overlay").classList.remove("hidden");
+  renderChronicle(getChronicleStats());
+}
+
+function closeChronicle() {
+  document.getElementById("chronicle-overlay").classList.add("hidden");
+}
+
 function openPartyOverlay() {
   document.getElementById("party-overlay").classList.remove("hidden");
   refreshPartyOverlayIfOpen();
@@ -3340,6 +3371,8 @@ document.getElementById("camp-main-menu-btn").addEventListener("click", goToMain
 document.getElementById("camp-character-btn").addEventListener("click", openCharacterSheet);
 document.getElementById("camp-quests-btn").addEventListener("click", openQuestBoard);
 document.getElementById("quest-board-close").addEventListener("click", closeQuestBoard);
+document.getElementById("camp-chronicle-btn").addEventListener("click", openChronicle);
+document.getElementById("chronicle-close").addEventListener("click", closeChronicle);
 document.getElementById("camp-talents-btn").addEventListener("click", () => openTalentTree());
 document.getElementById("talent-tree-close").addEventListener("click", closeTalentTree);
 document.getElementById("camp-campaign-btn").addEventListener("click", openCampaignBoard);

@@ -1729,6 +1729,34 @@ function renderQuestBoard(quests, progressState, claimedQuests, onClaim) {
   });
 }
 
+function renderChronicle(stats) {
+  const body = document.getElementById("chronicle-body");
+  const totalCurrent = stats.reduce((sum, s) => sum + s.current, 0);
+  const totalGoal = stats.reduce((sum, s) => sum + s.total, 0);
+  const overallPct = totalGoal > 0 ? Math.round((totalCurrent / totalGoal) * 100) : 0;
+
+  body.innerHTML = `
+    <div class="sheet-item-row chronicle-overall">
+      <div class="sheet-item-info">
+        <div class="sheet-item-name">📚 Ogólny postęp Gildii</div>
+        <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${overallPct}%"></div></div>
+        <div class="sheet-item-bonus">${overallPct}% ukończone</div>
+      </div>
+    </div>
+  ` + stats.map((s) => {
+    const pct = s.total > 0 ? Math.round((s.current / s.total) * 100) : 0;
+    return `
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-name">${s.icon} ${s.label}</div>
+          <div class="quest-progress-track"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+          <div class="sheet-item-bonus">${s.current}/${s.total}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
 const TALENT_KIND_BADGE = { passive: "💠", active: "⚡", sustained: "🛡️" };
 const TALENT_KIND_LABEL = { passive: "Bierna", active: "Aktywowana", sustained: "Podtrzymywana" };
 const TALENT_TREE_TABS = [

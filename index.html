@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=88">
+<link rel="stylesheet" href="style.css?v=89">
 <script type="importmap">
 {
   "imports": {
@@ -134,6 +134,7 @@
       <button type="button" id="camp-talents-btn">🌟 Umiejętności</button>
       <button type="button" id="camp-campaign-btn">🗡️ Kampania</button>
       <button type="button" id="camp-party-btn">👥 Drużyna</button>
+      <button type="button" id="camp-chronicle-btn">📚 Kroniki Gildii</button>
       <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
       <button type="button" id="tutorial-btn-camp">📖 Jak grać</button>
       <button type="button" id="camp-main-menu-btn" class="btn-quiet">🏠 Menu główne</button>
@@ -315,6 +316,16 @@
     </div>
   </div>
 
+  <div class="codex-overlay hidden" id="chronicle-overlay">
+    <div class="codex-modal">
+      <div class="codex-header">
+        <div class="codex-tabs"><span class="modal-title">📚 Kroniki Gildii</span></div>
+        <button class="codex-close" id="chronicle-close" type="button">✕</button>
+      </div>
+      <div class="codex-body" id="chronicle-body"></div>
+    </div>
+  </div>
+
   <div class="codex-overlay hidden" id="campaign-overlay">
     <div class="codex-modal">
       <div class="codex-header">
@@ -403,30 +414,30 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=88"></script>
-  <script src="js/dice.js?v=88"></script>
-  <script src="js/grid.js?v=88"></script>
-  <script src="js/dungeonmap.js?v=88"></script>
-  <script src="js/classes.js?v=88"></script>
-  <script src="js/talents.js?v=88"></script>
-  <script src="js/lore.js?v=88"></script>
-  <script src="js/prologue.js?v=88"></script>
-  <script src="js/locations.js?v=88"></script>
-  <script src="js/city.js?v=88"></script>
-  <script src="js/quests.js?v=88"></script>
-  <script src="js/sideQuests.js?v=88"></script>
-  <script src="js/campaign.js?v=88"></script>
-  <script src="js/equipment.js?v=88"></script>
-  <script src="js/crafting.js?v=88"></script>
-  <script src="js/potions.js?v=88"></script>
-  <script src="js/tutorial.js?v=88"></script>
-  <script src="js/characters.js?v=88"></script>
-  <script src="js/companions.js?v=88"></script>
-  <script src="js/companionStory.js?v=88"></script>
-  <script src="js/combat.js?v=88"></script>
-  <script src="js/ui.js?v=88"></script>
-  <script src="js/main.js?v=88"></script>
-  <script type="module" src="js/test3d.js?v=88"></script>
-  <script type="module" src="js/board3d.js?v=88"></script>
+  <script src="js/audio.js?v=89"></script>
+  <script src="js/dice.js?v=89"></script>
+  <script src="js/grid.js?v=89"></script>
+  <script src="js/dungeonmap.js?v=89"></script>
+  <script src="js/classes.js?v=89"></script>
+  <script src="js/talents.js?v=89"></script>
+  <script src="js/lore.js?v=89"></script>
+  <script src="js/prologue.js?v=89"></script>
+  <script src="js/locations.js?v=89"></script>
+  <script src="js/city.js?v=89"></script>
+  <script src="js/quests.js?v=89"></script>
+  <script src="js/sideQuests.js?v=89"></script>
+  <script src="js/campaign.js?v=89"></script>
+  <script src="js/equipment.js?v=89"></script>
+  <script src="js/crafting.js?v=89"></script>
+  <script src="js/potions.js?v=89"></script>
+  <script src="js/tutorial.js?v=89"></script>
+  <script src="js/characters.js?v=89"></script>
+  <script src="js/companions.js?v=89"></script>
+  <script src="js/companionStory.js?v=89"></script>
+  <script src="js/combat.js?v=89"></script>
+  <script src="js/ui.js?v=89"></script>
+  <script src="js/main.js?v=89"></script>
+  <script type="module" src="js/test3d.js?v=89"></script>
+  <script type="module" src="js/board3d.js?v=89"></script>
 </body>
 </html>

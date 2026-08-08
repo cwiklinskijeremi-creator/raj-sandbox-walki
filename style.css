@@ -454,6 +454,17 @@ body {
   width: min(920px, 95vw);
 }
 
+.chronicle-overall {
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.chronicle-overall .sheet-item-name {
+  font-size: 1.05rem;
+  color: var(--accent-bright);
+}
+
 .talent-tree-layout {
   display: flex;
   gap: 1.4rem;
