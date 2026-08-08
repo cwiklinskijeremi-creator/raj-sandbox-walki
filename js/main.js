@@ -1720,6 +1720,14 @@ function meetsItemRequirement(item) {
   return statValue >= item.requirement.amount;
 }
 
+// classRestriction gates zakładanie (equipItem/equipItemToCompanion), nie
+// zakup — dowolna klasa może kupić przedmiot z myślą o towarzyszu właściwej
+// klasy, skoro ekwipunek to jedna wspólna pula Gildii.
+function meetsClassRequirementFor(item, className) {
+  if (!item.classRestriction) return true;
+  return item.classRestriction === className;
+}
+
 function refreshCharacterSheetIfOpen() {
   const overlay = document.getElementById("character-sheet-overlay");
   if (overlay.classList.contains("hidden")) return;
@@ -1744,7 +1752,7 @@ function buyEquipment(itemId) {
 
 function equipItem(itemId) {
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
-  if (!item || !inventory.includes(itemId)) return;
+  if (!item || !inventory.includes(itemId) || !meetsClassRequirementFor(item, selectedClassName)) return;
   unequipItemEverywhere(itemId);
   equipped[resolveEquipSlotKey(item, equipped)] = itemId;
   saveEquipmentState();
@@ -1767,7 +1775,7 @@ function unequipSlot(slotKey) {
 function equipItemToCompanion(companionIndex, itemId) {
   const companion = companions[companionIndex];
   const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
-  if (!companion || !item || !inventory.includes(itemId)) return;
+  if (!companion || !item || !inventory.includes(itemId) || !meetsClassRequirementFor(item, companion.className)) return;
   if (!companion.equipped) companion.equipped = defaultEquippedState();
   unequipItemEverywhere(itemId);
   companion.equipped[resolveEquipSlotKey(item, companion.equipped)] = itemId;
@@ -2217,6 +2225,16 @@ let introStep = 0;
 
 function confirmCharacterCreation() {
   if (!playerName.trim() || !playerGender || !selectedSubclassName) return;
+  // Ekwipunek przechodzi między "Nowa gra" (patrz startNewGame — nie resetuje
+  // equipped), więc przedmiot klasowy założony przez poprzednią postać mógłby
+  // zostać na slocie mimo niepasującej nowej klasy — zdejmij taki przed startem.
+  Object.keys(equipped).forEach((slotKey) => {
+    const itemId = equipped[slotKey];
+    if (!itemId) return;
+    const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+    if (item && !meetsClassRequirementFor(item, selectedClassName)) equipped[slotKey] = null;
+  });
+  saveEquipmentState();
   player = buildPlayerCharacter();
   prologueStep = 0;
   phase = "prologue";

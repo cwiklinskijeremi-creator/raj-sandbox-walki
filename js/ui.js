@@ -700,6 +700,12 @@ function formatItemRequirement(item) {
   return `<div class="sheet-item-requirement${met ? "" : " requirement-unmet"}">Wymaga: poziom ${item.requirement.level}, ${item.requirement.stat.toUpperCase()} ${item.requirement.amount}</div>`;
 }
 
+function formatItemClassRestriction(item, className) {
+  if (!item.classRestriction) return "";
+  const met = item.classRestriction === className;
+  return `<div class="sheet-item-requirement${met ? "" : " requirement-unmet"}">Wymaga klasy: ${item.classRestriction}</div>`;
+}
+
 function formatItemSetTag(item) {
   if (!item.set) return "";
   const setDef = EQUIPMENT_SETS.find((s) => s.id === item.set);
@@ -895,6 +901,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
         : ownedUnequipped.map((id) => {
             const item = EQUIPMENT_ITEMS.find((i) => i.id === id);
             const level = equipmentUpgrades[id] || 0;
+            const classMet = meetsClassRequirementFor(item, player.class);
             return `
               <div class="sheet-item-row">
                 <div class="sheet-item-info">
@@ -903,8 +910,9 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
                   ${formatItemWeapon(item)}
                   <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
                   ${formatItemSetTag(item)}
+                  ${formatItemClassRestriction(item, player.class)}
                 </div>
-                <button type="button" class="sheet-action-btn equip-btn" data-item="${item.id}">Załóż</button>
+                <button type="button" class="sheet-action-btn equip-btn" data-item="${item.id}" ${classMet ? "" : "disabled"}>Załóż</button>
               </div>
             `;
           }).join("")}
@@ -925,6 +933,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
           <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
           ${formatItemSetTag(item)}
           ${formatItemRequirement(item)}
+          ${formatItemClassRestriction(item, player ? player.class : null)}
           <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
         </div>
         <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
@@ -1290,6 +1299,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
         : ownedFree.map((id) => {
             const item = EQUIPMENT_ITEMS.find((i) => i.id === id);
             const upgradeLevel = equipmentUpgrades[id] || 0;
+            const classMet = meetsClassRequirementFor(item, companion.className);
             return `
               <div class="sheet-item-row">
                 <div class="sheet-item-info">
@@ -1298,8 +1308,9 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
                   ${formatItemWeapon(item)}
                   <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + upgradeLevel * 0.25)}</div>
                   ${formatItemSetTag(item)}
+                  ${formatItemClassRestriction(item, companion.className)}
                 </div>
-                <button type="button" class="sheet-action-btn companion-equip-btn" data-item="${item.id}">Załóż</button>
+                <button type="button" class="sheet-action-btn companion-equip-btn" data-item="${item.id}" ${classMet ? "" : "disabled"}>Załóż</button>
               </div>
             `;
           }).join("")}
@@ -1758,6 +1769,7 @@ function renderCityPlace(place, state, handlers) {
           <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
           ${formatItemSetTag(item)}
           ${formatItemRequirement(item)}
+          ${formatItemClassRestriction(item, player ? player.class : null)}
           <div class="sheet-item-cost">${costLine}</div>
         </div>
         <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
