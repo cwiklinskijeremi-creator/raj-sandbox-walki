@@ -2085,7 +2085,7 @@ function renderCodexTabBody(tabKey) {
     return `<h3>${c.icon} ${c.title}</h3>` + c.entries.map((e) => `
       <div class="codex-entry">
         <h4>${e.icon} ${e.name}</h4>
-        <p>${e.description}</p>
+        ${e.paragraphs.map((p) => `<p>${p}</p>`).join("")}
       </div>
     `).join("");
   }

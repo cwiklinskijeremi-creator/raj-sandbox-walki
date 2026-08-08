@@ -19,27 +19,42 @@ const LORE_DATA = {
       {
         name: "Magowie",
         icon: "🔮",
-        description: "Elita, nieśmiertelni nearly, rządzący dekretami śmierci.",
+        paragraphs: [
+          "Roka Arcymagów rządzi Rajem od czasów Wojny Esencji — dziewięciu członków Rady, każde z krwi, w której esencja płynie najczyściej. Tron i miejsce w Radzie dziedziczy pierwszy potomek o nieskażonej krwi; reszta rodzeństwa zostaje „rezerwą”, skazaną na cień własnego nazwiska, dopóki nie znajdzie innego sposobu, by się wybić — spiskiem, zdradą albo, jak w niejednym przypadku, wygnaniem, które miało być karą.",
+          "Poza murami Wieży niewiele ich obchodzi, co dzieje się z tymi, którzy nie mają ich krwi. Niewolnicy z kopalni, słudzy Zakonu, najemnicy Gildii — to narzędzia, wymienialne i tanie, dopóki przynoszą esencję. Nawet ci z Rady, którzy mówią o „porządku” czy „ochronie”, rzadko widzą różnicę między rządzeniem a hodowlą.",
+        ],
       },
       {
         name: "Nie-magowie",
         icon: "⛓️",
-        description: "Niewolnicy w kopalniach lub „słudzy” na usługach Rady — w trzech frakcjach, które udają wolność, ale są smyczą magów.",
+        paragraphs: [
+          "Pod magami żyje reszta Raju, podzielona na tych, którzy jeszcze udają wolność, i tych, którym nawet na to nie pozwolono. Niewolnicy z Kopalni Esencji nie mają złudzeń — kopią, aż esencja ich zmieni albo zabije, cokolwiek nastąpi pierwsze.",
+          "Trzy frakcje — Gildia Poszukiwaczy Przygód, Zakon Światła i Gildia Rzemieślników — noszą się z większą godnością, ale wszystkie trzy odpowiadają w końcu przed tą samą Radą. Różnica między nimi a niewolnikiem z szybu bywa cieńsza, niż którakolwiek z nich chciałaby przyznać.",
+        ],
       },
       {
         name: "Gildia Poszukiwaczy Przygód",
         icon: "🗺️",
-        description: "Zabijają aberracje many, odzyskują zaginione kryształy. Brutalni łowcy nagród, lojalni za ochłapy esencji.",
+        paragraphs: [
+          "Gildia poluje na aberracje many i odzyskuje zaginione kryształy w zamian za ochłapy esencji — brudna, niebezpieczna robota, którą Rada chętnie zleca komuś innemu. To właśnie w jej szeregach, pod maską „nowego rekruta”, ukrywa się niejeden uciekinier i garstka towarzyszy, których zwerbował po drodze.",
+          "Nikt w Gildii nie pyta o przeszłość — liczy się tylko, ile potrafisz przetrwać. To czyni ją jedynym miejscem w Raju, gdzie reputacja buduje się czynami, a nie krwią w żyłach, choć nawet tutaj każdy sukces ostatecznie zasila skarbiec Rady.",
+        ],
       },
       {
         name: "Zakon Światła",
         icon: "✨",
-        description: "Pomagają ubogim (głównie niewolnikom), lecząc słabymi czarami światła. Ich „miłosierdzie” to propaganda — leczą, by niewolnicy mogli dalej pracować. Makiaweliczna grupa, skłonna zrobić wszystko, by utrzymać swoją marną przeszłość przy życiu.",
+        paragraphs: [
+          "Zakon leczy ubogich i niewolników słabymi czarami światła, a jego kapłani mówią o miłosierdziu tak często, że niemal brzmi to szczerze. W praktyce ich „łaska” istnieje po to, by robotnik wrócił do kopania choć jeden dzień dłużej.",
+          "Egzekutorzy Wiary Zakonu polują na Kult Spaczenia z gorliwością bliską obsesji, przekonani, że tępią herezję, nie konkurencję. A jednak nie każdy w habicie jest taki sam — bywają wśród nich tacy, dla których wiara wciąż znaczy więcej niż polityka Zakonu.",
+        ],
       },
       {
         name: "Gildia Rzemieślników",
         icon: "⚒️",
-        description: "Kowale, alchemicy i architekci tworzą broń i artefakty dla magów. Ich warsztaty to fabryki śmierci.",
+        paragraphs: [
+          "Kowale, alchemicy i architekci Gildii Rzemieślników kują broń i pancerze na zamówienie Rady — ich warsztaty to fabryki, które zbroją zarówno strażników kopalni, jak i tych, którzy próbują z nich uciec.",
+          "Za odpowiednią cenę, albo odrobinę zaufania, coś z ich warsztatu trafia też w ręce niższych stanem. Im więcej wie się o tym, skąd naprawdę pochodzi ruda w ich piecach, tym trudniej nie zauważyć, że niejeden rzemieślnik zamyka oczy na więcej, niż przyznaje.",
+        ],
       },
     ],
   },
