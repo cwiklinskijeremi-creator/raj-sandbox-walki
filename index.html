@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Raj — Sandbox Walki</title>
-<link rel="stylesheet" href="style.css?v=96">
+<link rel="stylesheet" href="style.css?v=97">
 <script type="importmap">
 {
   "imports": {
@@ -127,17 +127,35 @@
     <p class="camp-flavor">Obóz Gildii Poszukiwaczy Przygód, rozbity w cieniu kryształowych wież Aetherionu. Stąd wyruszają grupy najemników i łowców, by polować na aberracje many i odzyskiwać zaginione kryształy esencji — a Ty, ukryty pod maską nowego rekruta, dołączasz do ich szeregów.</p>
     <div class="camp-character-card" id="camp-character-card"></div>
     <div class="camp-buttons">
-      <button type="button" id="camp-expedition-btn" class="btn-primary">🗺️ Wyrusz na wyprawę</button>
-      <button type="button" id="camp-city-btn">🏙️ Miasto Aetherion</button>
-      <button type="button" id="camp-character-btn">🎒 Ekwipunek i postać</button>
-      <button type="button" id="camp-quests-btn">📋 Tablica zadań</button>
-      <button type="button" id="camp-talents-btn">🌟 Umiejętności</button>
-      <button type="button" id="camp-campaign-btn">🗡️ Kampania</button>
-      <button type="button" id="camp-party-btn">👥 Drużyna</button>
-      <button type="button" id="camp-chronicle-btn">📚 Kroniki Gildii</button>
-      <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
-      <button type="button" id="tutorial-btn-camp">📖 Jak grać</button>
-      <button type="button" id="camp-main-menu-btn" class="btn-quiet">🏠 Menu główne</button>
+      <div class="camp-button-group">
+        <div class="camp-button-row">
+          <button type="button" id="camp-expedition-btn" class="btn-primary">🗺️ Wyrusz na wyprawę</button>
+          <button type="button" id="camp-city-btn">🏙️ Miasto Aetherion</button>
+        </div>
+      </div>
+      <div class="camp-button-group">
+        <span class="camp-button-group-label">Postać i drużyna</span>
+        <div class="camp-button-row">
+          <button type="button" id="camp-character-btn">🎒 Ekwipunek i postać</button>
+          <button type="button" id="camp-talents-btn">🌟 Umiejętności</button>
+          <button type="button" id="camp-party-btn">👥 Drużyna</button>
+        </div>
+      </div>
+      <div class="camp-button-group">
+        <span class="camp-button-group-label">Fabuła i postęp</span>
+        <div class="camp-button-row">
+          <button type="button" id="camp-campaign-btn">🗡️ Kampania</button>
+          <button type="button" id="camp-quests-btn">📋 Tablica zadań</button>
+          <button type="button" id="camp-chronicle-btn">📚 Kroniki Gildii</button>
+          <button type="button" id="camp-codex-btn">📜 Kodeks świata</button>
+        </div>
+      </div>
+      <div class="camp-button-group">
+        <div class="camp-button-row">
+          <button type="button" id="tutorial-btn-camp">📖 Jak grać</button>
+          <button type="button" id="camp-main-menu-btn" class="btn-quiet">🏠 Menu główne</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -269,7 +287,7 @@
   <div class="codex-overlay hidden" id="character-sheet-overlay">
     <div class="codex-modal">
       <div class="codex-header">
-        <div class="codex-tabs"><span class="modal-title">Ekwipunek i postać</span></div>
+        <div class="codex-tabs" id="character-sheet-tabs"></div>
         <button class="codex-close" id="character-sheet-close" type="button">✕</button>
       </div>
       <div class="codex-body" id="character-sheet-body"></div>
@@ -414,30 +432,30 @@
     </div>
   </div>
 
-  <script src="js/audio.js?v=96"></script>
-  <script src="js/dice.js?v=96"></script>
-  <script src="js/grid.js?v=96"></script>
-  <script src="js/dungeonmap.js?v=96"></script>
-  <script src="js/classes.js?v=96"></script>
-  <script src="js/talents.js?v=96"></script>
-  <script src="js/lore.js?v=96"></script>
-  <script src="js/prologue.js?v=96"></script>
-  <script src="js/locations.js?v=96"></script>
-  <script src="js/city.js?v=96"></script>
-  <script src="js/quests.js?v=96"></script>
-  <script src="js/sideQuests.js?v=96"></script>
-  <script src="js/campaign.js?v=96"></script>
-  <script src="js/equipment.js?v=96"></script>
-  <script src="js/crafting.js?v=96"></script>
-  <script src="js/potions.js?v=96"></script>
-  <script src="js/tutorial.js?v=96"></script>
-  <script src="js/characters.js?v=96"></script>
-  <script src="js/companions.js?v=96"></script>
-  <script src="js/companionStory.js?v=96"></script>
-  <script src="js/combat.js?v=96"></script>
-  <script src="js/ui.js?v=96"></script>
-  <script src="js/main.js?v=96"></script>
-  <script type="module" src="js/test3d.js?v=96"></script>
-  <script type="module" src="js/board3d.js?v=96"></script>
+  <script src="js/audio.js?v=97"></script>
+  <script src="js/dice.js?v=97"></script>
+  <script src="js/grid.js?v=97"></script>
+  <script src="js/dungeonmap.js?v=97"></script>
+  <script src="js/classes.js?v=97"></script>
+  <script src="js/talents.js?v=97"></script>
+  <script src="js/lore.js?v=97"></script>
+  <script src="js/prologue.js?v=97"></script>
+  <script src="js/locations.js?v=97"></script>
+  <script src="js/city.js?v=97"></script>
+  <script src="js/quests.js?v=97"></script>
+  <script src="js/sideQuests.js?v=97"></script>
+  <script src="js/campaign.js?v=97"></script>
+  <script src="js/equipment.js?v=97"></script>
+  <script src="js/crafting.js?v=97"></script>
+  <script src="js/potions.js?v=97"></script>
+  <script src="js/tutorial.js?v=97"></script>
+  <script src="js/characters.js?v=97"></script>
+  <script src="js/companions.js?v=97"></script>
+  <script src="js/companionStory.js?v=97"></script>
+  <script src="js/combat.js?v=97"></script>
+  <script src="js/ui.js?v=97"></script>
+  <script src="js/main.js?v=97"></script>
+  <script type="module" src="js/test3d.js?v=97"></script>
+  <script type="module" src="js/board3d.js?v=97"></script>
 </body>
 </html>

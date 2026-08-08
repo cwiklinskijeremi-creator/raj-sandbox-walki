@@ -700,12 +700,35 @@ function formatItemRequirement(item) {
   return `<div class="sheet-item-requirement${met ? "" : " requirement-unmet"}">Wymaga: poziom ${item.requirement.level}, ${item.requirement.stat.toUpperCase()} ${item.requirement.amount}</div>`;
 }
 
+const CHARACTER_SHEET_TABS = [
+  { key: "stats", label: "📊 Postać" },
+  { key: "equipment", label: "🎒 Ekwipunek" },
+  { key: "shop", label: "🛒 Sklep" },
+  { key: "potions", label: "🧪 Mikstury" },
+];
+let characterSheetActiveTab = "stats";
+
 function renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers) {
+  const tabsEl = document.getElementById("character-sheet-tabs");
   const body = document.getElementById("character-sheet-body");
   if (!player) {
+    tabsEl.innerHTML = "";
     body.innerHTML = `<p class="creation-hint">Brak postaci.</p>`;
     return;
   }
+
+  tabsEl.innerHTML = "";
+  CHARACTER_SHEET_TABS.forEach((tab) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `codex-tab-btn${tab.key === characterSheetActiveTab ? " selected" : ""}`;
+    btn.textContent = tab.label;
+    btn.addEventListener("click", () => {
+      characterSheetActiveTab = tab.key;
+      renderCharacterSheet(player, inventory, equipped, resources, potionInventory, equipmentUpgrades, progress, handlers);
+    });
+    tabsEl.appendChild(btn);
+  });
 
   const { level, xp, xpToNext, bonusStats, statPointsAvailable, talentPointsAvailable, corruption, devouredCount, mutationTier } = progress;
   const spentPoints = Object.values(bonusStats).reduce((a, b) => a + b, 0);
@@ -815,28 +838,32 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
   `;
 
   const notOwned = EQUIPMENT_ITEMS.filter((item) => item.vendor === "camp" && !inventory.includes(item.id));
+  const renderCampShopRow = (item) => {
+    const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
+    const affordable = owned >= item.cost.amount;
+    const meetsReq = meetsItemRequirement(item);
+    return `
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-name">${item.icon} ${item.name}</div>
+          <div class="sheet-item-desc">${item.description}</div>
+          ${formatItemWeapon(item)}
+          <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+          ${formatItemRequirement(item)}
+          <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
+        </div>
+        <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
+      </div>
+    `;
+  };
+  const campWeaponItems = notOwned.filter((item) => item.weapon);
+  const campOtherItems = notOwned.filter((item) => !item.weapon);
   const shopHtml = `
     <div class="sheet-section">
       <h4>Kupiec obozowy</h4>
       ${notOwned.length === 0 ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>` : ""}
-      ${notOwned.map((item) => {
-        const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
-        const affordable = owned >= item.cost.amount;
-        const meetsReq = meetsItemRequirement(item);
-        return `
-          <div class="sheet-item-row">
-            <div class="sheet-item-info">
-              <div class="sheet-item-name">${item.icon} ${item.name}</div>
-              <div class="sheet-item-desc">${item.description}</div>
-              ${formatItemWeapon(item)}
-              <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
-              ${formatItemRequirement(item)}
-              <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
-            </div>
-            <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
-          </div>
-        `;
-      }).join("")}
+      ${campWeaponItems.length > 0 ? `<h5 class="sheet-subheading">⚔️ Broń</h5>${campWeaponItems.map(renderCampShopRow).join("")}` : ""}
+      ${campOtherItems.length > 0 ? `<h5 class="sheet-subheading">🛡️ Ekwipunek</h5>${campOtherItems.map(renderCampShopRow).join("")}` : ""}
     </div>
   `;
 
@@ -878,9 +905,15 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
     </div>
   `;
 
-  body.innerHTML = statsHtml + levelUpHtml + resourcesHtml + slotsHtml + inventoryHtml + shopHtml + potionInventoryHtml + potionShopHtml;
+  const tabContent = {
+    stats: statsHtml + levelUpHtml + resourcesHtml,
+    equipment: slotsHtml + inventoryHtml,
+    shop: shopHtml,
+    potions: potionInventoryHtml + potionShopHtml,
+  };
+  body.innerHTML = tabContent[characterSheetActiveTab] || "";
 
-  if (unspentPoints > 0) {
+  if (unspentPoints > 0 && characterSheetActiveTab === "stats") {
     renderStatAllocatorInto(document.getElementById("sheet-stat-allocator"), baseStats, bonusStats, statPointsAvailable, handlers.onAdjustStat);
   }
 
@@ -1619,32 +1652,38 @@ function renderCityPlace(place, state, handlers) {
 
   const notOwned = items.filter((item) => !inventory.includes(item.id));
 
+  const renderShopRow = (item) => {
+    const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
+    const discountedCost = getDiscountedCost(item);
+    const affordable = owned >= discountedCost;
+    const meetsReq = meetsItemRequirement(item);
+    const discountPct = Math.round(getReputationDiscount(item.vendor) * 100);
+    const costLine = discountPct > 0
+      ? `Koszt: <s>${item.cost.amount}</s> ${discountedCost} × ${item.cost.currency} (masz: ${owned}) — rabat -${discountPct}%`
+      : `Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})`;
+    return `
+      <div class="sheet-item-row">
+        <div class="sheet-item-info">
+          <div class="sheet-item-name">${item.icon} ${item.name}</div>
+          <div class="sheet-item-desc">${item.description}</div>
+          ${formatItemWeapon(item)}
+          <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+          ${formatItemRequirement(item)}
+          <div class="sheet-item-cost">${costLine}</div>
+        </div>
+        <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
+      </div>
+    `;
+  };
+
+  const weaponItems = notOwned.filter((item) => item.weapon);
+  const otherItems = notOwned.filter((item) => !item.weapon);
+
   shopEl.innerHTML = `<h4>Towar na sprzedaż</h4>` +
     (notOwned.length === 0
       ? `<p class="sheet-empty-note">Wykupiono cały dostępny towar.</p>`
-      : notOwned.map((item) => {
-          const owned = resources[item.cost.currency] ? resources[item.cost.currency].amount : 0;
-          const discountedCost = getDiscountedCost(item);
-          const affordable = owned >= discountedCost;
-          const meetsReq = meetsItemRequirement(item);
-          const discountPct = Math.round(getReputationDiscount(item.vendor) * 100);
-          const costLine = discountPct > 0
-            ? `Koszt: <s>${item.cost.amount}</s> ${discountedCost} × ${item.cost.currency} (masz: ${owned}) — rabat -${discountPct}%`
-            : `Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})`;
-          return `
-            <div class="sheet-item-row">
-              <div class="sheet-item-info">
-                <div class="sheet-item-name">${item.icon} ${item.name}</div>
-                <div class="sheet-item-desc">${item.description}</div>
-                ${formatItemWeapon(item)}
-                <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
-                ${formatItemRequirement(item)}
-                <div class="sheet-item-cost">${costLine}</div>
-              </div>
-              <button type="button" class="sheet-action-btn buy-btn" data-item="${item.id}" ${affordable && meetsReq ? "" : "disabled"}>Kup</button>
-            </div>
-          `;
-        }).join(""));
+      : (weaponItems.length > 0 ? `<h5 class="sheet-subheading">⚔️ Broń</h5>${weaponItems.map(renderShopRow).join("")}` : "")
+        + (otherItems.length > 0 ? `<h5 class="sheet-subheading">🛡️ Ekwipunek</h5>${otherItems.map(renderShopRow).join("")}` : ""));
 
   shopEl.querySelectorAll(".buy-btn").forEach((btn) => {
     btn.addEventListener("click", () => handlers.onBuy(btn.dataset.item));
