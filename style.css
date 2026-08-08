@@ -1384,6 +1384,13 @@ button:disabled {
   color: #a89c8f;
 }
 
+.codex-enemy-flavor {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #b8a9c9;
+  margin: 0.2rem 0 0.35rem;
+}
+
 .hidden {
   display: none !important;
 }

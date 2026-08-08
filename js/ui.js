@@ -2122,9 +2122,11 @@ function renderCodexTabBody(tabKey) {
             `;
           }
           const e = ENEMY_TEMPLATES[key]();
+          const flavor = LORE_DATA.enemyFlavor[key];
           return `
             <div class="codex-subclass">
               <div class="codex-subclass-title">${e.icon} ${e.name} ${e.mutated ? `<span class="mutated-tag" title="Można pożreć jego szczątki po pokonaniu w walce.">🧟 spaczony</span>` : ""}</div>
+              ${flavor ? `<div class="codex-enemy-flavor">„${flavor}”</div>` : ""}
               <div class="codex-subclass-gear">
                 HP: ${e.maxHP} &nbsp;|&nbsp; STR: ${e.str} &nbsp; WYT: ${e.wyt} &nbsp; ZRE: ${e.zre} &nbsp; INT: ${e.int} &nbsp; CHA: ${e.cha}
                 &nbsp;|&nbsp; Pancerz: ${(e.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(e.przebicie * 100).toFixed(0)}%

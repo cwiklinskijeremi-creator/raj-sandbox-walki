@@ -66,4 +66,59 @@ const LORE_DATA = {
     "Truciciel": "Alchemik, dla którego każda fiolka to pytanie: lek czy trucizna? Odpowiedź zależy od klienta.",
     "Medyk": "Ostatnia deska ratunku na polu bitwy — i dowód, że w Raju nawet litość ma swoją cenę.",
   },
+  // Jedno zdanie fabularne per zwykły przeciwnik (bossowie mają już własną
+  // charakterystykę przez zdolność specjalną) — pokazywane w Bestiariuszu
+  // dopiero po odkryciu, pogrupowane tu według lokacji dla porządku, choć
+  // klucz to templateKey z ENEMY_TEMPLATES (characters.js), nie nazwa lokacji.
+  enemyFlavor: {
+    gornik: "Kiedyś po prostu kopał rudę; teraz kopie, bo ciało zapomniało robić cokolwiek innego.",
+    lowca: "Poluje na to, czym mógłby się stać, gdyby Gildia kiedyś przestała mu płacić.",
+    aberracja: "Nikt nie pamięta, czym była, zanim mana przepisała ją od nowa.",
+    adept: "Wierzy, że każde światło, które rzuca, jest miłosierdziem — nie pytaniem, komu naprawdę służy.",
+
+    kopacz: "Wciela rozkaz nadzorcy głębiej niż własne imię, którego już nie pamięta.",
+    pelzacz: "Zrósł się z żyłą esencji tak dawno, że nikt nie wie, gdzie kończy się kamień, a zaczyna stworzenie.",
+    nadzorca: "Bicz w jego dłoni kupiła mu Rada — resztę okrucieństwa dorzucił sam, za darmo.",
+    pijawka: "Żywi się tym samym blaskiem, który zabił każdego górnika, jakiego dotąd spotkała.",
+    kolos: "Skała, mięso i esencja stopiły się w nim tak dawno, że żadne z nich już nie pamięta różnicy.",
+    rdzawyautomat: "Zbudowany przez Gildię Rzemieślników, żeby kopał szybciej niż niewolnik i nie potrzebował snu.",
+    iskiernikesencji: "Każde wyładowanie to fragment krzyku, który uwiązł w nim, zanim jeszcze przestał być człowiekiem.",
+    skalnysluga: "Nie służy Radzie ani Gildii — służy czemuś starszemu, co śpi głębiej niż sięgnął jeszcze żaden szyb.",
+
+    wilk: "Poluje w watahach, które esencja rozerwała na pojedyncze, głodne cienie.",
+    konstrukt: "Las oplótł czyjeś kości tak dawno, że trudno powiedzieć, kogo właściwie dusi teraz jego uścisk.",
+    szarancza: "Jedna nie znaczy nic. Chmura tysięcy potrafi obedrzeć wzgórze do gołej ziemi w jedno popołudnie.",
+    pomiot: "Wylągł się z jaja, które nigdy nie powinno dojrzeć w skażonej ziemi lasu.",
+    traper: "Rozstawiał sidła na aberracje tak długo, że sam zaczął polować bardziej jak jedna z nich.",
+    pajeczydozorca: "Pilnuje sieci większej, niż jakikolwiek pojedynczy łowca zdołałby utkać sam.",
+    spaczonymotyl: "Pyłek z jego skrzydeł usypia ofiarę łagodniej, niż na to zasługuje to, co robi potem.",
+    fungalnypomiot: "Rośnie tam, gdzie ktoś inny już przegrał z tym samym lasem.",
+
+    zwiadowca: "Pierwszy dostrzega zdobycz i ostatni dostaje za nią zapłatę.",
+    egzekutor: "Rozstrzyga spory Gildii tak, jak Rada rozstrzyga spory z całym światem — pięścią, nie słowem.",
+    tropiciel: "Sprzedaje swoje umiejętności każdemu, kto zapłaci — łowcom, kupcom, czasem samej zwierzynie.",
+    strzelec: "Nigdy nie pyta, do kogo strzela, tylko ile za to dostanie.",
+    kapitan: "Dowodzi patrolem, który Rada uznaje za konieczny koszt utrzymania szlaku otwartym.",
+    tarczownikgildii: "Stoi tam, gdzie inni uciekają, bo to jedyna praca, jaką Gildia mu jeszcze powierza.",
+    jezdziecgildii: "Pokonuje szlak szybciej niż wieści o tym, co go pokonało.",
+    sabotazysta: "Woli zniszczyć most, niż walczyć na nim — most nie krwawi, nie płacze, nie pamięta.",
+
+    nowicjusz: "Wciąż wierzy, że światło, którym leczy, należy do niego, a nie do Zakonu.",
+    egzekutorwiary: "Poluje na heretyków Kultu Spaczenia z gorliwością, która sama zaczyna przypominać obsesję.",
+    inkwizytor: "Osądza duszę szybciej, niż zdąży wysłuchać jednego zdania w jej obronie.",
+    straznik: "Broni relikwii, których znaczenia nikt już nie pamięta — tylko to, że trzeba ich bronić.",
+    kaplanka: "Jej promień oczyszcza duszę równie skutecznie, co wszelkie pytania, które mogłaby zadać Zakonowi.",
+    kustoszrelikwii: "Katalogował świętości Zakonu tak długo, że przestał odróżniać wiarę od inwentarza.",
+    flagellant: "Wierzy, że każdy bicz, którym się smaga, spłaca dług, którego Zakon nigdy nie nazwał po imieniu.",
+    straznikllancuchow: "Pilnuje więźniów, o których Zakon woli nie mówić głośno przy niewolnikach z kopalni.",
+    inkwizycyjnypodpalacz: "Ogień oczyszczający pali tak samo dowody, jak i tych, którzy je znaleźli.",
+
+    utopiony: "Grzebał zmarłych Rady, zanim krypty zatopiła pęknięta żyła wodna — teraz nie potrafi przestać, nawet pod wodą.",
+    widmokrypty: "Jęczy imieniem, którego nikt żywy już nie pamięta wystarczająco dobrze, by je odpowiedzieć.",
+    kostotwor: "Zbudowany z kości tylu zmarłych, że żaden pojedynczy szkielet nie mógłby rościć sobie do niego prawa.",
+    mackaglebin: "Wypełzła z wody, która zatopiła krypty — i jak dotąd nikt nie wypełznął z powrotem.",
+    straznikkrypty: "Stoi na warcie od czasów sprzed Wojny Esencji i nikt nie zdążył go jeszcze zluzować.",
+    zjawabagienna: "Ślizga się po wodzie, która zalała groby, jakby wciąż szukała drogi na powierzchnię.",
+    nekromantaodrzuconych: "Wskrzesza tych, których Rada odrzuciła za życia, dając im jedyną karierę, jaka im jeszcze pozostała — służbę po śmierci.",
+  },
 };
