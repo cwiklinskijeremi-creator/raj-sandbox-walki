@@ -700,6 +700,42 @@ function formatItemRequirement(item) {
   return `<div class="sheet-item-requirement${met ? "" : " requirement-unmet"}">Wymaga: poziom ${item.requirement.level}, ${item.requirement.stat.toUpperCase()} ${item.requirement.amount}</div>`;
 }
 
+function formatItemSetTag(item) {
+  if (!item.set) return "";
+  const setDef = EQUIPMENT_SETS.find((s) => s.id === item.set);
+  if (!setDef) return "";
+  return `<div class="sheet-item-set-tag">${setDef.icon} Zestaw: ${setDef.name}</div>`;
+}
+
+function formatSetBonusText(bonus) {
+  const parts = [];
+  if (bonus.pancerz) parts.push(`+${(bonus.pancerz * 100).toFixed(0)}% pancerza`);
+  if (bonus.przebicie) parts.push(`+${(bonus.przebicie * 100).toFixed(0)}% przebicia`);
+  ["str", "wyt", "zre", "int", "cha"].forEach((k) => {
+    if (bonus[k]) parts.push(`+${bonus[k]} ${k.toUpperCase()}`);
+  });
+  return parts.join(", ");
+}
+
+function renderSetProgressSection(equippedObj) {
+  const setProgress = getSetProgressFor(equippedObj);
+  return `
+    <div class="sheet-section">
+      <h4>🔗 Zestawy ekwipunku</h4>
+      ${setProgress.map((setDef) => `
+        <div class="set-progress-block">
+          <div class="set-progress-title">${setDef.icon} ${setDef.name} — ${setDef.equippedCount}/${setDef.itemIds.length} części założonych</div>
+          ${setDef.tiers.map((tier) => `
+            <div class="set-tier-row${setDef.equippedCount >= tier.count ? " set-tier-active" : ""}">
+              ${setDef.equippedCount >= tier.count ? "✅" : "🔒"} ${tier.count} cz. — <strong>${tier.label}</strong>: ${formatSetBonusText(tier.bonus)}
+            </div>
+          `).join("")}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 const CHARACTER_SHEET_TABS = [
   { key: "stats", label: "📊 Postać" },
   { key: "equipment", label: "🎒 Ekwipunek" },
@@ -802,6 +838,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
                       <div class="sheet-item-name">${item.icon} ${item.name}${level > 0 ? ` <span class="potion-count">+${level}</span>` : ""}</div>
                       ${formatItemWeapon(item)}
                       <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
+                      ${formatItemSetTag(item)}
                     </div>
                     <button type="button" class="sheet-action-btn unequip-btn" data-slot="${slot.key}">Zdejmij</button>
                   </div>`
@@ -829,6 +866,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
                   <div class="sheet-item-desc">${item.description}</div>
                   ${formatItemWeapon(item)}
                   <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + level * 0.25)}</div>
+                  ${formatItemSetTag(item)}
                 </div>
                 <button type="button" class="sheet-action-btn equip-btn" data-item="${item.id}">Załóż</button>
               </div>
@@ -849,6 +887,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
           <div class="sheet-item-desc">${item.description}</div>
           ${formatItemWeapon(item)}
           <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+          ${formatItemSetTag(item)}
           ${formatItemRequirement(item)}
           <div class="sheet-item-cost">Koszt: ${item.cost.amount} × ${item.cost.currency} (masz: ${owned})</div>
         </div>
@@ -907,7 +946,7 @@ function renderCharacterSheet(player, inventory, equipped, resources, potionInve
 
   const tabContent = {
     stats: statsHtml + levelUpHtml + resourcesHtml,
-    equipment: slotsHtml + inventoryHtml,
+    equipment: slotsHtml + renderSetProgressSection(equipped) + inventoryHtml,
     shop: shopHtml,
     potions: potionInventoryHtml + potionShopHtml,
   };
@@ -1141,6 +1180,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
                       <div class="sheet-item-name">${item.icon} ${item.name}${upgradeLevel > 0 ? ` <span class="potion-count">+${upgradeLevel}</span>` : ""}</div>
                       ${formatItemWeapon(item)}
                       <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + upgradeLevel * 0.25)}</div>
+                      ${formatItemSetTag(item)}
                     </div>
                     <button type="button" class="sheet-action-btn companion-unequip-btn" data-slot="${slot.key}">Zdejmij</button>
                   </div>`
@@ -1212,6 +1252,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
                   <div class="sheet-item-desc">${item.description}</div>
                   ${formatItemWeapon(item)}
                   <div class="sheet-item-bonus">${formatScaledItemBonus(item, 1 + upgradeLevel * 0.25)}</div>
+                  ${formatItemSetTag(item)}
                 </div>
                 <button type="button" class="sheet-action-btn companion-equip-btn" data-item="${item.id}">Załóż</button>
               </div>
@@ -1220,7 +1261,7 @@ function renderCompanionSheet(companion, inventory, equipped, equipmentUpgrades,
     </div>
   `;
 
-  body.innerHTML = statsHtml + developmentHtml + storyHtml + slotsHtml + inventoryHtml;
+  body.innerHTML = statsHtml + developmentHtml + storyHtml + slotsHtml + renderSetProgressSection(cEquipped) + inventoryHtml;
 
   renderStatAllocatorInto(
     document.getElementById("companion-stat-allocator"),
@@ -1668,6 +1709,7 @@ function renderCityPlace(place, state, handlers) {
           <div class="sheet-item-desc">${item.description}</div>
           ${formatItemWeapon(item)}
           <div class="sheet-item-bonus">${formatItemBonus(item)}</div>
+          ${formatItemSetTag(item)}
           ${formatItemRequirement(item)}
           <div class="sheet-item-cost">${costLine}</div>
         </div>

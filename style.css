@@ -2054,6 +2054,38 @@ button:disabled {
   color: var(--danger-bright);
 }
 
+.sheet-item-set-tag {
+  font-size: 0.8rem;
+  color: #9c8fc9;
+}
+
+.set-progress-block {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid #2a2730;
+}
+
+.set-progress-block:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.set-progress-title {
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.set-tier-row {
+  font-size: 0.85rem;
+  color: #6a6470;
+  padding: 0.15rem 0;
+}
+
+.set-tier-row.set-tier-active {
+  color: #c9bef0;
+}
+
 .craft-ingredient-missing {
   color: var(--danger-bright);
 }

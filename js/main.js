@@ -1379,6 +1379,50 @@ function triggerMadnessEpisode() {
   }
 }
 
+// Zestawy ekwipunku (equipment.js: EQUIPMENT_SETS) liczą tylko to, co
+// aktualnie założone w danym equippedObj — ten sam przedmiot w plecaku albo
+// na innej postaci się nie liczy. Bonus progu nie skaluje się z equipmentUpgrades
+// (to premia za komplet, nie za pojedynczy ulepszony przedmiot).
+function getEquippedSetCounts(equippedObj) {
+  const counts = {};
+  Object.values(equippedObj).forEach((itemId) => {
+    if (!itemId) return;
+    const item = EQUIPMENT_ITEMS.find((i) => i.id === itemId);
+    if (!item || !item.set) return;
+    counts[item.set] = (counts[item.set] || 0) + 1;
+  });
+  return counts;
+}
+
+function getActiveSetTier(setDef, equippedCount) {
+  let active = null;
+  setDef.tiers.forEach((tier) => {
+    if (equippedCount >= tier.count) active = tier;
+  });
+  return active;
+}
+
+function getSetBonusesFor(equippedObj) {
+  const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
+  const counts = getEquippedSetCounts(equippedObj);
+  EQUIPMENT_SETS.forEach((setDef) => {
+    const tier = getActiveSetTier(setDef, counts[setDef.id] || 0);
+    if (!tier) return;
+    Object.entries(tier.bonus).forEach(([key, value]) => { totals[key] += value; });
+  });
+  return totals;
+}
+
+// Używane przez UI (arkusz postaci/towarzysza) do pokazania postępu każdego
+// zestawu, niezależnie od tego, czy gracz ma już jakiekolwiek jego części.
+function getSetProgressFor(equippedObj) {
+  const counts = getEquippedSetCounts(equippedObj);
+  return EQUIPMENT_SETS.map((setDef) => ({
+    ...setDef,
+    equippedCount: counts[setDef.id] || 0,
+  }));
+}
+
 function getEquipmentStatBonusesFor(equippedObj) {
   const totals = { str: 0, wyt: 0, zre: 0, int: 0, cha: 0, pancerz: 0, przebicie: 0 };
   Object.values(equippedObj).forEach((itemId) => {
@@ -1391,6 +1435,8 @@ function getEquipmentStatBonusesFor(equippedObj) {
       totals[key] += (key === "pancerz" || key === "przebicie") ? scaled : Math.round(scaled);
     });
   });
+  const setBonus = getSetBonusesFor(equippedObj);
+  Object.entries(setBonus).forEach(([key, value]) => { totals[key] += value; });
   return totals;
 }
 
