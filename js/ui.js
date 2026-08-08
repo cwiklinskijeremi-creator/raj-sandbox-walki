@@ -719,18 +719,29 @@ function formatSetBonusText(bonus) {
 
 const SHOP_CATEGORY_TABS = [
   { key: "weapon", label: "⚔️ Broń" },
-  { key: "armor", label: "🛡️ Zbroja" },
-  { key: "jewelry", label: "💍 Biżuteria" },
+  { key: "helm", label: "🪖 Hełm" },
+  { key: "napiersnik", label: "🥋 Napierśnik" },
+  { key: "rekawice", label: "🧤 Rękawice" },
+  { key: "spodnie", label: "👖 Spodnie" },
+  { key: "buty", label: "🥾 Buty" },
+  { key: "naszyjnik", label: "📿 Naszyjnik" },
+  { key: "pierscien", label: "💍 Pierścień" },
+  { key: "accessory", label: "🦾 Akcesoria" },
 ];
 
+// Broń liczy się niezależnie od tego, w której dłoni siedzi; pozostałe
+// przedmioty w slotach lewa_reka/prawa_reka (naramienniki, bransolety —
+// czysty bonus staty, bez pola weapon) trafiają do wspólnej kategorii
+// "accessory", bo nie pasują do żadnego konkretnego slotu z EQUIPMENT_SLOTS.
 function getShopItemCategory(item) {
   if (item.weapon) return "weapon";
-  if (["helm", "napiersnik", "rekawice", "spodnie", "buty"].includes(item.slot)) return "armor";
-  return "jewelry";
+  if (item.slot === "lewa_reka" || item.slot === "prawa_reka") return "accessory";
+  return item.slot;
 }
 
 function categorizeShopItems(items) {
-  const categorized = { weapon: [], armor: [], jewelry: [] };
+  const categorized = {};
+  SHOP_CATEGORY_TABS.forEach((tab) => { categorized[tab.key] = []; });
   items.forEach((item) => categorized[getShopItemCategory(item)].push(item));
   return categorized;
 }
