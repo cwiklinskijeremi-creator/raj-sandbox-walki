@@ -121,4 +121,17 @@ const LORE_DATA = {
     zjawabagienna: "Ślizga się po wodzie, która zalała groby, jakby wciąż szukała drogi na powierzchnię.",
     nekromantaodrzuconych: "Wskrzesza tych, których Rada odrzuciła za życia, dając im jedyną karierę, jaka im jeszcze pozostała — służbę po śmierci.",
   },
+  // Jedno zdanie fabularne per boss (klucz = bossKey z BOSS_TEMPLATES,
+  // characters.js) — analogicznie do enemyFlavor powyżej, ale dla ośmiu
+  // najważniejszych narracyjnie stworzeń w grze.
+  bossFlavor: {
+    boss_kopalnie: "Strzegł żyły esencji, zanim jeszcze Rada nazwała ją swoją — i nie zamierza ustąpić temu, co przyszło później.",
+    boss_las: "Utkała swoje królestwo z sieci i jadu głęboko w Skażonym Lesie, gdzie nawet aberracje wolą nie zapuszczać się bez zaproszenia.",
+    boss_szlak: "Znaczy każdą ofiarę przed ciosem, bo dla niego polowanie bez rytuału to tylko rzeźnictwo.",
+    boss_placowka: "Modli się do tego samego światła co reszta Zakonu — tyle że jego modlitwy dawno przestały być skierowane w górę.",
+    boss_krypty: "Rządziła czymś, zanim krypty zatopiła pęknięta żyła wodna, i wciąż uważa, że rządzi tym dalej.",
+    boss_dorian: "Doniósł Radzie za obietnicę stanowiska doradcy — i dostał więcej władzy, niż potrafił unieść bez złamania się w środku.",
+    boss_cien_rady: "Rada nie wysyła go, żeby negocjował. Wysyła go, kiedy negocjacje przestały być opcją.",
+    boss_odrzucony: "Pierwszy eksperyment Doriana, porzucony, zanim zdążył zostać czymkolwiek — a mimo to przetrwał dłużej, niż ktokolwiek zakładał.",
+  },
 };

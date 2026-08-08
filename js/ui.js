@@ -2145,9 +2145,11 @@ function renderCodexTabBody(tabKey) {
             `;
           }
           const b = BOSS_TEMPLATES[loc.bossKey]();
+          const bossFlavor = LORE_DATA.bossFlavor[loc.bossKey];
           return `
             <div class="codex-subclass codex-boss-entry">
               <div class="codex-subclass-title">👑 ${b.icon} ${b.name} ${b.mutated ? `<span class="mutated-tag" title="Można pożreć jego szczątki po pokonaniu w walce.">🧟 spaczony</span>` : ""}</div>
+              ${bossFlavor ? `<div class="codex-enemy-flavor">„${bossFlavor}”</div>` : ""}
               <div class="codex-subclass-gear">
                 HP: ${b.maxHP} &nbsp;|&nbsp; STR: ${b.str} &nbsp; WYT: ${b.wyt} &nbsp; ZRE: ${b.zre} &nbsp; INT: ${b.int} &nbsp; CHA: ${b.cha}
                 &nbsp;|&nbsp; Pancerz: ${(b.pancerz * 100).toFixed(0)}% &nbsp; Przebicie: ${(b.przebicie * 100).toFixed(0)}%
